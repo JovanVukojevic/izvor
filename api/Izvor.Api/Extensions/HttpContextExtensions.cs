@@ -1,0 +1,20 @@
+using Izvor.Api.Models;
+
+namespace Izvor.Api.Extensions;
+
+public static class HttpContextExtensions
+{
+    private const string TenantContextKey = "Izvor.Tenant";
+
+    public static void SetTenant(this HttpContext context, Tenant tenant)
+    {
+        context.Items[TenantContextKey] = tenant;
+    }
+
+    public static Tenant GetTenant(this HttpContext context)
+    {
+        return context.Items[TenantContextKey] as Tenant
+            ?? throw new InvalidOperationException(
+                "Tenant not set in HttpContext. TenantResolutionMiddleware must run before this point.");
+    }
+}

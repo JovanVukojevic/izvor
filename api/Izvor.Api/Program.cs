@@ -1,5 +1,6 @@
 using System.Text;
 using Izvor.Api.Configuration;
+using Izvor.Api.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -15,6 +16,9 @@ builder.Services.AddNpgsqlDataSource(connectionString);
 
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection(JwtSettings.SectionName));
+
+builder.Services.Configure<TenantHostSettings>(
+    builder.Configuration.GetSection(TenantHostSettings.SectionName));
 
 var jwtSettings = builder.Configuration
     .GetSection(JwtSettings.SectionName)
@@ -41,6 +45,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.UseMiddleware<TenantResolutionMiddleware>();
 
 app.MapOpenApi();
 app.MapScalarApiReference();
