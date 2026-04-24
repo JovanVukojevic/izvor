@@ -41,8 +41,9 @@ public sealed class AuthController : ControllerBase
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
         await using (var setCommand = new NpgsqlCommand(
-            $"SET LOCAL app.current_tenant = '{tenant.Id}'", connection, transaction))
+            "SELECT set_config('app.current_tenant', @t, true)", connection, transaction))
         {
+            setCommand.Parameters.AddWithValue("t", tenant.Id.ToString());
             await setCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 

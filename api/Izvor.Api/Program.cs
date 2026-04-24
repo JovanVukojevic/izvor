@@ -39,6 +39,7 @@ builder.Services.Configure<TenantHostSettings>(
     builder.Configuration.GetSection(TenantHostSettings.SectionName));
 
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IDbSessionContext, DbSessionContext>();
 
 var jwtSettings = builder.Configuration
     .GetSection(JwtSettings.SectionName)
@@ -101,6 +102,10 @@ var app = builder.Build();
 
 app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseRateLimiter();
+app.UseAuthentication();
+app.UseMiddleware<JwtTenantMatchMiddleware>();
+app.UseAuthorization();
+app.UseMiddleware<DatabaseSessionContextMiddleware>();
 
 app.MapOpenApi();
 app.MapScalarApiReference();
