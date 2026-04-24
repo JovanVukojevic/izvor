@@ -1,4 +1,3 @@
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using Izvor.Api.Configuration;
 using Izvor.Api.Extensions;
@@ -24,23 +23,21 @@ public sealed class TenantResolutionMiddleware
         "api"
     };
 
-    private static readonly JsonSerializerOptions ErrorJsonOptions = new(JsonSerializerOptions.Web)
-    {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-    };
-
     private readonly RequestDelegate _next;
     private readonly string _baseDomain;
     private readonly ILogger<TenantResolutionMiddleware> _logger;
+    private readonly JsonSerializerOptions _jsonOptions;
 
     public TenantResolutionMiddleware(
         RequestDelegate next,
         IOptions<TenantHostSettings> hostSettings,
-        ILogger<TenantResolutionMiddleware> logger)
+        ILogger<TenantResolutionMiddleware> logger,
+        JsonSerializerOptions jsonOptions)
     {
         _next = next;
         _baseDomain = hostSettings.Value.BaseDomain;
         _logger = logger;
+        _jsonOptions = jsonOptions;
     }
 
     public async Task InvokeAsync(HttpContext context, NpgsqlDataSource dataSource)
@@ -145,7 +142,7 @@ public sealed class TenantResolutionMiddleware
             UpdatedAt: reader.GetDateTime(6));
     }
 
-    private static async Task WriteErrorAsync(
+    private async Task WriteErrorAsync(
         HttpContext context,
         int statusCode,
         string error,
@@ -154,6 +151,6 @@ public sealed class TenantResolutionMiddleware
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
         var payload = new ErrorResponse(error, message);
-        await JsonSerializer.SerializeAsync(context.Response.Body, payload, ErrorJsonOptions);
+        await JsonSerializer.SerializeAsync(context.Response.Body, payload, _jsonOptions);
     }
 }
