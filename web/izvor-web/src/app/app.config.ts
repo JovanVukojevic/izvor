@@ -18,6 +18,9 @@ export const appConfig: ApplicationConfig = {
       inject(TenantContextService);
     }),
     providePrimeNG({ theme: { preset: Aura } }),
-    { provide: API_BASE_URL, useValue: environment.apiBaseUrl }
+    {
+      provide: API_BASE_URL,
+      useFactory: () => `${window.location.protocol}//${window.location.hostname}:${environment.apiPort}`
+    }
   ]
 };
