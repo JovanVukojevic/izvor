@@ -33,6 +33,15 @@ export class AuthService {
       .pipe(tap(response => this.persistSession(response)));
   }
 
+  fetchCurrentUser(): Observable<UserInfo> {
+    return this.http
+      .get<UserInfo>(`${this.apiBaseUrl}/api/me`)
+      .pipe(tap(user => {
+        this._currentUser.set(user);
+        sessionStorage.setItem(AuthService.USER_KEY, JSON.stringify(user));
+      }));
+  }
+
   logout(): void {
     sessionStorage.removeItem(AuthService.ACCESS_TOKEN_KEY);
     sessionStorage.removeItem(AuthService.USER_KEY);
