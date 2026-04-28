@@ -1,0 +1,31 @@
+using Izvor.Api.Dtos;
+using Npgsql;
+
+namespace Izvor.Api.Mapping;
+
+public static class CourseRowMapper
+{
+    public static CourseResponse Map(NpgsqlDataReader reader)
+    {
+        var idOrdinal = reader.GetOrdinal("id");
+        var categoryOrdinal = reader.GetOrdinal("category_id");
+        var authorOrdinal = reader.GetOrdinal("author_id");
+        var titleOrdinal = reader.GetOrdinal("title");
+        var descOrdinal = reader.GetOrdinal("description");
+        var statusOrdinal = reader.GetOrdinal("status");
+        var sequentialOrdinal = reader.GetOrdinal("sequential");
+        var createdOrdinal = reader.GetOrdinal("created_at");
+        var updatedOrdinal = reader.GetOrdinal("updated_at");
+
+        return new CourseResponse(
+            Id: reader.GetGuid(idOrdinal),
+            CategoryId: reader.IsDBNull(categoryOrdinal) ? null : reader.GetGuid(categoryOrdinal),
+            AuthorId: reader.GetGuid(authorOrdinal),
+            Title: reader.GetString(titleOrdinal),
+            Description: reader.IsDBNull(descOrdinal) ? null : reader.GetString(descOrdinal),
+            Status: reader.GetString(statusOrdinal),
+            Sequential: reader.GetBoolean(sequentialOrdinal),
+            CreatedAt: reader.GetDateTime(createdOrdinal),
+            UpdatedAt: reader.GetDateTime(updatedOrdinal));
+    }
+}

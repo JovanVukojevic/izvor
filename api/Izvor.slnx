@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="Izvor.Api/Izvor.Api.csproj" />
+  <Project Path="Izvor.Api.Tests/Izvor.Api.Tests.csproj" />
 </Solution>

@@ -2,14 +2,17 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.RateLimiting;
+using FluentValidation;
 using Izvor.Api.Configuration;
 using Izvor.Api.Middleware;
 using Izvor.Api.Models;
 using Izvor.Api.Services;
+using Izvor.Api.Validation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +30,12 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 builder.Services.AddOpenApi();
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+builder.Services.AddFluentValidationAutoValidation(config =>
+{
+    config.OverrideDefaultResultFactoryWith<IzvorProblemDetailsFactory>();
+});
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("Connection string 'Default' not configured");
@@ -143,6 +152,7 @@ app.UseAuthentication();
 app.UseMiddleware<JwtTenantMatchMiddleware>();
 app.UseAuthorization();
 app.UseMiddleware<DatabaseSessionContextMiddleware>();
+app.UseMiddleware<PostgresExceptionHandlerMiddleware>();
 
 app.MapOpenApi();
 app.MapScalarApiReference();
