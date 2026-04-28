@@ -259,6 +259,53 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         body!.Error.Should().Be("validation_failed");
     }
 
+    [Fact] // K18
+    public async Task Publish_course_with_lessons_succeeds()
+    {
+        var draft = await CreateCourseAsync(AnaClient(), "Publishable");
+        var lesson = await AnaClient().PostAsJsonAsync(
+            $"/api/courses/{draft.Id}/lessons",
+            new CreateLessonRequest("Lesson 1", "body"));
+        lesson.EnsureSuccessStatusCode();
+
+        var publish = await AnaClient().PostAsync($"/api/courses/{draft.Id}/publish", null);
+        publish.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await publish.Content.ReadFromJsonAsync<CourseResponse>();
+        body!.Id.Should().Be(draft.Id);
+        body.Status.Should().Be("published");
+    }
+
+    [Fact] // K19
+    public async Task Publish_empty_course_returns_409_course_has_no_lessons()
+    {
+        var draft = await CreateCourseAsync(AnaClient(), "Empty");
+
+        var publish = await AnaClient().PostAsync($"/api/courses/{draft.Id}/publish", null);
+        publish.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var body = await publish.Content.ReadFromJsonAsync<ErrorResponse>();
+        body!.Error.Should().Be("state_invalid");
+        body.Message.Should().Be("course_has_no_lessons");
+    }
+
+    [Fact] // K20
+    public async Task Publish_already_published_returns_409_course_not_draft()
+    {
+        var draft = await CreateCourseAsync(AnaClient(), "AlreadyPub");
+        var lesson = await AnaClient().PostAsJsonAsync(
+            $"/api/courses/{draft.Id}/lessons",
+            new CreateLessonRequest("Lesson 1", "body"));
+        lesson.EnsureSuccessStatusCode();
+
+        var first = await AnaClient().PostAsync($"/api/courses/{draft.Id}/publish", null);
+        first.EnsureSuccessStatusCode();
+
+        var second = await AnaClient().PostAsync($"/api/courses/{draft.Id}/publish", null);
+        second.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var body = await second.Content.ReadFromJsonAsync<ErrorResponse>();
+        body!.Error.Should().Be("state_invalid");
+        body.Message.Should().Be("course_not_draft");
+    }
+
     private async Task<CourseResponse> CreateCourseAsync(HttpClient client, string title)
     {
         var response = await client.PostAsJsonAsync("/api/courses",

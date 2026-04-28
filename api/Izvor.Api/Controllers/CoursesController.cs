@@ -124,6 +124,23 @@ public sealed class CoursesController : ControllerBase
         return Ok(results);
     }
 
+    [HttpPost("{id:guid}/publish")]
+    [ProducesResponseType(typeof(CourseResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<CourseResponse>> PublishAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using (var publish = _session.CreateCommand("SELECT api.publish_course(@id)"))
+        {
+            publish.Parameters.AddWithValue("id", id);
+            await publish.ExecuteScalarAsync(cancellationToken);
+        }
+
+        var refreshed = await ReadCourseAsync(id, cancellationToken);
+        return Ok(refreshed);
+    }
+
     private async Task<CourseResponse> ReadCourseAsync(Guid id, CancellationToken cancellationToken)
     {
         await using var command = _session.CreateCommand(
