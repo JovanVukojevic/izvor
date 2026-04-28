@@ -12,6 +12,7 @@ public static class TestIds
     public static readonly Guid AnaUserId = new("aaaaaaaa-0000-0000-0000-000000000002");
     public static readonly Guid PeraUserId = new("aaaaaaaa-0000-0000-0000-000000000003");
     public static readonly Guid InactiveUserId = new("aaaaaaaa-0000-0000-0000-000000000004");
+    public static readonly Guid IvanaUserId = new("aaaaaaaa-0000-0000-0000-000000000005");
 
     public static readonly Guid JanaUserId = new("bbbbbbbb-0000-0000-0000-000000000001");
     public static readonly Guid PetarUserId = new("bbbbbbbb-0000-0000-0000-000000000002");
@@ -20,6 +21,7 @@ public static class TestIds
     public const string AnaEmail = "ana@acme.test";
     public const string PeraEmail = "pera@acme.test";
     public const string InactiveEmail = "inactive@acme.test";
+    public const string IvanaEmail = "ivana@acme.test";
     public const string JanaEmail = "jana@intellya.test";
     public const string PetarEmail = "petar@intellya.test";
 

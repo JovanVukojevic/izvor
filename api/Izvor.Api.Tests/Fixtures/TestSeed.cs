@@ -24,6 +24,7 @@ internal static class TestSeed
         await InsertUserAsync(conn, tx, TestIds.MarkoUserId, TestIds.AcmeTenantId, TestIds.MarkoEmail, passwordHash, "admin", true);
         await InsertUserAsync(conn, tx, TestIds.AnaUserId, TestIds.AcmeTenantId, TestIds.AnaEmail, passwordHash, "author", true);
         await InsertUserAsync(conn, tx, TestIds.PeraUserId, TestIds.AcmeTenantId, TestIds.PeraEmail, passwordHash, "learner", true);
+        await InsertUserAsync(conn, tx, TestIds.IvanaUserId, TestIds.AcmeTenantId, TestIds.IvanaEmail, passwordHash, "learner", true);
         await InsertUserAsync(conn, tx, TestIds.InactiveUserId, TestIds.AcmeTenantId, TestIds.InactiveEmail, passwordHash, "learner", false);
 
         await InsertUserAsync(conn, tx, TestIds.JanaUserId, TestIds.IntellyaTenantId, TestIds.JanaEmail, passwordHash, "admin", true);
