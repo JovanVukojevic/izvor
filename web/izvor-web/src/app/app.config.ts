@@ -2,6 +2,7 @@ import { ApplicationConfig, ErrorHandler, inject, provideAppInitializer, provide
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
+import { MessageService } from 'primeng/api';
 import Aura from '@primeuix/themes/aura';
 import { firstValueFrom } from 'rxjs';
 
@@ -11,6 +12,7 @@ import { API_BASE_URL } from './core/api-base-url.token';
 import { TenantContextService } from './core/tenant-context';
 import { AuthService } from './core/auth/auth.service';
 import { authInterceptor } from './core/auth/auth.interceptor';
+import { errorInterceptor } from './core/api/error.interceptor';
 import { SilentErrorHandler } from './core/silent-error-handler';
 
 export const appConfig: ApplicationConfig = {
@@ -18,7 +20,8 @@ export const appConfig: ApplicationConfig = {
     { provide: ErrorHandler, useClass: SilentErrorHandler },
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([errorInterceptor, authInterceptor])),
+    MessageService,
     provideAppInitializer(() => {
       inject(TenantContextService);
     }),
