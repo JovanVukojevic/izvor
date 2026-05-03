@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 
 import { Button } from 'primeng/button';
 import { Tag } from 'primeng/tag';
@@ -29,6 +30,9 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
     Tag,
     Message,
     RouterLink,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
     CourseEnrollmentsView,
     CourseStatsView
   ],
@@ -108,21 +112,25 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
           @if (lessons().length === 0) {
             <p class="empty">No lessons yet.</p>
           } @else {
-            <ol class="lessons">
-              @for (lesson of lessons(); track lesson.id; let i = $index; let last = $last) {
-                <li>
+            <ol
+              class="lessons"
+              cdkDropList
+              [cdkDropListDisabled]="!canManageLessons() || reordering()"
+              (cdkDropListDropped)="onLessonDrop($event)"
+            >
+              @for (lesson of lessons(); track lesson.id) {
+                <li cdkDrag [cdkDragDisabled]="!canManageLessons() || reordering()">
+                  @if (canManageLessons()) {
+                    <span class="drag-handle" cdkDragHandle title="Drag to reorder">
+                      <i class="pi pi-bars"></i>
+                    </span>
+                  }
                   <a [routerLink]="['/courses', c.id, 'lessons', lesson.id]" class="lesson-link">
                     <span class="lesson-position">{{ lesson.position }}.</span>
                     <span>{{ lesson.title }}</span>
                   </a>
                   @if (canManageLessons()) {
                     <span class="lesson-actions">
-                      <p-button icon="pi pi-arrow-up" size="small" severity="secondary" [text]="true"
-                        [disabled]="i === 0 || reordering()"
-                        (onClick)="moveLesson(lesson, -1)" />
-                      <p-button icon="pi pi-arrow-down" size="small" severity="secondary" [text]="true"
-                        [disabled]="last || reordering()"
-                        (onClick)="moveLesson(lesson, 1)" />
                       <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
                         [routerLink]="['/courses', c.id, 'lessons', lesson.id, 'edit']" />
                       <p-button icon="pi pi-trash" size="small" severity="danger" [text]="true"
@@ -163,10 +171,26 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
       display: flex; align-items: center; justify-content: space-between;
       padding: 0.5rem; border: 1px solid var(--p-content-border-color, #e5e7eb); border-radius: 4px;
     }
-    .lesson-link { display: flex; gap: 0.5rem; color: var(--p-text-color, #111827); text-decoration: none; }
+    .lesson-link { display: flex; gap: 0.5rem; color: var(--p-text-color, #111827); text-decoration: none; flex: 1; }
     .lesson-link:hover { text-decoration: underline; }
     .lesson-position { color: var(--p-text-muted-color, #6b7280); min-width: 1.5rem; }
     .lesson-actions { display: flex; gap: 0.25rem; }
+    .drag-handle {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 1.5rem; height: 1.5rem; cursor: grab;
+      color: var(--p-text-muted-color, #6b7280);
+    }
+    .drag-handle:active { cursor: grabbing; }
+    .lessons li.cdk-drag-preview {
+      box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+                  0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                  0 3px 14px 2px rgba(0, 0, 0, 0.12);
+      background: var(--p-content-background, #ffffff);
+    }
+    .lessons li.cdk-drag-placeholder { opacity: 0.3; }
+    .lessons.cdk-drop-list-dragging li:not(.cdk-drag-placeholder) {
+      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+    }
     .empty { color: var(--p-text-muted-color, #6b7280); }
     code { font-size: 0.75rem; color: var(--p-text-muted-color, #6b7280); }
     :host ::ng-deep .banner { width: 100%; }
@@ -391,11 +415,19 @@ export class CourseDetail {
     });
   }
 
-  moveLesson(lesson: LessonResponse, delta: 1 | -1): void {
-    const newPos = lesson.position + delta;
-    if (newPos < 1 || newPos > this.lessons().length) return;
+  onLessonDrop(event: CdkDragDrop<LessonResponse[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+
+    const original = this.lessons();
+    const reordered = [...original];
+    moveItemInArray(reordered, event.previousIndex, event.currentIndex);
+    this.lessons.set(reordered);
+
+    const moved = original[event.previousIndex];
+    const newPosition = event.currentIndex + 1;
     this.reordering.set(true);
-    this.lessonService.reorderLesson(lesson.id, { position: newPos }).subscribe({
+
+    this.lessonService.reorderLesson(moved.id, { position: newPosition }).subscribe({
       next: () => {
         this.lessonService.listLessonsByCourse(this.courseId()).subscribe({
           next: rows => {
@@ -406,6 +438,7 @@ export class CourseDetail {
         });
       },
       error: (err: HttpErrorResponse) => {
+        this.lessons.set(original);
         this.reordering.set(false);
         const body = err.error as ErrorResponse | null | undefined;
         this.messages.add({
