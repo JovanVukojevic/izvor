@@ -1,8 +1,10 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { marked } from 'marked';
 
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
@@ -46,7 +48,11 @@ import { AuthService } from '../../../core/auth/auth.service';
         }
 
         <article>
-          <pre class="content">{{ l.content || '(no content)' }}</pre>
+          @if (l.content) {
+            <div class="content" [innerHTML]="renderedContent()"></div>
+          } @else {
+            <p class="content empty">(no content)</p>
+          }
         </article>
 
         <section class="actions">
@@ -78,12 +84,40 @@ import { AuthService } from '../../../core/auth/auth.service';
     .lesson-header h1 { margin: 0; }
     .position { color: var(--p-text-muted-color, #6b7280); }
     .content {
-      white-space: pre-wrap;
-      font-family: inherit;
       background: var(--p-content-hover-background, #f9fafb);
       padding: 1rem;
       border-radius: 6px;
       margin: 0;
+    }
+    .content.empty { color: var(--p-text-muted-color, #6b7280); font-style: italic; }
+    .content :first-child { margin-top: 0; }
+    .content :last-child { margin-bottom: 0; }
+    .content pre {
+      background: var(--p-content-background, #ffffff);
+      padding: 0.75rem;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .content code {
+      background: var(--p-content-background, #ffffff);
+      padding: 0.1rem 0.3rem;
+      border-radius: 3px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+    }
+    .content pre code { background: transparent; padding: 0; }
+    .content blockquote {
+      border-left: 3px solid var(--p-content-border-color, #e5e7eb);
+      margin: 0.5rem 0;
+      padding-left: 1rem;
+      color: var(--p-text-muted-color, #6b7280);
+    }
+    .content ul, .content ol { padding-left: 1.5rem; }
+    .content table { border-collapse: collapse; }
+    .content th, .content td {
+      border: 1px solid var(--p-content-border-color, #e5e7eb);
+      padding: 0.25rem 0.5rem;
     }
     .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     :host ::ng-deep .banner { width: 100%; }
@@ -98,6 +132,7 @@ export class LessonDetail {
   private readonly auth = inject(AuthService);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   readonly courseId = signal<string>('');
   readonly lessonId = signal<string>('');
@@ -130,6 +165,15 @@ export class LessonDetail {
     if (!e || e.status !== 'active') return false;
     if (this.alreadyComplete()) return false;
     return this.course()?.status === 'published';
+  });
+
+  // Lesson content is markdown authored by tenant authors (admin/author roles,
+  // trusted within a tenant). RLS guarantees content from one tenant never
+  // reaches another, so per-tenant XSS surface is bounded by tenant membership.
+  readonly renderedContent = computed<SafeHtml>(() => {
+    const content = this.lesson()?.content ?? '';
+    const html = marked.parse(content, { async: false }) as string;
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   });
 
   ngOnInit(): void {
