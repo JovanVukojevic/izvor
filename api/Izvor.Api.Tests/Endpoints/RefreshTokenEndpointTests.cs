@@ -49,13 +49,13 @@ public sealed class RefreshTokenEndpointTests : IAsyncLifetime
         return client;
     }
 
-    private static async Task<(LoginResponse Body, string CookieValue, string SetCookieHeader)> LoginAsync(
+    private static async Task<(AuthResponse Body, string CookieValue, string SetCookieHeader)> LoginAsync(
         HttpClient client, string email, string password)
     {
         var response = await client.PostAsJsonAsync("/api/auth/login",
             new LoginRequest(email, password));
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = (await response.Content.ReadFromJsonAsync<LoginResponse>())!;
+        var body = (await response.Content.ReadFromJsonAsync<AuthResponse>())!;
         var setCookie = ExtractRefreshSetCookie(response);
         var cookieValue = ExtractCookieValue(setCookie);
         return (body, cookieValue, setCookie);
@@ -174,7 +174,7 @@ public sealed class RefreshTokenEndpointTests : IAsyncLifetime
         var response = await client.SendAsync(refreshRequest);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var body = await response.Content.ReadFromJsonAsync<AuthResponse>();
         body!.AccessToken.Should().NotBeNullOrEmpty();
         body.AccessToken.Should().NotBe(loginBody.AccessToken, "rotation must mint a fresh access token");
         body.User.Email.Should().Be(TestIds.MarkoEmail);

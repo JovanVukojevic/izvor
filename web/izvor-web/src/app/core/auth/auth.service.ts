@@ -1,81 +1,79 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Router } from '@angular/router';
+import { Observable, catchError, finalize, map, shareReplay, tap, throwError } from 'rxjs';
 
 import { API_BASE_URL } from '../api-base-url.token';
-import { LoginRequest, LoginResponse, UserInfo } from './models';
+import { AuthResponse, LoginRequest, UserInfo } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private static readonly ACCESS_TOKEN_KEY = 'izvor.accessToken';
-  private static readonly USER_KEY = 'izvor.user';
-
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = inject(API_BASE_URL);
+  private readonly router = inject(Router);
+
+  private accessToken: string | null = null;
+  private refreshInFlight$: Observable<string> | null = null;
 
   private readonly _currentUser = signal<UserInfo | null>(null);
-  private _accessToken: string | null = null;
-
   readonly currentUser = this._currentUser.asReadonly();
   readonly isAuthenticated = computed(() => this._currentUser() !== null);
 
-  constructor() {
-    this.hydrateFromSessionStorage();
-  }
-
   getAccessToken(): string | null {
-    return this._accessToken;
+    return this.accessToken;
   }
 
-  login(request: LoginRequest): Observable<LoginResponse> {
+  login(request: LoginRequest): Observable<AuthResponse> {
     return this.http
-      .post<LoginResponse>(`${this.apiBaseUrl}/api/auth/login`, request)
-      .pipe(tap(response => this.persistSession(response)));
+      .post<AuthResponse>(`${this.apiBaseUrl}/api/auth/login`, request, { withCredentials: true })
+      .pipe(tap(response => this.applyAuthResponse(response)));
   }
 
   fetchCurrentUser(): Observable<UserInfo> {
     return this.http
       .get<UserInfo>(`${this.apiBaseUrl}/api/me`)
-      .pipe(tap(user => {
-        this._currentUser.set(user);
-        sessionStorage.setItem(AuthService.USER_KEY, JSON.stringify(user));
-      }));
+      .pipe(tap(user => this._currentUser.set(user)));
+  }
+
+  refreshAccessToken(): Observable<string> {
+    if (this.refreshInFlight$ !== null) {
+      return this.refreshInFlight$;
+    }
+    this.refreshInFlight$ = this.http
+      .post<AuthResponse>(`${this.apiBaseUrl}/api/auth/refresh`, {}, { withCredentials: true })
+      .pipe(
+        tap(response => this.applyAuthResponse(response)),
+        map(response => response.accessToken),
+        catchError(err => {
+          this.clearLocalState();
+          return throwError(() => err);
+        }),
+        finalize(() => { this.refreshInFlight$ = null; }),
+        shareReplay(1)
+      );
+    return this.refreshInFlight$;
   }
 
   logout(): void {
-    sessionStorage.removeItem(AuthService.ACCESS_TOKEN_KEY);
-    sessionStorage.removeItem(AuthService.USER_KEY);
-    this._accessToken = null;
-    this._currentUser.set(null);
+    this.http
+      .post(`${this.apiBaseUrl}/api/auth/logout`, {}, { withCredentials: true })
+      .subscribe({ next: () => {}, error: () => {} });
+    this.clearLocalState();
+    this.router.navigate(['/login']);
   }
 
-  private persistSession(response: LoginResponse): void {
-    sessionStorage.setItem(AuthService.ACCESS_TOKEN_KEY, response.accessToken);
-    sessionStorage.setItem(AuthService.USER_KEY, JSON.stringify(response.user));
-    this._accessToken = response.accessToken;
+  logoutLocal(): void {
+    this.clearLocalState();
+  }
+
+  private applyAuthResponse(response: AuthResponse): void {
+    this.accessToken = response.accessToken;
     this._currentUser.set(response.user);
   }
 
-  private hydrateFromSessionStorage(): void {
-    const token = sessionStorage.getItem(AuthService.ACCESS_TOKEN_KEY);
-    const userJson = sessionStorage.getItem(AuthService.USER_KEY);
-
-    if (token === null || userJson === null) {
-      this.clearSessionStorage();
-      return;
-    }
-
-    try {
-      const user = JSON.parse(userJson) as UserInfo;
-      this._accessToken = token;
-      this._currentUser.set(user);
-    } catch {
-      this.clearSessionStorage();
-    }
-  }
-
-  private clearSessionStorage(): void {
-    sessionStorage.removeItem(AuthService.ACCESS_TOKEN_KEY);
-    sessionStorage.removeItem(AuthService.USER_KEY);
+  private clearLocalState(): void {
+    this.accessToken = null;
+    this._currentUser.set(null);
+    this.refreshInFlight$ = null;
   }
 }

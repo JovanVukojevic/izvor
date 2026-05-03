@@ -103,7 +103,7 @@ public sealed class AuthController : ControllerBase
             Email: email,
             Role: role,
             Tenant: new TenantInfo(tenant.Id, tenant.Name, tenant.Subdomain));
-        return Ok(new LoginResponse(accessToken, userInfo));
+        return Ok(new AuthResponse(accessToken, userInfo));
     }
 
     [HttpPost("refresh")]
@@ -179,7 +179,7 @@ public sealed class AuthController : ControllerBase
             Email: email,
             Role: role,
             Tenant: new TenantInfo(tenantIdFromDb, tenantName, tenantSubdomain));
-        return Ok(new LoginResponse(accessToken, userInfo));
+        return Ok(new AuthResponse(accessToken, userInfo));
     }
 
     [HttpPost("logout")]

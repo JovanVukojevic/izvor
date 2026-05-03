@@ -16,7 +16,7 @@ export interface UserInfo {
   tenant: TenantInfo;
 }
 
-export interface LoginResponse {
+export interface AuthResponse {
   accessToken: string;
   user: UserInfo;
 }

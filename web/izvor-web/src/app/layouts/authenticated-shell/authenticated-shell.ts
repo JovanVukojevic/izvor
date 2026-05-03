@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { Button } from 'primeng/button';
 
@@ -116,13 +116,11 @@ import { RequiresRoleDirective } from '../../core/auth/role.directive';
 })
 export class AuthenticatedShell {
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
   readonly user = this.auth.currentUser;
   readonly tenantLabel = computed(() => this.user()?.tenant?.name ?? null);
 
   onLogout(): void {
     this.auth.logout();
-    this.router.navigate(['/login']);
   }
 }

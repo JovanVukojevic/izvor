@@ -1,13 +1,12 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { catchError, throwError } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { ErrorResponse } from './models/error-response.model';
 
-const LOGIN_PATH = '/api/auth/login';
+const AUTH_ENDPOINTS = ['/api/auth/login', '/api/auth/refresh', '/api/auth/logout'];
 
 const DEAD_SESSION_CODES: ReadonlySet<string> = new Set([
   'tenant_mismatch',
@@ -17,13 +16,12 @@ const DEAD_SESSION_CODES: ReadonlySet<string> = new Set([
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const messageService = inject(MessageService);
   const authService = inject(AuthService);
-  const router = inject(Router);
 
-  const isLoginRequest = req.url.endsWith(LOGIN_PATH);
+  const isAuthRequest = AUTH_ENDPOINTS.some(path => req.url.endsWith(path));
 
   return next(req).pipe(
     catchError(error => {
-      if (isLoginRequest || !(error instanceof HttpErrorResponse)) {
+      if (isAuthRequest || !(error instanceof HttpErrorResponse)) {
         return throwError(() => error);
       }
       if (error.status === 401) {
@@ -44,7 +42,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           : 'Session expired. Please sign in again.';
         messageService.add({ severity: 'error', summary: 'Signed out', detail });
         authService.logout();
-        router.navigate(['/login']);
         return throwError(() => error);
       }
 

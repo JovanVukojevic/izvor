@@ -28,13 +28,12 @@ export const appConfig: ApplicationConfig = {
     }),
     provideAppInitializer(async () => {
       const authService = inject(AuthService);
-      if (authService.getAccessToken() === null) {
-        return;
-      }
       try {
+        await firstValueFrom(authService.refreshAccessToken());
         await firstValueFrom(authService.fetchCurrentUser());
       } catch {
-        authService.logout();
+        // No session or expired/revoked cookie — normal first-visit case.
+        // refreshAccessToken() already cleared local state on failure.
       }
     }),
     providePrimeNG({ theme: { preset: Aura } }),
