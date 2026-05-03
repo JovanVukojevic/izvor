@@ -5,6 +5,7 @@ import { roleGuard } from '../../core/auth/role.guard';
 export const CATEGORIES_ROUTES: Routes = [
   {
     path: '',
+    title: 'Categories · Izvor',
     canActivate: [roleGuard],
     data: { minRole: 'admin' },
     loadComponent: () =>
@@ -12,6 +13,7 @@ export const CATEGORIES_ROUTES: Routes = [
   },
   {
     path: 'new',
+    title: 'New Category · Izvor',
     canActivate: [roleGuard],
     data: { minRole: 'admin' },
     loadComponent: () =>
@@ -19,6 +21,7 @@ export const CATEGORIES_ROUTES: Routes = [
   },
   {
     path: ':id/edit',
+    title: 'Edit Category · Izvor',
     canActivate: [roleGuard],
     data: { minRole: 'admin' },
     loadComponent: () =>

@@ -104,12 +104,12 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
     }
 
     [Fact] // K5
-    public async Task List_default_filter_excludes_drafts()
+    public async Task List_with_status_published_excludes_drafts()
     {
         await CreateCourseAsync(AnaClient(), "Drafty");
 
         var pera = PeraClient();
-        var response = await pera.GetAsync("/api/courses");
+        var response = await pera.GetAsync("/api/courses?status=published");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var list = await response.Content.ReadFromJsonAsync<List<CourseResponse>>();
         list.Should().BeEmpty();
@@ -125,6 +125,30 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var list = await response.Content.ReadFromJsonAsync<List<CourseResponse>>();
         list.Should().Contain(c => c.Id == draft.Id);
+    }
+
+    [Fact] // K6b
+    public async Task List_with_no_status_param_returns_all_statuses()
+    {
+        var ana = AnaClient();
+
+        await CreateCourseAsync(ana, "Draft course");
+        var publishedToBe = await CreateCourseAsync(ana, "Published course");
+        var archivedToBe = await CreateCourseAsync(ana, "Archived course");
+
+        var lesson = await ana.PostAsJsonAsync(
+            $"/api/courses/{publishedToBe.Id}/lessons",
+            new CreateLessonRequest("L1", "body"));
+        lesson.EnsureSuccessStatusCode();
+        (await ana.PostAsync($"/api/courses/{publishedToBe.Id}/publish", null)).EnsureSuccessStatusCode();
+
+        (await ana.DeleteAsync($"/api/courses/{archivedToBe.Id}")).EnsureSuccessStatusCode();
+
+        var response = await ana.GetAsync("/api/courses");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var list = await response.Content.ReadFromJsonAsync<List<CourseResponse>>();
+        list!.Should().HaveCount(3);
+        list!.Select(c => c.Status).Should().BeEquivalentTo(new[] { "draft", "published", "archived" });
     }
 
     [Fact] // K7

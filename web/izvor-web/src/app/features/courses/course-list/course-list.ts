@@ -13,6 +13,7 @@ import { CategoryService } from '../../../core/api/services/category.service';
 import { CourseResponse, CourseStatus } from '../../../core/api/models/course.model';
 import { CategoryResponse } from '../../../core/api/models/category.model';
 import { RequiresRoleDirective } from '../../../core/auth/role.directive';
+import { AuthService } from '../../../core/auth/auth.service';
 
 interface StatusOption {
   label: string;
@@ -106,15 +107,16 @@ export class CourseList {
   private readonly courseService = inject(CourseService);
   private readonly categoryService = inject(CategoryService);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   readonly statusOptions: StatusOption[] = [
-    { label: 'Published', value: 'published' },
+    { label: 'All', value: 'all' },
     { label: 'Draft', value: 'draft' },
-    { label: 'Archived', value: 'archived' },
-    { label: 'Any status', value: 'all' }
+    { label: 'Published', value: 'published' },
+    { label: 'Archived', value: 'archived' }
   ];
 
-  statusFilter: CourseStatus | 'all' = 'published';
+  statusFilter: CourseStatus | 'all' = this.defaultStatusForRole();
   categoryFilter: string | 'all' = 'all';
 
   readonly isLoading = signal(true);
@@ -172,5 +174,10 @@ export class CourseList {
     if (status === 'published') return 'success';
     if (status === 'draft') return 'info';
     return 'secondary';
+  }
+
+  private defaultStatusForRole(): CourseStatus | 'all' {
+    const role = this.auth.currentUser()?.role;
+    return role === 'admin' || role === 'author' ? 'all' : 'published';
   }
 }

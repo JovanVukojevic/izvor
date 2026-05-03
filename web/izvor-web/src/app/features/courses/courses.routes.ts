@@ -5,10 +5,12 @@ import { roleGuard } from '../../core/auth/role.guard';
 export const COURSES_ROUTES: Routes = [
   {
     path: '',
+    title: 'Courses · Izvor',
     loadComponent: () => import('./course-list/course-list').then(m => m.CourseList)
   },
   {
     path: 'new',
+    title: 'New Course · Izvor',
     canActivate: [roleGuard],
     data: { minRole: 'author' },
     loadComponent: () => import('./course-form/course-form').then(m => m.CourseForm)
@@ -25,6 +27,7 @@ export const COURSES_ROUTES: Routes = [
   },
   {
     path: ':id/lessons/new',
+    title: 'New Lesson · Izvor',
     canActivate: [roleGuard],
     data: { minRole: 'author' },
     loadComponent: () => import('../lessons/lesson-form/lesson-form').then(m => m.LessonForm)

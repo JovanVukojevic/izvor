@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, forkJoin, of } from 'rxjs';
 
@@ -127,6 +128,7 @@ export class CourseForm {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly messages = inject(MessageService);
+  private readonly titleService = inject(Title);
 
   readonly id = signal<string | null>(null);
   readonly isLoading = signal(false);
@@ -183,6 +185,7 @@ export class CourseForm {
             categoryId: course.categoryId,
             sequential: course.sequential
           });
+          this.titleService.setTitle(`Edit · ${course.title} · Izvor`);
         }
         this.isLoading.set(false);
       },
@@ -190,6 +193,7 @@ export class CourseForm {
         this.isLoading.set(false);
         if (err.status === 404 && id !== null) {
           this.notFound.set(true);
+          this.titleService.setTitle('Not Found · Izvor');
         } else {
           this.errorMessage.set('Could not load form.');
         }

@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -133,6 +133,7 @@ export class LessonDetail {
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly titleService = inject(Title);
 
   readonly courseId = signal<string>('');
   readonly lessonId = signal<string>('');
@@ -196,6 +197,7 @@ export class LessonDetail {
       next: ({ lesson, course, activeEnrollments }) => {
         this.lesson.set(lesson);
         this.course.set(course);
+        this.titleService.setTitle(`${lesson.title} · Izvor`);
         const myE = activeEnrollments.find(e => e.courseId === course.id) ?? null;
         this.myEnrollment.set(myE);
         if (myE) {
@@ -212,7 +214,10 @@ export class LessonDetail {
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading.set(false);
-        if (err.status === 404) this.notFound.set(true);
+        if (err.status === 404) {
+          this.notFound.set(true);
+          this.titleService.setTitle('Not Found · Izvor');
+        }
       }
     });
   }

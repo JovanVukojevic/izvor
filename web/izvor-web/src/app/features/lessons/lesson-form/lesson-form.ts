@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -98,6 +99,7 @@ export class LessonForm {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly messages = inject(MessageService);
+  private readonly titleService = inject(Title);
 
   readonly courseId = signal<string>('');
   readonly lessonId = signal<string | null>(null);
@@ -151,17 +153,23 @@ export class LessonForm {
           if (!lesson) {
             this.notFound.set(true);
             this.isLoading.set(false);
+            this.titleService.setTitle('Not Found · Izvor');
             return;
           }
           this.lesson.set(lesson);
           this.form.patchValue({ title: lesson.title, content: lesson.content });
+          this.titleService.setTitle(`Edit · ${lesson.title} · Izvor`);
         }
         this.isLoading.set(false);
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading.set(false);
-        if (err.status === 404) this.notFound.set(true);
-        else this.errorMessage.set('Could not load form.');
+        if (err.status === 404) {
+          this.notFound.set(true);
+          this.titleService.setTitle('Not Found · Izvor');
+        } else {
+          this.errorMessage.set('Could not load form.');
+        }
       }
     });
   }

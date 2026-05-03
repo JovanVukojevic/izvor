@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -206,6 +207,7 @@ export class CourseDetail {
   private readonly auth = inject(AuthService);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
+  private readonly titleService = inject(Title);
 
   readonly courseId = signal<string>('');
   readonly isLoading = signal(true);
@@ -275,10 +277,12 @@ export class CourseDetail {
           activeEnrollments.find(e => e.courseId === course.id) ?? null
         );
         this.isLoading.set(false);
+        this.titleService.setTitle(`${course.title} · Izvor`);
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading.set(false);
         if (err.status === 404) this.notFound.set(true);
+        this.titleService.setTitle('Not Found · Izvor');
       }
     });
   }
