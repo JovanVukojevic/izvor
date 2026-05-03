@@ -1,64 +1,35 @@
-import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject } from '@angular/core';
 
 import { Card } from 'primeng/card';
-import { Button } from 'primeng/button';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { TenantContextService } from '../../core/tenant-context';
 
 @Component({
   selector: 'izvor-dashboard',
-  imports: [Card, Button],
+  imports: [Card],
   template: `
-    <div class="dashboard-page">
-      <p-card header="Dashboard" styleClass="dashboard-card">
-        <p>Welcome, {{ user()?.email }}</p>
-        <p>Role: {{ user()?.role }}</p>
-        <p>Tenant: {{ subdomain }}</p>
-
-        <p-button
-          label="Logout"
-          severity="secondary"
-          (onClick)="onLogout()"
-          styleClass="dashboard-logout"
-        />
+    <div class="dashboard">
+      <p-card header="Welcome">
+        @if (user(); as u) {
+          <p>Welcome, <strong>{{ u.email }}</strong></p>
+          <p class="dashboard-meta">Role: {{ u.role }}</p>
+        }
+        <p>Use the navigation above to browse courses, manage your enrollments, or — if you have permission — create courses and manage categories.</p>
       </p-card>
     </div>
   `,
   styles: [`
-    .dashboard-page {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
+    .dashboard {
+      max-width: 800px;
     }
 
-    :host ::ng-deep .dashboard-card {
-      width: 100%;
-      max-width: 400px;
-    }
-
-    .dashboard-page p {
-      margin: 0 0 0.5rem;
-    }
-
-    :host ::ng-deep .dashboard-logout {
-      margin-top: 1rem;
+    .dashboard-meta {
+      color: var(--p-text-muted-color, #6b7280);
+      margin-bottom: 1rem;
     }
   `]
 })
 export class Dashboard {
-  private readonly authService = inject(AuthService);
-  private readonly tenantContext = inject(TenantContextService);
-  private readonly router = inject(Router);
-
-  readonly user = computed(() => this.authService.currentUser());
-  readonly subdomain = this.tenantContext.subdomain;
-
-  onLogout(): void {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
+  private readonly auth = inject(AuthService);
+  readonly user = this.auth.currentUser;
 }

@@ -31,10 +31,15 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       const body = error.error as ErrorResponse | null | undefined;
-      const code = body?.error;
+      const matchedDeadSession =
+        error.status === 403 &&
+        ((body?.error !== undefined && DEAD_SESSION_CODES.has(body.error)) ||
+          (body?.message !== undefined && DEAD_SESSION_CODES.has(body.message)));
 
-      if (error.status === 403 && code !== undefined && DEAD_SESSION_CODES.has(code)) {
-        const detail = code === 'tenant_mismatch'
+      if (matchedDeadSession) {
+        const isTenantMismatch =
+          body?.error === 'tenant_mismatch' || body?.message === 'tenant_mismatch';
+        const detail = isTenantMismatch
           ? 'Session does not match this tenant.'
           : 'Session expired. Please sign in again.';
         messageService.add({ severity: 'error', summary: 'Signed out', detail });
