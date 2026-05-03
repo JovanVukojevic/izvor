@@ -4,7 +4,6 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { Button } from 'primeng/button';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { TenantContextService } from '../../core/tenant-context';
 import { RequiresRoleDirective } from '../../core/auth/role.directive';
 
 @Component({
@@ -117,15 +116,10 @@ import { RequiresRoleDirective } from '../../core/auth/role.directive';
 })
 export class AuthenticatedShell {
   private readonly auth = inject(AuthService);
-  private readonly tenant = inject(TenantContextService);
   private readonly router = inject(Router);
 
   readonly user = this.auth.currentUser;
-  readonly tenantLabel = computed(() => {
-    const sub = this.tenant.subdomain;
-    if (!sub) return null;
-    return sub.charAt(0).toUpperCase() + sub.slice(1);
-  });
+  readonly tenantLabel = computed(() => this.user()?.tenant?.name ?? null);
 
   onLogout(): void {
     this.auth.logout();

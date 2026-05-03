@@ -79,7 +79,12 @@ public sealed class AuthController : ControllerBase
         await transaction.CommitAsync(cancellationToken);
 
         var token = _tokenService.GenerateToken(userId, tenant.Id, role, email);
-        return Ok(new LoginResponse(token, new UserInfo(userId, email, role)));
+        var userInfo = new UserInfo(
+            Id: userId,
+            Email: email,
+            Role: role,
+            Tenant: new TenantInfo(tenant.Id, tenant.Name, tenant.Subdomain));
+        return Ok(new LoginResponse(token, userInfo));
     }
 
     private static bool TryVerifyPassword(string password, string hash)
