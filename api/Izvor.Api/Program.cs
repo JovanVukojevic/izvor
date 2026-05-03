@@ -79,7 +79,8 @@ builder.Services.AddCors(options =>
                 && !string.Equals(uri.Host, corsSettings.BaseDomain, StringComparison.OrdinalIgnoreCase);
         })
         .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-        .WithHeaders("Authorization", "Content-Type");
+        .WithHeaders("Authorization", "Content-Type")
+        .AllowCredentials();
     });
 });
 
@@ -123,6 +124,17 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0
             }));
 
+    options.AddPolicy("refresh", httpContext =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new SlidingWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromSeconds(60),
+                SegmentsPerWindow = 6,
+                QueueLimit = 0
+            }));
+
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = async (context, cancellationToken) =>
     {
@@ -134,7 +146,7 @@ builder.Services.AddRateLimiter(options =>
 
         var payload = new ErrorResponse(
             "rate_limit_exceeded",
-            "Too many login attempts. Please try again later.");
+            "Too many requests. Please try again later.");
         await JsonSerializer.SerializeAsync(
             context.HttpContext.Response.Body,
             payload,

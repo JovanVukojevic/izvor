@@ -74,4 +74,12 @@ internal static class TestSeed
             conn);
         await cmd.ExecuteNonQueryAsync();
     }
+
+    public static async Task ResetRefreshTokensAsync(string adminConnectionString)
+    {
+        await using var conn = new NpgsqlConnection(adminConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand("TRUNCATE impl.refresh_tokens", conn);
+        await cmd.ExecuteNonQueryAsync();
+    }
 }

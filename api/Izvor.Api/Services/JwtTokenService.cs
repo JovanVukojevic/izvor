@@ -19,7 +19,7 @@ public sealed class JwtTokenService : IJwtTokenService
     public string GenerateToken(Guid userId, Guid tenantId, string role, string email)
     {
         var now = DateTime.UtcNow;
-        var expires = now.AddMinutes(_settings.ExpiryMinutes);
+        var expires = now.AddMinutes(_settings.AccessTokenLifetimeMinutes);
         var issuedAtUnix = new DateTimeOffset(now).ToUnixTimeSeconds();
 
         var claims = new[]

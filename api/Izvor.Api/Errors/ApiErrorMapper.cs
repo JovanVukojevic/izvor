@@ -58,6 +58,11 @@ public static class ApiErrorMapper
         "position_out_of_range"
     };
 
+    private static readonly HashSet<string> UnauthorizedCodes = new(StringComparer.Ordinal)
+    {
+        "invalid_refresh_token"
+    };
+
     // Matches `spec.assert_role` raises like "role admin required, caller has learner".
     private static readonly Regex RoleRequiredPattern = new(
         @"^role .* required",
@@ -98,6 +103,9 @@ public static class ApiErrorMapper
 
         if (BadRequestCodes.Contains(text))
             return (StatusCodes.Status400BadRequest, new ErrorResponse("bad_request", text));
+
+        if (UnauthorizedCodes.Contains(text))
+            return (StatusCodes.Status401Unauthorized, new ErrorResponse("unauthorized", text));
 
         if (RoleRequiredPattern.IsMatch(text))
             return (StatusCodes.Status403Forbidden, new ErrorResponse("forbidden", text));
