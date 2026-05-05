@@ -1,18 +1,29 @@
+using System.Net;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using FluentValidation;
 using Izvor.Api.Configuration;
+using Izvor.Api.Extensions;
 using Izvor.Api.Middleware;
 using Izvor.Api.Models;
 using Izvor.Api.Services;
 using Izvor.Api.Validation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+
+const int GlobalPerIpPermitLimit = 100;
+const int LoginPerIpPermitLimit = 5;
+const int LoginPerUserPermitLimit = 10;
+const int RefreshPerIpPermitLimit = 10;
+const int RateLimitWindowSeconds = 60;
+const int RateLimitSegmentsPerWindow = 6;
+const string LoginPath = "/api/auth/login";
+const string RefreshPath = "/api/auth/refresh";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -111,29 +122,112 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// X-Forwarded-For support is OFF by default. Enabling BehindProxy=true WITHOUT
+// populating TrustedProxies is a header-spoofing vulnerability — any client could
+// inject an X-Forwarded-For value to dodge per-IP rate limits. The whitelist
+// below clears the framework's localhost defaults and only trusts what's
+// explicitly configured.
+var behindProxy = builder.Configuration.GetValue<bool>("BehindProxy");
+if (behindProxy)
+{
+    var trustedProxies = builder.Configuration
+        .GetSection("TrustedProxies")
+        .Get<string[]>() ?? Array.Empty<string>();
+
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = 1;
+        options.KnownProxies.Clear();
+        options.KnownIPNetworks.Clear();
+        foreach (var proxy in trustedProxies)
+        {
+            if (IPAddress.TryParse(proxy, out var ip))
+            {
+                options.KnownProxies.Add(ip);
+            }
+        }
+    });
+}
+
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddPolicy("login", httpContext =>
-        RateLimitPartition.GetSlidingWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new SlidingWindowRateLimiterOptions
-            {
-                PermitLimit = 5,
-                Window = TimeSpan.FromSeconds(60),
-                SegmentsPerWindow = 6,
-                QueueLimit = 0
-            }));
+    options.GlobalLimiter = PartitionedRateLimiter.CreateChained(
+        // Universal per-IP cap — every request to every endpoint.
+        PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+            RateLimitPartition.GetSlidingWindowLimiter(
+                partitionKey: "global-ip:" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+                factory: _ => new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = GlobalPerIpPermitLimit,
+                    Window = TimeSpan.FromSeconds(RateLimitWindowSeconds),
+                    SegmentsPerWindow = RateLimitSegmentsPerWindow,
+                    QueueLimit = 0
+                })),
 
-    options.AddPolicy("refresh", httpContext =>
-        RateLimitPartition.GetSlidingWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new SlidingWindowRateLimiterOptions
+        // Login per-IP — preserves the original brute-force-resistant behavior.
+        PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        {
+            if (!httpContext.Request.Path.StartsWithSegments(LoginPath, StringComparison.OrdinalIgnoreCase))
             {
-                PermitLimit = 10,
-                Window = TimeSpan.FromSeconds(60),
-                SegmentsPerWindow = 6,
-                QueueLimit = 0
-            }));
+                return RateLimitPartition.GetNoLimiter("none");
+            }
+            var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            return RateLimitPartition.GetSlidingWindowLimiter(
+                partitionKey: "login-ip:" + ip,
+                factory: _ => new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = LoginPerIpPermitLimit,
+                    Window = TimeSpan.FromSeconds(RateLimitWindowSeconds),
+                    SegmentsPerWindow = RateLimitSegmentsPerWindow,
+                    QueueLimit = 0
+                });
+        }),
+
+        // Login per-user — caps brute force against a single account regardless
+        // of source IP. Email is extracted by LoginEmailExtractionMiddleware
+        // before this limiter runs; missing-email path falls back to a per-IP
+        // bucket so attackers can't bypass via malformed JSON.
+        PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        {
+            if (!httpContext.Request.Path.StartsWithSegments(LoginPath, StringComparison.OrdinalIgnoreCase))
+            {
+                return RateLimitPartition.GetNoLimiter("none");
+            }
+            var subdomain = httpContext.TryGetTenant()?.Subdomain ?? "unknown-tenant";
+            var key = httpContext.Items.TryGetValue(LoginEmailExtractionMiddleware.LoginEmailItemKey, out var e)
+                      && e is string email
+                ? "login-user:" + subdomain + ":" + email
+                : "login-user:NO_EMAIL:" + (httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+            return RateLimitPartition.GetSlidingWindowLimiter(
+                partitionKey: key,
+                factory: _ => new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = LoginPerUserPermitLimit,
+                    Window = TimeSpan.FromSeconds(RateLimitWindowSeconds),
+                    SegmentsPerWindow = RateLimitSegmentsPerWindow,
+                    QueueLimit = 0
+                });
+        }),
+
+        // Refresh per-IP — preserves the original refresh-burst guard.
+        PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        {
+            if (!httpContext.Request.Path.StartsWithSegments(RefreshPath, StringComparison.OrdinalIgnoreCase))
+            {
+                return RateLimitPartition.GetNoLimiter("none");
+            }
+            var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            return RateLimitPartition.GetSlidingWindowLimiter(
+                partitionKey: "refresh-ip:" + ip,
+                factory: _ => new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = RefreshPerIpPermitLimit,
+                    Window = TimeSpan.FromSeconds(RateLimitWindowSeconds),
+                    SegmentsPerWindow = RateLimitSegmentsPerWindow,
+                    QueueLimit = 0
+                });
+        }));
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = async (context, cancellationToken) =>
@@ -157,8 +251,14 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+if (app.Configuration.GetValue<bool>("BehindProxy"))
+{
+    app.UseForwardedHeaders();
+}
+
 app.UseCors("IzvorDevCors");
 app.UseMiddleware<TenantResolutionMiddleware>();
+app.UseMiddleware<LoginEmailExtractionMiddleware>();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<JwtTenantMatchMiddleware>();

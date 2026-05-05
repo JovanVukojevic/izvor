@@ -3,7 +3,6 @@ using Izvor.Api.Extensions;
 using Izvor.Api.Models;
 using Izvor.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
@@ -43,7 +42,7 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    [EnableRateLimiting("login")]
+    [RequestSizeLimit(2048)]
     public async Task<IActionResult> LoginAsync(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
@@ -107,7 +106,6 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("refresh")]
-    [EnableRateLimiting("refresh")]
     public async Task<IActionResult> RefreshAsync(CancellationToken cancellationToken)
     {
         if (!Request.Cookies.TryGetValue(RefreshCookieName, out var incomingToken)
