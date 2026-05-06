@@ -22,6 +22,4 @@ export interface LessonProgressResponse {
   enrollmentId: string;
   lessonId: string;
   completedAt: string;
-  createdAt: string;
-  updatedAt: string;
 }

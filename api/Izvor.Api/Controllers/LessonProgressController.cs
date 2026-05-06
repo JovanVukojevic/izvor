@@ -13,7 +13,7 @@ namespace Izvor.Api.Controllers;
 public sealed class LessonProgressController : ControllerBase
 {
     private const string LessonProgressSelectColumns =
-        "id, enrollment_id, lesson_id, completed_at, created_at, updated_at";
+        "id, enrollment_id, lesson_id, completed_at";
 
     private const string CompletionStatsSelectColumns =
         "course_id, total_enrollments, active_count, completed_count, cancelled_count, average_progress_pct";
