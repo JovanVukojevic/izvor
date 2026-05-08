@@ -19,7 +19,10 @@ internal static class TestSeed
         await using var tx = await conn.BeginTransactionAsync();
 
         await InsertTenantAsync(conn, tx, TestIds.AcmeTenantId, "Acme Corp", "ACME", TestIds.AcmeSubdomain);
+        await SeedRolesForTenantAsync(conn, tx, TestIds.AcmeTenantId);
+
         await InsertTenantAsync(conn, tx, TestIds.IntellyaTenantId, "Intellya", "INTELLYA", TestIds.IntellyaSubdomain);
+        await SeedRolesForTenantAsync(conn, tx, TestIds.IntellyaTenantId);
 
         await InsertUserAsync(conn, tx, TestIds.MarkoUserId, TestIds.AcmeTenantId, TestIds.MarkoEmail, passwordHash, "admin", true);
         await InsertUserAsync(conn, tx, TestIds.AnaUserId, TestIds.AcmeTenantId, TestIds.AnaEmail, passwordHash, "author", true);
@@ -48,13 +51,28 @@ internal static class TestSeed
         await cmd.ExecuteNonQueryAsync();
     }
 
+    private static async Task SeedRolesForTenantAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx, Guid tenantId)
+    {
+        await using var cmd = new NpgsqlCommand(
+            "INSERT INTO impl.roles (tenant_id, code, name, description, rank) VALUES " +
+            "(@tenantId, 'admin',   'Administrator', 'Full administrative access within the organization', 100), " +
+            "(@tenantId, 'author',  'Author',        'Can create and manage course content',                50), " +
+            "(@tenantId, 'learner', 'Learner',       'Can browse and complete courses',                     10)",
+            conn, tx);
+        cmd.Parameters.AddWithValue("tenantId", tenantId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
     private static async Task InsertUserAsync(
         NpgsqlConnection conn, NpgsqlTransaction tx,
         Guid id, Guid tenantId, string email, string passwordHash, string role, bool isActive)
     {
         await using var cmd = new NpgsqlCommand(
-            "INSERT INTO impl.users (id, tenant_id, email, password_hash, role, is_active) " +
-            "VALUES (@id, @tenantId, @email, @passwordHash, @role::impl.user_role, @isActive)",
+            "INSERT INTO impl.users (id, tenant_id, email, password_hash, role_id, is_active) " +
+            "VALUES (@id, @tenantId, @email, @passwordHash, " +
+            "        (SELECT id FROM impl.roles WHERE tenant_id = @tenantId AND code = @role), " +
+            "        @isActive)",
             conn, tx);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("tenantId", tenantId);
