@@ -13,7 +13,7 @@ namespace Izvor.Api.Controllers;
 public sealed class CoursesController : ControllerBase
 {
     private const string CourseSelectColumns =
-        "id, category_id, author_id, title, description, status, created_at, updated_at, is_active";
+        "id, category_id, author_id, title, description, created_at, updated_at, is_active";
 
     private readonly IDbSessionContext _session;
 
@@ -74,31 +74,14 @@ public sealed class CoursesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         await using var command = _session.CreateCommand("SELECT api.delete_course(@id)");
         command.Parameters.AddWithValue("id", id);
 
-        // spec.delete_course gates with assert_course_owner_or_admin (raises if
-        // missing). Past the assert, false means already-soft-deleted (idempotent).
         await command.ExecuteScalarAsync(cancellationToken);
         return NoContent();
-    }
-
-    [HttpPost("{id:guid}/restore")]
-    [ProducesResponseType(typeof(CourseResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CourseResponse>> RestoreAsync(Guid id, CancellationToken cancellationToken)
-    {
-        await using (var restore = _session.CreateCommand("SELECT api.restore_course(@id)"))
-        {
-            restore.Parameters.AddWithValue("id", id);
-            await restore.ExecuteScalarAsync(cancellationToken);
-        }
-
-        var refreshed = await ReadCourseAsync(id, cancellationToken);
-        return Ok(refreshed);
     }
 
     [HttpGet("{id:guid}")]
@@ -126,9 +109,8 @@ public sealed class CoursesController : ControllerBase
         CancellationToken cancellationToken)
     {
         await using var command = _session.CreateCommand(
-            $"SELECT {CourseSelectColumns} FROM api.list_courses(@categoryFilter, @statusFilter, @activeFilter)");
+            $"SELECT {CourseSelectColumns} FROM api.list_courses(@categoryFilter, @activeFilter)");
         command.Parameters.AddWithValue("categoryFilter", (object?)query.CategoryId ?? DBNull.Value);
-        command.Parameters.AddWithValue("statusFilter", (object?)query.Status ?? DBNull.Value);
         command.Parameters.AddWithValue("activeFilter", (object?)query.Active ?? DBNull.Value);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -140,17 +122,17 @@ public sealed class CoursesController : ControllerBase
         return Ok(results);
     }
 
-    [HttpPost("{id:guid}/publish")]
+    [HttpPost("{id:guid}/activate")]
     [ProducesResponseType(typeof(CourseResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CourseResponse>> PublishAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<CourseResponse>> ActivateAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using (var publish = _session.CreateCommand("SELECT api.publish_course(@id)"))
+        await using (var activate = _session.CreateCommand("SELECT api.activate_course(@id)"))
         {
-            publish.Parameters.AddWithValue("id", id);
-            await publish.ExecuteScalarAsync(cancellationToken);
+            activate.Parameters.AddWithValue("id", id);
+            await activate.ExecuteScalarAsync(cancellationToken);
         }
 
         var refreshed = await ReadCourseAsync(id, cancellationToken);

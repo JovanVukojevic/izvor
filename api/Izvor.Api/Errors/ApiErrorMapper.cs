@@ -26,11 +26,11 @@ public static class ApiErrorMapper
     private static readonly HashSet<string> StateInvalidCodes = new(StringComparer.Ordinal)
     {
         "course_inactive",
-        "course_not_draft",
-        "course_not_published",
+        "course_has_enrollments",
+        "course_has_no_lessons",
+        "lesson_has_progress",
         "enrollment_not_active",
         "enrollment_cancelled",
-        "course_has_no_lessons",
         "not_enrolled"
     };
 

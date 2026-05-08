@@ -12,7 +12,6 @@ public static class CourseRowMapper
         var authorOrdinal = reader.GetOrdinal("author_id");
         var titleOrdinal = reader.GetOrdinal("title");
         var descOrdinal = reader.GetOrdinal("description");
-        var statusOrdinal = reader.GetOrdinal("status");
         var createdOrdinal = reader.GetOrdinal("created_at");
         var updatedOrdinal = reader.GetOrdinal("updated_at");
         var activeOrdinal = reader.GetOrdinal("is_active");
@@ -23,7 +22,7 @@ public static class CourseRowMapper
             AuthorId: reader.GetGuid(authorOrdinal),
             Title: reader.GetString(titleOrdinal),
             Description: reader.IsDBNull(descOrdinal) ? null : reader.GetString(descOrdinal),
-            Status: reader.GetString(statusOrdinal),
+            Status: "draft", // Placeholder until Prompt 2 removes the DTO field.
             CreatedAt: reader.GetDateTime(createdOrdinal),
             UpdatedAt: reader.GetDateTime(updatedOrdinal),
             IsActive: reader.GetBoolean(activeOrdinal));

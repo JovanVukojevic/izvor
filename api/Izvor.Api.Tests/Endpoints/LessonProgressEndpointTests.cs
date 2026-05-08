@@ -200,8 +200,6 @@ public sealed class LessonProgressEndpointTests : IAsyncLifetime
     [Fact] // LP15
     public async Task Get_completion_stats_for_empty_course_returns_zeros()
     {
-        // Stats query doesn't gate on course status; draft is fine and avoids
-        // needing a lesson just to satisfy publish_course's lesson-existence check.
         var emptyCourseId = await CreateDraftCourseAsync("Empty");
 
         var response = await AnaClient().GetAsync($"/api/courses/{emptyCourseId}/completion-stats");
@@ -243,7 +241,7 @@ public sealed class LessonProgressEndpointTests : IAsyncLifetime
 
     private async Task PublishCourseAsync(Guid courseId)
     {
-        var resp = await AnaClient().PostAsync($"/api/courses/{courseId}/publish", null);
+        var resp = await AnaClient().PostAsync($"/api/courses/{courseId}/activate", null);
         resp.EnsureSuccessStatusCode();
     }
 

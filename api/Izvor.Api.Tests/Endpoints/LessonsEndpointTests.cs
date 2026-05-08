@@ -217,18 +217,24 @@ public sealed class LessonsEndpointTests : IAsyncLifetime
     }
 
     [Fact] // L15
-    public async Task Delete_on_published_course_returns_409()
+    public async Task Delete_lesson_with_progress_returns_409_lesson_has_progress()
     {
-        var lesson = await CreateLessonAsync(AnaClient(), _courseId, "Published lesson", "body");
+        var lesson = await CreateLessonAsync(AnaClient(), _courseId, "Active lesson", "body");
 
-        var publish = await AnaClient().PostAsync($"/api/courses/{_courseId}/publish", null);
-        publish.EnsureSuccessStatusCode();
+        var activate = await AnaClient().PostAsync($"/api/courses/{_courseId}/activate", null);
+        activate.EnsureSuccessStatusCode();
+
+        var pera = PeraClient();
+        (await pera.PostAsJsonAsync("/api/enrollments",
+            new EnrollUserRequest(_courseId, TestIds.PeraUserId))).EnsureSuccessStatusCode();
+        (await pera.PostAsync($"/api/lessons/{lesson.Id}/complete", null))
+            .EnsureSuccessStatusCode();
 
         var del = await AnaClient().DeleteAsync($"/api/lessons/{lesson.Id}");
         del.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var body = await del.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Error.Should().Be("state_invalid");
-        body.Message.Should().Be("course_not_draft");
+        body.Message.Should().Be("lesson_has_progress");
     }
 
     [Fact] // L16

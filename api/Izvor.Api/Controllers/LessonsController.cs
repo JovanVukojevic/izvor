@@ -109,7 +109,7 @@ public sealed class LessonsController : ControllerBase
         command.Parameters.AddWithValue("id", id);
 
         // spec.delete_lesson is silently idempotent on missing (per 7.2 hard-delete
-        // pattern); raises course_not_draft on non-draft parent course.
+        // pattern); raises lesson_has_progress when committed progress exists.
         await command.ExecuteScalarAsync(cancellationToken);
         return NoContent();
     }
