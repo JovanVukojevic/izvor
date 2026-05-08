@@ -92,8 +92,8 @@ public sealed class LessonsController : ControllerBase
         command.Parameters.AddWithValue("title", request.Title);
         command.Parameters.AddWithValue("content", request.Content);
 
-        // spec.update_lesson raises lesson_not_found / course_is_archived; past
-        // those, false means no-change idempotent. Both succeed paths return 204.
+        // spec.update_lesson raises lesson_not_found; past that, false means
+        // no-change idempotent. Both succeed paths return 204.
         await command.ExecuteScalarAsync(cancellationToken);
         return NoContent();
     }

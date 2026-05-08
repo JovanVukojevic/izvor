@@ -13,7 +13,7 @@ namespace Izvor.Api.Controllers;
 public sealed class CoursesController : ControllerBase
 {
     private const string CourseSelectColumns =
-        "id, category_id, author_id, title, description, status, created_at, updated_at";
+        "id, category_id, author_id, title, description, status, created_at, updated_at, is_active";
 
     private readonly IDbSessionContext _session;
 
@@ -80,9 +80,25 @@ public sealed class CoursesController : ControllerBase
         command.Parameters.AddWithValue("id", id);
 
         // spec.delete_course gates with assert_course_owner_or_admin (raises if
-        // missing). Past the assert, false means already-archived (idempotent).
+        // missing). Past the assert, false means already-soft-deleted (idempotent).
         await command.ExecuteScalarAsync(cancellationToken);
         return NoContent();
+    }
+
+    [HttpPost("{id:guid}/restore")]
+    [ProducesResponseType(typeof(CourseResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CourseResponse>> RestoreAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using (var restore = _session.CreateCommand("SELECT api.restore_course(@id)"))
+        {
+            restore.Parameters.AddWithValue("id", id);
+            await restore.ExecuteScalarAsync(cancellationToken);
+        }
+
+        var refreshed = await ReadCourseAsync(id, cancellationToken);
+        return Ok(refreshed);
     }
 
     [HttpGet("{id:guid}")]
@@ -110,9 +126,10 @@ public sealed class CoursesController : ControllerBase
         CancellationToken cancellationToken)
     {
         await using var command = _session.CreateCommand(
-            $"SELECT {CourseSelectColumns} FROM api.list_courses(@categoryFilter, @statusFilter, NULL::boolean)");
+            $"SELECT {CourseSelectColumns} FROM api.list_courses(@categoryFilter, @statusFilter, @activeFilter)");
         command.Parameters.AddWithValue("categoryFilter", (object?)query.CategoryId ?? DBNull.Value);
         command.Parameters.AddWithValue("statusFilter", (object?)query.Status ?? DBNull.Value);
+        command.Parameters.AddWithValue("activeFilter", (object?)query.Active ?? DBNull.Value);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var results = new List<CourseResponse>();

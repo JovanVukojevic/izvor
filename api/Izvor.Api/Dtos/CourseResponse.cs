@@ -8,4 +8,5 @@ public sealed record CourseResponse(
     string? Description,
     string Status,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    bool IsActive);

@@ -15,6 +15,7 @@ public static class CourseRowMapper
         var statusOrdinal = reader.GetOrdinal("status");
         var createdOrdinal = reader.GetOrdinal("created_at");
         var updatedOrdinal = reader.GetOrdinal("updated_at");
+        var activeOrdinal = reader.GetOrdinal("is_active");
 
         return new CourseResponse(
             Id: reader.GetGuid(idOrdinal),
@@ -24,6 +25,7 @@ public static class CourseRowMapper
             Description: reader.IsDBNull(descOrdinal) ? null : reader.GetString(descOrdinal),
             Status: reader.GetString(statusOrdinal),
             CreatedAt: reader.GetDateTime(createdOrdinal),
-            UpdatedAt: reader.GetDateTime(updatedOrdinal));
+            UpdatedAt: reader.GetDateTime(updatedOrdinal),
+            IsActive: reader.GetBoolean(activeOrdinal));
     }
 }

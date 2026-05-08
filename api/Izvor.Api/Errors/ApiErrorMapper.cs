@@ -25,7 +25,6 @@ public static class ApiErrorMapper
 
     private static readonly HashSet<string> StateInvalidCodes = new(StringComparer.Ordinal)
     {
-        "course_is_archived",
         "course_inactive",
         "course_not_draft",
         "course_not_published",
