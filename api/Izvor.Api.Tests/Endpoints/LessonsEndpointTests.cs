@@ -182,26 +182,6 @@ public sealed class LessonsEndpointTests : IAsyncLifetime
         body.Content.Should().Be("New body");
     }
 
-    [Fact] // L11
-    public async Task Update_on_archived_course_returns_409()
-    {
-        // To reach archived-with-lessons: draft → +lesson → publish → delete (archive).
-        var lesson = await CreateLessonAsync(AnaClient(), _courseId, "Doomed", "body");
-
-        var publish = await AnaClient().PostAsync($"/api/courses/{_courseId}/publish", null);
-        publish.EnsureSuccessStatusCode();
-
-        var del = await AnaClient().DeleteAsync($"/api/courses/{_courseId}");
-        del.StatusCode.Should().Be(HttpStatusCode.NoContent);
-
-        var update = await AnaClient().PutAsJsonAsync($"/api/lessons/{lesson.Id}",
-            new UpdateLessonRequest("Wont stick", "body"));
-        update.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var body = await update.Content.ReadFromJsonAsync<ErrorResponse>();
-        body!.Error.Should().Be("state_invalid");
-        body.Message.Should().Be("course_is_archived");
-    }
-
     [Fact] // L12
     public async Task Update_with_no_changes_returns_204_idempotent()
     {

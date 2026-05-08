@@ -127,13 +127,12 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
     }
 
     [Fact] // K6b
-    public async Task List_with_no_status_param_returns_all_statuses()
+    public async Task List_with_no_status_param_returns_draft_and_published()
     {
         var ana = AnaClient();
 
         await CreateCourseAsync(ana, "Draft course");
         var publishedToBe = await CreateCourseAsync(ana, "Published course");
-        var archivedToBe = await CreateCourseAsync(ana, "Archived course");
 
         var lesson = await ana.PostAsJsonAsync(
             $"/api/courses/{publishedToBe.Id}/lessons",
@@ -141,13 +140,11 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         lesson.EnsureSuccessStatusCode();
         (await ana.PostAsync($"/api/courses/{publishedToBe.Id}/publish", null)).EnsureSuccessStatusCode();
 
-        (await ana.DeleteAsync($"/api/courses/{archivedToBe.Id}")).EnsureSuccessStatusCode();
-
         var response = await ana.GetAsync("/api/courses");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var list = await response.Content.ReadFromJsonAsync<List<CourseResponse>>();
-        list!.Should().HaveCount(3);
-        list!.Select(c => c.Status).Should().BeEquivalentTo(new[] { "draft", "published", "archived" });
+        list!.Should().HaveCount(2);
+        list!.Select(c => c.Status).Should().BeEquivalentTo(new[] { "draft", "published" });
     }
 
     [Fact] // K7
@@ -198,21 +195,6 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         body!.Message.Should().Be("not_course_owner");
     }
 
-    [Fact] // K12
-    public async Task Update_on_archived_returns_409()
-    {
-        var draft = await CreateCourseAsync(AnaClient(), "WillArchive");
-        var del = await AnaClient().DeleteAsync($"/api/courses/{draft.Id}");
-        del.StatusCode.Should().Be(HttpStatusCode.NoContent);
-
-        var update = await AnaClient().PutAsJsonAsync($"/api/courses/{draft.Id}",
-            new UpdateCourseRequest("Wont stick", null, null));
-        update.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var body = await update.Content.ReadFromJsonAsync<ErrorResponse>();
-        body!.Error.Should().Be("state_invalid");
-        body.Message.Should().Be("course_is_archived");
-    }
-
     [Fact] // K13
     public async Task Update_with_no_changes_returns_204_idempotent()
     {
@@ -223,27 +205,48 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         noOp.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
-    [Fact] // K14
-    public async Task Delete_published_course_archives_it()
+    [Fact] // K14b
+    public async Task DeleteAsync_without_enrollments_then_get_returns_404()
     {
-        var draft = await CreateCourseAsync(AnaClient(), "ToArchive");
-        // soft delete a draft (204), then verify GET shows archived.
-        var del = await AnaClient().DeleteAsync($"/api/courses/{draft.Id}");
+        var ana = AnaClient();
+        var draft = await CreateCourseAsync(ana, "HardDeleteTarget");
+        var lesson = await ana.PostAsJsonAsync(
+            $"/api/courses/{draft.Id}/lessons",
+            new CreateLessonRequest("L1", "body"));
+        lesson.EnsureSuccessStatusCode();
+
+        var del = await ana.DeleteAsync($"/api/courses/{draft.Id}");
         del.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var get = await AnaClient().GetAsync($"/api/courses?status=archived");
-        var list = await get.Content.ReadFromJsonAsync<List<CourseResponse>>();
-        list!.Should().Contain(c => c.Id == draft.Id && c.Status == "archived");
+        var get = await ana.GetAsync($"/api/courses/{draft.Id}");
+        get.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    [Fact] // K15
-    public async Task Delete_already_archived_returns_204_idempotent()
+    [Fact] // K15b
+    public async Task DeleteAsync_with_enrollments_then_enroll_returns_409_course_inactive()
     {
-        var draft = await CreateCourseAsync(AnaClient(), "DoubleArchive");
-        await AnaClient().DeleteAsync($"/api/courses/{draft.Id}");
+        var ana = AnaClient();
+        var draft = await CreateCourseAsync(ana, "SoftDeleteTarget");
+        (await ana.PostAsJsonAsync(
+            $"/api/courses/{draft.Id}/lessons",
+            new CreateLessonRequest("L1", "body"))).EnsureSuccessStatusCode();
+        (await ana.PostAsync($"/api/courses/{draft.Id}/publish", null)).EnsureSuccessStatusCode();
 
-        var second = await AnaClient().DeleteAsync($"/api/courses/{draft.Id}");
-        second.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var pera = PeraClient();
+        var firstEnroll = await pera.PostAsJsonAsync("/api/enrollments",
+            new EnrollUserRequest(draft.Id, TestIds.PeraUserId));
+        firstEnroll.EnsureSuccessStatusCode();
+
+        var del = await ana.DeleteAsync($"/api/courses/{draft.Id}");
+        del.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var ivana = MakeClient(TestIds.AcmeSubdomain, TestIds.IvanaUserId, "learner", TestIds.IvanaEmail, TestIds.AcmeTenantId);
+        var secondEnroll = await ivana.PostAsJsonAsync("/api/enrollments",
+            new EnrollUserRequest(draft.Id, TestIds.IvanaUserId));
+        secondEnroll.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var body = await secondEnroll.Content.ReadFromJsonAsync<ErrorResponse>();
+        body!.Error.Should().Be("state_invalid");
+        body.Message.Should().Be("course_inactive");
     }
 
     [Fact] // K16

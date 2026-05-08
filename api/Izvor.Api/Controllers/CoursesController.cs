@@ -110,7 +110,7 @@ public sealed class CoursesController : ControllerBase
         CancellationToken cancellationToken)
     {
         await using var command = _session.CreateCommand(
-            $"SELECT {CourseSelectColumns} FROM api.list_courses(@categoryFilter, @statusFilter)");
+            $"SELECT {CourseSelectColumns} FROM api.list_courses(@categoryFilter, @statusFilter, NULL::boolean)");
         command.Parameters.AddWithValue("categoryFilter", (object?)query.CategoryId ?? DBNull.Value);
         command.Parameters.AddWithValue("statusFilter", (object?)query.Status ?? DBNull.Value);
 

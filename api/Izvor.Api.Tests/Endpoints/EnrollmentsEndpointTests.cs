@@ -17,7 +17,7 @@ public sealed class EnrollmentsEndpointTests : IAsyncLifetime
     private Guid _categoryId;
     private Guid _publishedCourseId;
     private Guid _draftCourseId;
-    private Guid _archivedCourseId;
+    private Guid _inactiveCourseId;
 
     public EnrollmentsEndpointTests(PostgresFixture postgres)
     {
@@ -36,7 +36,7 @@ public sealed class EnrollmentsEndpointTests : IAsyncLifetime
 
         _publishedCourseId = await CreatePublishedCourseAsync("Published Course");
         _draftCourseId = await CreateDraftCourseAsync("Draft Course");
-        _archivedCourseId = await CreateArchivedCourseAsync("Archived Course");
+        _inactiveCourseId = await CreateInactiveCourseAsync("Inactive Course");
     }
 
     public Task DisposeAsync()
@@ -105,15 +105,15 @@ public sealed class EnrollmentsEndpointTests : IAsyncLifetime
     }
 
     [Fact] // E5
-    public async Task Self_enroll_in_archived_course_returns_409()
+    public async Task EnrollAsync_on_inactive_course_returns_409_course_inactive()
     {
         var response = await PeraClient().PostAsJsonAsync("/api/enrollments",
-            new EnrollUserRequest(_archivedCourseId, TestIds.PeraUserId));
+            new EnrollUserRequest(_inactiveCourseId, TestIds.PeraUserId));
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Error.Should().Be("state_invalid");
-        body.Message.Should().Be("course_is_archived");
+        body.Message.Should().Be("course_inactive");
     }
 
     [Fact] // E6
@@ -324,9 +324,12 @@ public sealed class EnrollmentsEndpointTests : IAsyncLifetime
         return (await resp.Content.ReadFromJsonAsync<CourseResponse>())!.Id;
     }
 
-    private async Task<Guid> CreateArchivedCourseAsync(string title)
+    private async Task<Guid> CreateInactiveCourseAsync(string title)
     {
         var id = await CreatePublishedCourseAsync(title);
+        // Enroll one learner so the subsequent delete hits the soft branch
+        // (delete_course hard-deletes when no enrollments exist).
+        await EnrollAsync(IvanaClient(), id, TestIds.IvanaUserId);
         var del = await AnaClient().DeleteAsync($"/api/courses/{id}");
         del.EnsureSuccessStatusCode();
         return id;
