@@ -15,6 +15,7 @@ import { EnrollmentResponse, EnrollmentStatus } from '../models/enrollment.model
 export interface ListCoursesParams {
   categoryId?: string;
   status?: CourseStatus;
+  active?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -29,6 +30,9 @@ export class CourseService {
     }
     if (params?.status !== undefined) {
       httpParams = httpParams.set('status', params.status);
+    }
+    if (params?.active !== undefined) {
+      httpParams = httpParams.set('active', String(params.active));
     }
     return this.http.get<CourseResponse[]>(`${this.apiBaseUrl}/api/courses`, { params: httpParams });
   }
@@ -51,6 +55,10 @@ export class CourseService {
 
   publishCourse(id: string): Observable<CourseResponse> {
     return this.http.post<CourseResponse>(`${this.apiBaseUrl}/api/courses/${id}/publish`, null);
+  }
+
+  restoreCourse(id: string): Observable<CourseResponse> {
+    return this.http.post<CourseResponse>(`${this.apiBaseUrl}/api/courses/${id}/restore`, null);
   }
 
   getCourseEnrollments(courseId: string, status?: EnrollmentStatus): Observable<EnrollmentResponse[]> {

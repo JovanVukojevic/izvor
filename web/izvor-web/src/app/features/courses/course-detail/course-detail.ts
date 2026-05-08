@@ -57,6 +57,9 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
             <div class="title-row">
               <h1>{{ c.title }}</h1>
               <p-tag [value]="c.status" [severity]="statusSeverity(c.status)" />
+              @if (!c.isActive) {
+                <p-tag value="Inactive" severity="warn" />
+              }
             </div>
             <p class="meta">
               Category: {{ categoryName() }} · Author: <code>{{ c.authorId }}</code>
@@ -77,9 +80,13 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
             <p-button label="Publish" icon="pi pi-send" severity="success"
               [loading]="publishing()" (onClick)="publish()" />
           }
-          @if (canEdit()) {
+          @if (canDelete()) {
             <p-button label="Delete Course" icon="pi pi-trash" severity="danger"
               [text]="true" (onClick)="confirmDelete()" />
+          }
+          @if (canRestore()) {
+            <p-button label="Restore Course" icon="pi pi-replay" severity="success"
+              [text]="true" [loading]="restoring()" (onClick)="confirmRestore()" />
           }
           @if (canManageLessons()) {
             <p-button label="Add Lesson" icon="pi pi-plus" severity="secondary"
@@ -217,6 +224,7 @@ export class CourseDetail {
   readonly publishing = signal(false);
   readonly enrolling = signal(false);
   readonly reordering = signal(false);
+  readonly restoring = signal(false);
   readonly publishError = signal<string | null>(null);
   readonly enrollMessage = signal<string | null>(null);
   readonly enrollMessageSeverity = signal<'error' | 'warn' | 'info'>('error');
@@ -233,11 +241,16 @@ export class CourseDetail {
 
   readonly canPublish = computed(() => this.canEdit() && this.course()?.status === 'draft');
 
-  readonly canManageLessons = computed(() => this.canEdit() && this.course()?.status !== 'archived');
+  readonly canManageLessons = computed(() => this.canEdit());
 
-  readonly canEnroll = computed(() =>
-    this.course()?.status === 'published' && this.myEnrollment() === null
-  );
+  readonly canDelete = computed(() => this.canEdit() && this.course()?.isActive === true);
+
+  readonly canRestore = computed(() => this.canEdit() && this.course()?.isActive === false);
+
+  readonly canEnroll = computed(() => {
+    const c = this.course();
+    return c?.status === 'published' && c.isActive && this.myEnrollment() === null;
+  });
 
   readonly canCancelEnrollment = computed(() => this.myEnrollment()?.status === 'active');
 
@@ -284,10 +297,8 @@ export class CourseDetail {
     });
   }
 
-  statusSeverity(status: CourseStatus): 'success' | 'info' | 'secondary' {
-    if (status === 'published') return 'success';
-    if (status === 'draft') return 'info';
-    return 'secondary';
+  statusSeverity(status: CourseStatus): 'success' | 'info' {
+    return status === 'published' ? 'success' : 'info';
   }
 
   publish(): void {
@@ -317,12 +328,47 @@ export class CourseDetail {
     if (!c) return;
     this.confirm.confirm({
       header: 'Delete course',
-      message: `Archive "${c.title}"? Published courses become archived; this is a soft delete.`,
+      message: `Delete "${c.title}"? Courses with no enrollments are removed permanently; courses with enrollments are deactivated and can be restored later.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Delete',
       acceptButtonStyleClass: 'p-button-danger',
       rejectLabel: 'Cancel',
       accept: () => this.delete()
+    });
+  }
+
+  confirmRestore(): void {
+    const c = this.course();
+    if (!c) return;
+    this.confirm.confirm({
+      header: 'Restore course',
+      message: `Restore "${c.title}"? It will become available for new enrollments again.`,
+      icon: 'pi pi-replay',
+      acceptLabel: 'Restore',
+      acceptButtonStyleClass: 'p-button-success',
+      rejectLabel: 'Cancel',
+      accept: () => this.restore()
+    });
+  }
+
+  private restore(): void {
+    const id = this.courseId();
+    this.restoring.set(true);
+    this.courseService.restoreCourse(id).subscribe({
+      next: refreshed => {
+        this.course.set(refreshed);
+        this.restoring.set(false);
+        this.messages.add({ severity: 'success', summary: 'Course restored' });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.restoring.set(false);
+        const body = err.error as ErrorResponse | null | undefined;
+        this.messages.add({
+          severity: 'error',
+          summary: 'Restore failed',
+          detail: body?.message ?? 'Could not restore the course.'
+        });
+      }
     });
   }
 
@@ -365,9 +411,22 @@ export class CourseDetail {
           this.refreshMyEnrollment();
           return;
         }
+        if (err.status === 409 && body?.message === 'course_inactive') {
+          this.enrollMessageSeverity.set('warn');
+          this.enrollMessage.set('This course is no longer accepting enrollments.');
+          this.refreshCourse();
+          return;
+        }
         this.enrollMessageSeverity.set('error');
         this.enrollMessage.set(body?.message ?? 'Could not enroll.');
       }
+    });
+  }
+
+  private refreshCourse(): void {
+    const id = this.courseId();
+    this.courseService.getCourse(id).subscribe({
+      next: c => this.course.set(c)
     });
   }
 

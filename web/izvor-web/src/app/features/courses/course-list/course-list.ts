@@ -25,6 +25,13 @@ interface CategoryOption {
   value: string | 'all';
 }
 
+type ActiveFilter = 'active' | 'inactive' | 'all';
+
+interface ActiveOption {
+  label: string;
+  value: ActiveFilter;
+}
+
 @Component({
   selector: 'izvor-course-list',
   imports: [TableModule, Select, Button, Tag, FormsModule, RouterLink, RequiresRoleDirective],
@@ -46,6 +53,17 @@ interface CategoryOption {
           <p-select
             [options]="statusOptions"
             [(ngModel)]="statusFilter"
+            (onChange)="reload()"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="filter-select"
+          />
+        </div>
+        <div class="filter">
+          <label>Activity</label>
+          <p-select
+            [options]="activeOptions"
+            [(ngModel)]="activeFilter"
             (onChange)="reload()"
             optionLabel="label"
             optionValue="value"
@@ -80,7 +98,12 @@ interface CategoryOption {
           </ng-template>
           <ng-template pTemplate="body" let-row>
             <tr class="row-clickable" (click)="open(row)">
-              <td>{{ row.title }}</td>
+              <td>
+                <span>{{ row.title }}</span>
+                @if (!row.isActive) {
+                  <p-tag value="Inactive" severity="warn" styleClass="inactive-badge" />
+                }
+              </td>
               <td>{{ categoryName(row.categoryId) }}</td>
               <td><p-tag [value]="row.status" [severity]="statusSeverity(row.status)" /></td>
             </tr>
@@ -97,6 +120,7 @@ interface CategoryOption {
     .filter { display: flex; flex-direction: column; gap: 0.25rem; }
     .filter label { font-size: 0.85rem; color: var(--p-text-muted-color, #6b7280); }
     :host ::ng-deep .filter-select { min-width: 200px; }
+    :host ::ng-deep .inactive-badge { margin-left: 0.5rem; }
     .empty { color: var(--p-text-muted-color, #6b7280); }
     .row-clickable { cursor: pointer; }
   `]
@@ -110,11 +134,17 @@ export class CourseList {
   readonly statusOptions: StatusOption[] = [
     { label: 'All', value: 'all' },
     { label: 'Draft', value: 'draft' },
-    { label: 'Published', value: 'published' },
-    { label: 'Archived', value: 'archived' }
+    { label: 'Published', value: 'published' }
+  ];
+
+  readonly activeOptions: ActiveOption[] = [
+    { label: 'Active', value: 'active' },
+    { label: 'Inactive', value: 'inactive' },
+    { label: 'All', value: 'all' }
   ];
 
   statusFilter: CourseStatus | 'all' = this.defaultStatusForRole();
+  activeFilter: ActiveFilter = 'active';
   categoryFilter: string | 'all' = 'all';
 
   readonly isLoading = signal(true);
@@ -155,6 +185,7 @@ export class CourseList {
   private fetchCourses() {
     return this.courseService.listCourses({
       status: this.statusFilter === 'all' ? undefined : this.statusFilter,
+      active: this.activeFilter === 'all' ? undefined : this.activeFilter === 'active',
       categoryId: this.categoryFilter === 'all' ? undefined : this.categoryFilter
     });
   }
@@ -168,10 +199,8 @@ export class CourseList {
     return this.categories().find(c => c.id === id)?.name ?? '—';
   }
 
-  statusSeverity(status: CourseStatus): 'success' | 'info' | 'secondary' {
-    if (status === 'published') return 'success';
-    if (status === 'draft') return 'info';
-    return 'secondary';
+  statusSeverity(status: CourseStatus): 'success' | 'info' {
+    return status === 'published' ? 'success' : 'info';
   }
 
   private defaultStatusForRole(): CourseStatus | 'all' {

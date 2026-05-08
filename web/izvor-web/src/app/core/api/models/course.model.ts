@@ -1,4 +1,4 @@
-export type CourseStatus = 'draft' | 'published' | 'archived';
+export type CourseStatus = 'draft' | 'published';
 
 export interface CourseResponse {
   id: string;
@@ -9,6 +9,7 @@ export interface CourseResponse {
   status: CourseStatus;
   createdAt: string;
   updatedAt: string;
+  isActive: boolean;
 }
 
 export interface CreateCourseRequest {

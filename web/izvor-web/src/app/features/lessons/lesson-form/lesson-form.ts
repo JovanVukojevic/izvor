@@ -229,10 +229,6 @@ export class LessonForm {
       this.notFound.set(true);
       return;
     }
-    if (err.status === 409 && body?.message === 'course_is_archived') {
-      this.errorMessage.set('This course is archived; lessons cannot be modified.');
-      return;
-    }
     if (err.status === 409 && body?.message === 'course_not_draft') {
       this.errorMessage.set('Lessons can only be deleted on draft courses.');
       return;
