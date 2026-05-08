@@ -62,7 +62,6 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<CourseResponse>();
         body!.Title.Should().Be("Intro to FP");
-        body.Status.Should().Be("draft");
         body.AuthorId.Should().Be(TestIds.AnaUserId);
     }
 
@@ -283,15 +282,6 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         body!.Error.Should().Be("tenant_mismatch");
     }
 
-    [Fact] // K17
-    public async Task List_with_invalid_status_returns_400()
-    {
-        var response = await AnaClient().GetAsync("/api/courses?status=banana");
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-        body!.Error.Should().Be("validation_failed");
-    }
-
     [Fact] // K18
     public async Task Activate_course_with_lessons_succeeds()
     {
@@ -318,6 +308,66 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         var body = await activate.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Error.Should().Be("state_invalid");
         body.Message.Should().Be("course_has_no_lessons");
+    }
+
+    [Fact] // K20
+    public async Task Activate_already_active_returns_200_idempotent()
+    {
+        var ana = AnaClient();
+        var courseId = await CreateActiveCourseAsync(ana, "AlreadyActive");
+
+        var second = await ana.PostAsync($"/api/courses/{courseId}/activate", null);
+        second.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await second.Content.ReadFromJsonAsync<CourseResponse>();
+        body!.Id.Should().Be(courseId);
+        body.IsActive.Should().BeTrue();
+    }
+
+    [Fact] // K28
+    public async Task DeactivateAsync_active_course_returns_200_and_is_active_false()
+    {
+        var ana = AnaClient();
+        var courseId = await CreateActiveCourseAsync(ana, "ToDeactivate");
+
+        var deactivate = await ana.PostAsync($"/api/courses/{courseId}/deactivate", null);
+        deactivate.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await deactivate.Content.ReadFromJsonAsync<CourseResponse>();
+        body!.Id.Should().Be(courseId);
+        body.IsActive.Should().BeFalse();
+    }
+
+    [Fact] // K29
+    public async Task DeactivateAsync_already_inactive_returns_200_and_is_active_false()
+    {
+        var ana = AnaClient();
+        var draft = await CreateCourseAsync(ana, "FreshInactive");
+
+        var deactivate = await ana.PostAsync($"/api/courses/{draft.Id}/deactivate", null);
+        deactivate.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await deactivate.Content.ReadFromJsonAsync<CourseResponse>();
+        body!.Id.Should().Be(draft.Id);
+        body.IsActive.Should().BeFalse();
+    }
+
+    [Fact] // K30
+    public async Task DeactivateAsync_unknown_id_returns_404()
+    {
+        var response = await AnaClient().PostAsync($"/api/courses/{Guid.NewGuid()}/deactivate", null);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        body!.Message.Should().Be("course_not_found");
+    }
+
+    [Fact] // K31
+    public async Task DeactivateAsync_as_learner_returns_403()
+    {
+        // Ana (author) creates the active course; Pera (learner) attempts to
+        // deactivate. Either layer of defense may fire first
+        // (RLS-hidden / not_course_owner / role check) — accept any 403.
+        var courseId = await CreateActiveCourseAsync(AnaClient(), "ProtectedDeactivate");
+
+        var response = await PeraClient().PostAsync($"/api/courses/{courseId}/deactivate", null);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     private async Task<CourseResponse> CreateCourseAsync(HttpClient client, string title)

@@ -22,7 +22,6 @@ public static class CourseRowMapper
             AuthorId: reader.GetGuid(authorOrdinal),
             Title: reader.GetString(titleOrdinal),
             Description: reader.IsDBNull(descOrdinal) ? null : reader.GetString(descOrdinal),
-            Status: "draft", // Placeholder until Prompt 2 removes the DTO field.
             CreatedAt: reader.GetDateTime(createdOrdinal),
             UpdatedAt: reader.GetDateTime(updatedOrdinal),
             IsActive: reader.GetBoolean(activeOrdinal));

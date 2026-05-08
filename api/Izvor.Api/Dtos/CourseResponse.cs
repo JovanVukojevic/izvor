@@ -6,7 +6,6 @@ public sealed record CourseResponse(
     Guid AuthorId,
     string Title,
     string? Description,
-    string Status,
     DateTime CreatedAt,
     DateTime UpdatedAt,
     bool IsActive);

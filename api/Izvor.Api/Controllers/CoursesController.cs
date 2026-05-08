@@ -139,6 +139,22 @@ public sealed class CoursesController : ControllerBase
         return Ok(refreshed);
     }
 
+    [HttpPost("{id:guid}/deactivate")]
+    [ProducesResponseType(typeof(CourseResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CourseResponse>> DeactivateAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using (var deactivate = _session.CreateCommand("SELECT api.deactivate_course(@id)"))
+        {
+            deactivate.Parameters.AddWithValue("id", id);
+            await deactivate.ExecuteScalarAsync(cancellationToken);
+        }
+
+        var refreshed = await ReadCourseAsync(id, cancellationToken);
+        return Ok(refreshed);
+    }
+
     private async Task<CourseResponse> ReadCourseAsync(Guid id, CancellationToken cancellationToken)
     {
         await using var command = _session.CreateCommand(
