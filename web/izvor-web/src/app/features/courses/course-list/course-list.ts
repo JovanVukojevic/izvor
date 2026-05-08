@@ -10,15 +10,9 @@ import { FormsModule } from '@angular/forms';
 
 import { CourseService } from '../../../core/api/services/course.service';
 import { CategoryService } from '../../../core/api/services/category.service';
-import { CourseResponse, CourseStatus } from '../../../core/api/models/course.model';
+import { CourseResponse } from '../../../core/api/models/course.model';
 import { CategoryResponse } from '../../../core/api/models/category.model';
 import { RequiresRoleDirective } from '../../../core/auth/role.directive';
-import { AuthService } from '../../../core/auth/auth.service';
-
-interface StatusOption {
-  label: string;
-  value: CourseStatus | 'all';
-}
 
 interface CategoryOption {
   label: string;
@@ -48,17 +42,6 @@ interface ActiveOption {
       </header>
 
       <div class="filters">
-        <div class="filter">
-          <label>Status</label>
-          <p-select
-            [options]="statusOptions"
-            [(ngModel)]="statusFilter"
-            (onChange)="reload()"
-            optionLabel="label"
-            optionValue="value"
-            styleClass="filter-select"
-          />
-        </div>
         <div class="filter">
           <label>Activity</label>
           <p-select
@@ -93,7 +76,6 @@ interface ActiveOption {
             <tr>
               <th>Title</th>
               <th>Category</th>
-              <th>Status</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-row>
@@ -105,7 +87,6 @@ interface ActiveOption {
                 }
               </td>
               <td>{{ categoryName(row.categoryId) }}</td>
-              <td><p-tag [value]="row.status" [severity]="statusSeverity(row.status)" /></td>
             </tr>
           </ng-template>
         </p-table>
@@ -129,13 +110,6 @@ export class CourseList {
   private readonly courseService = inject(CourseService);
   private readonly categoryService = inject(CategoryService);
   private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
-
-  readonly statusOptions: StatusOption[] = [
-    { label: 'All', value: 'all' },
-    { label: 'Draft', value: 'draft' },
-    { label: 'Published', value: 'published' }
-  ];
 
   readonly activeOptions: ActiveOption[] = [
     { label: 'Active', value: 'active' },
@@ -143,7 +117,6 @@ export class CourseList {
     { label: 'All', value: 'all' }
   ];
 
-  statusFilter: CourseStatus | 'all' = this.defaultStatusForRole();
   activeFilter: ActiveFilter = 'active';
   categoryFilter: string | 'all' = 'all';
 
@@ -184,7 +157,6 @@ export class CourseList {
 
   private fetchCourses() {
     return this.courseService.listCourses({
-      status: this.statusFilter === 'all' ? undefined : this.statusFilter,
       active: this.activeFilter === 'all' ? undefined : this.activeFilter === 'active',
       categoryId: this.categoryFilter === 'all' ? undefined : this.categoryFilter
     });
@@ -197,14 +169,5 @@ export class CourseList {
   categoryName(id: string | null): string {
     if (id === null) return '—';
     return this.categories().find(c => c.id === id)?.name ?? '—';
-  }
-
-  statusSeverity(status: CourseStatus): 'success' | 'info' {
-    return status === 'published' ? 'success' : 'info';
-  }
-
-  private defaultStatusForRole(): CourseStatus | 'all' {
-    const role = this.auth.currentUser()?.role;
-    return role === 'admin' || role === 'author' ? 'all' : 'published';
   }
 }

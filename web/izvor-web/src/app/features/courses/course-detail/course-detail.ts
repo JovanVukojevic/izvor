@@ -15,7 +15,7 @@ import { CourseService } from '../../../core/api/services/course.service';
 import { LessonService } from '../../../core/api/services/lesson.service';
 import { EnrollmentService } from '../../../core/api/services/enrollment.service';
 import { CategoryService } from '../../../core/api/services/category.service';
-import { CourseResponse, CourseStatus } from '../../../core/api/models/course.model';
+import { CourseResponse } from '../../../core/api/models/course.model';
 import { LessonResponse } from '../../../core/api/models/lesson.model';
 import { EnrollmentResponse } from '../../../core/api/models/enrollment.model';
 import { CategoryResponse } from '../../../core/api/models/category.model';
@@ -45,7 +45,13 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
         <p-message severity="error" text="Course not found" />
         <p><a routerLink="/courses">Back to courses</a></p>
       } @else if (course(); as c) {
-        @if (publishError(); as msg) {
+        @if (activateError(); as msg) {
+          <p-message severity="error" [text]="msg" styleClass="banner" />
+        }
+        @if (deleteError(); as msg) {
+          <p-message severity="error" [text]="msg" styleClass="banner" />
+        }
+        @if (lessonDeleteError(); as msg) {
           <p-message severity="error" [text]="msg" styleClass="banner" />
         }
         @if (enrollMessage(); as msg) {
@@ -56,7 +62,6 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
           <div>
             <div class="title-row">
               <h1>{{ c.title }}</h1>
-              <p-tag [value]="c.status" [severity]="statusSeverity(c.status)" />
               @if (!c.isActive) {
                 <p-tag value="Inactive" severity="warn" />
               }
@@ -76,17 +81,17 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
             <p-button label="Edit Course" icon="pi pi-pencil" severity="secondary"
               [routerLink]="['/courses', c.id, 'edit']" />
           }
-          @if (canPublish()) {
-            <p-button label="Publish" icon="pi pi-send" severity="success"
-              [loading]="publishing()" (onClick)="publish()" />
+          @if (canActivate()) {
+            <p-button label="Activate" icon="pi pi-send" severity="success"
+              [loading]="activating()" (onClick)="confirmActivate()" />
+          }
+          @if (canDeactivate()) {
+            <p-button label="Deactivate" icon="pi pi-eye-slash" severity="warn"
+              [loading]="deactivating()" (onClick)="confirmDeactivate()" />
           }
           @if (canDelete()) {
             <p-button label="Delete Course" icon="pi pi-trash" severity="danger"
               [text]="true" (onClick)="confirmDelete()" />
-          }
-          @if (canRestore()) {
-            <p-button label="Restore Course" icon="pi pi-replay" severity="success"
-              [text]="true" [loading]="restoring()" (onClick)="confirmRestore()" />
           }
           @if (canManageLessons()) {
             <p-button label="Add Lesson" icon="pi pi-plus" severity="secondary"
@@ -139,7 +144,6 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
                       <p-button icon="pi pi-pencil" size="small" severity="secondary" [text]="true"
                         [routerLink]="['/courses', c.id, 'lessons', lesson.id, 'edit']" />
                       <p-button icon="pi pi-trash" size="small" severity="danger" [text]="true"
-                        [disabled]="c.status !== 'draft'"
                         (onClick)="confirmDeleteLesson(lesson)" />
                     </span>
                   }
@@ -221,11 +225,13 @@ export class CourseDetail {
   readonly myEnrollment = signal<EnrollmentResponse | null>(null);
   readonly categories = signal<CategoryResponse[]>([]);
 
-  readonly publishing = signal(false);
+  readonly activating = signal(false);
+  readonly deactivating = signal(false);
   readonly enrolling = signal(false);
   readonly reordering = signal(false);
-  readonly restoring = signal(false);
-  readonly publishError = signal<string | null>(null);
+  readonly activateError = signal<string | null>(null);
+  readonly deleteError = signal<string | null>(null);
+  readonly lessonDeleteError = signal<string | null>(null);
   readonly enrollMessage = signal<string | null>(null);
   readonly enrollMessageSeverity = signal<'error' | 'warn' | 'info'>('error');
 
@@ -239,17 +245,19 @@ export class CourseDetail {
     return u.role === 'admin' || c.authorId === u.id;
   });
 
-  readonly canPublish = computed(() => this.canEdit() && this.course()?.status === 'draft');
+  readonly canActivate = computed(() => this.canEdit() && this.course()?.isActive === false);
+
+  readonly canDeactivate = computed(() => this.canEdit() && this.course()?.isActive === true);
 
   readonly canManageLessons = computed(() => this.canEdit());
 
-  readonly canDelete = computed(() => this.canEdit() && this.course()?.isActive === true);
-
-  readonly canRestore = computed(() => this.canEdit() && this.course()?.isActive === false);
+  readonly canDelete = computed(() => this.canEdit());
 
   readonly canEnroll = computed(() => {
     const c = this.course();
-    return c?.status === 'published' && c.isActive && this.myEnrollment() === null;
+    return c?.isActive === true
+      && this.myEnrollment() === null
+      && this.auth.currentUser()?.role === 'learner';
   });
 
   readonly canCancelEnrollment = computed(() => this.myEnrollment()?.status === 'active');
@@ -297,28 +305,73 @@ export class CourseDetail {
     });
   }
 
-  statusSeverity(status: CourseStatus): 'success' | 'info' {
-    return status === 'published' ? 'success' : 'info';
+  confirmActivate(): void {
+    const c = this.course();
+    if (!c) return;
+    this.confirm.confirm({
+      header: 'Activate course',
+      message: 'Make this course available to learners?',
+      icon: 'pi pi-send',
+      acceptLabel: 'Activate',
+      acceptButtonStyleClass: 'p-button-success',
+      rejectLabel: 'Cancel',
+      accept: () => this.activate()
+    });
   }
 
-  publish(): void {
+  private activate(): void {
     const id = this.courseId();
-    this.publishError.set(null);
-    this.publishing.set(true);
-    this.courseService.publishCourse(id).subscribe({
+    this.activateError.set(null);
+    this.activating.set(true);
+    this.courseService.activateCourse(id).subscribe({
       next: refreshed => {
         this.course.set(refreshed);
-        this.publishing.set(false);
-        this.messages.add({ severity: 'success', summary: 'Course published' });
+        this.activating.set(false);
+        this.messages.add({ severity: 'success', summary: 'Course activated' });
       },
       error: (err: HttpErrorResponse) => {
-        this.publishing.set(false);
+        this.activating.set(false);
         const body = err.error as ErrorResponse | null | undefined;
         if (err.status === 409 && body?.message === 'course_has_no_lessons') {
-          this.publishError.set('Add at least one lesson before publishing.');
+          this.activateError.set('Add at least one lesson before activating.');
         } else {
-          this.publishError.set(body?.message ?? 'Could not publish the course.');
+          this.activateError.set(body?.message ?? 'Could not activate the course.');
         }
+      }
+    });
+  }
+
+  confirmDeactivate(): void {
+    const c = this.course();
+    if (!c) return;
+    this.confirm.confirm({
+      header: 'Deactivate course',
+      message: 'Hide this course from learners? Existing enrollments are preserved.',
+      icon: 'pi pi-eye-slash',
+      acceptLabel: 'Deactivate',
+      acceptButtonStyleClass: 'p-button-warn',
+      rejectLabel: 'Cancel',
+      accept: () => this.deactivate()
+    });
+  }
+
+  private deactivate(): void {
+    const id = this.courseId();
+    this.deactivating.set(true);
+    this.courseService.deactivateCourse(id).subscribe({
+      next: refreshed => {
+        this.course.set(refreshed);
+        this.deactivating.set(false);
+        this.messages.add({ severity: 'success', summary: 'Course deactivated' });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.deactivating.set(false);
+        const body = err.error as ErrorResponse | null | undefined;
+        this.messages.add({
+          severity: 'error',
+          summary: 'Deactivate failed',
+          detail: body?.message ?? 'Could not deactivate the course.'
+        });
       }
     });
   }
@@ -328,7 +381,7 @@ export class CourseDetail {
     if (!c) return;
     this.confirm.confirm({
       header: 'Delete course',
-      message: `Delete "${c.title}"? Courses with no enrollments are removed permanently; courses with enrollments are deactivated and can be restored later.`,
+      message: `Delete "${c.title}" permanently? This cannot be undone. Courses with any enrollments cannot be deleted; deactivate them instead.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Delete',
       acceptButtonStyleClass: 'p-button-danger',
@@ -337,43 +390,9 @@ export class CourseDetail {
     });
   }
 
-  confirmRestore(): void {
-    const c = this.course();
-    if (!c) return;
-    this.confirm.confirm({
-      header: 'Restore course',
-      message: `Restore "${c.title}"? It will become available for new enrollments again.`,
-      icon: 'pi pi-replay',
-      acceptLabel: 'Restore',
-      acceptButtonStyleClass: 'p-button-success',
-      rejectLabel: 'Cancel',
-      accept: () => this.restore()
-    });
-  }
-
-  private restore(): void {
-    const id = this.courseId();
-    this.restoring.set(true);
-    this.courseService.restoreCourse(id).subscribe({
-      next: refreshed => {
-        this.course.set(refreshed);
-        this.restoring.set(false);
-        this.messages.add({ severity: 'success', summary: 'Course restored' });
-      },
-      error: (err: HttpErrorResponse) => {
-        this.restoring.set(false);
-        const body = err.error as ErrorResponse | null | undefined;
-        this.messages.add({
-          severity: 'error',
-          summary: 'Restore failed',
-          detail: body?.message ?? 'Could not restore the course.'
-        });
-      }
-    });
-  }
-
   private delete(): void {
     const id = this.courseId();
+    this.deleteError.set(null);
     this.courseService.deleteCourse(id).subscribe({
       next: () => {
         this.messages.add({ severity: 'success', summary: 'Course deleted' });
@@ -381,6 +400,10 @@ export class CourseDetail {
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null | undefined;
+        if (err.status === 409 && body?.message === 'course_has_enrollments') {
+          this.deleteError.set('This course has enrollments and cannot be deleted. Deactivate it instead.');
+          return;
+        }
         this.messages.add({
           severity: 'error',
           summary: 'Delete failed',
@@ -513,7 +536,7 @@ export class CourseDetail {
   confirmDeleteLesson(lesson: LessonResponse): void {
     this.confirm.confirm({
       header: 'Delete lesson',
-      message: `Delete "${lesson.title}"? This cannot be undone.`,
+      message: `Delete "${lesson.title}"? Lessons that any learner has marked complete cannot be deleted.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Delete',
       acceptButtonStyleClass: 'p-button-danger',
@@ -523,6 +546,7 @@ export class CourseDetail {
   }
 
   private deleteLesson(lesson: LessonResponse): void {
+    this.lessonDeleteError.set(null);
     this.lessonService.deleteLesson(lesson.id).subscribe({
       next: () => {
         this.messages.add({ severity: 'success', summary: 'Lesson deleted' });
@@ -532,6 +556,10 @@ export class CourseDetail {
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null | undefined;
+        if (err.status === 409 && body?.message === 'lesson_has_progress') {
+          this.lessonDeleteError.set('This lesson has been completed by at least one learner and cannot be deleted.');
+          return;
+        }
         this.messages.add({
           severity: 'error',
           summary: 'Delete failed',

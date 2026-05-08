@@ -1,12 +1,9 @@
-export type CourseStatus = 'draft' | 'published';
-
 export interface CourseResponse {
   id: string;
   categoryId: string | null;
   authorId: string;
   title: string;
   description: string | null;
-  status: CourseStatus;
   createdAt: string;
   updatedAt: string;
   isActive: boolean;

@@ -6,7 +6,6 @@ import { API_BASE_URL } from '../../api-base-url.token';
 import {
   CourseCompletionStatsResponse,
   CourseResponse,
-  CourseStatus,
   CreateCourseRequest,
   UpdateCourseRequest
 } from '../models/course.model';
@@ -14,7 +13,6 @@ import { EnrollmentResponse, EnrollmentStatus } from '../models/enrollment.model
 
 export interface ListCoursesParams {
   categoryId?: string;
-  status?: CourseStatus;
   active?: boolean;
 }
 
@@ -27,9 +25,6 @@ export class CourseService {
     let httpParams = new HttpParams();
     if (params?.categoryId !== undefined) {
       httpParams = httpParams.set('categoryId', params.categoryId);
-    }
-    if (params?.status !== undefined) {
-      httpParams = httpParams.set('status', params.status);
     }
     if (params?.active !== undefined) {
       httpParams = httpParams.set('active', String(params.active));
@@ -53,12 +48,12 @@ export class CourseService {
     return this.http.delete<void>(`${this.apiBaseUrl}/api/courses/${id}`);
   }
 
-  publishCourse(id: string): Observable<CourseResponse> {
-    return this.http.post<CourseResponse>(`${this.apiBaseUrl}/api/courses/${id}/publish`, null);
+  activateCourse(id: string): Observable<CourseResponse> {
+    return this.http.post<CourseResponse>(`${this.apiBaseUrl}/api/courses/${id}/activate`, null);
   }
 
-  restoreCourse(id: string): Observable<CourseResponse> {
-    return this.http.post<CourseResponse>(`${this.apiBaseUrl}/api/courses/${id}/restore`, null);
+  deactivateCourse(id: string): Observable<CourseResponse> {
+    return this.http.post<CourseResponse>(`${this.apiBaseUrl}/api/courses/${id}/deactivate`, null);
   }
 
   getCourseEnrollments(courseId: string, status?: EnrollmentStatus): Observable<EnrollmentResponse[]> {

@@ -119,7 +119,7 @@ export class MyEnrollments {
     this.isLoading.set(true);
     forkJoin({
       enrollments: this.fetch(),
-      courses: this.courseService.listCourses({ status: undefined }).pipe(catchError(() => of([] as CourseResponse[])))
+      courses: this.courseService.listCourses().pipe(catchError(() => of([] as CourseResponse[])))
     }).subscribe({
       next: ({ enrollments, courses }) => {
         this.rows.set(enrollments);

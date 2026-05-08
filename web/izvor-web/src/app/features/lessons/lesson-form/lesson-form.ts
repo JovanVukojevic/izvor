@@ -229,10 +229,6 @@ export class LessonForm {
       this.notFound.set(true);
       return;
     }
-    if (err.status === 409 && body?.message === 'course_not_draft') {
-      this.errorMessage.set('Lessons can only be deleted on draft courses.');
-      return;
-    }
     this.errorMessage.set(body?.message ?? 'Could not save the lesson.');
   }
 }

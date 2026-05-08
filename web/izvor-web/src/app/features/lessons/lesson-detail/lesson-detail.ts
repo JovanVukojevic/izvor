@@ -68,7 +68,6 @@ import { AuthService } from '../../../core/auth/auth.service';
             <p-button label="Edit Lesson" icon="pi pi-pencil" severity="secondary"
               [routerLink]="['/courses', courseId(), 'lessons', l.id, 'edit']" />
             <p-button label="Delete Lesson" icon="pi pi-trash" severity="danger" [text]="true"
-              [disabled]="course()?.status !== 'draft'"
               (onClick)="confirmDelete()" />
           }
         </section>
@@ -165,7 +164,7 @@ export class LessonDetail {
     const e = this.myEnrollment();
     if (!e || e.status !== 'active') return false;
     if (this.alreadyComplete()) return false;
-    return this.course()?.status === 'published';
+    return true;
   });
 
   // Lesson content is markdown authored by tenant authors (admin/author roles,
@@ -276,7 +275,7 @@ export class LessonDetail {
     if (!l) return;
     this.confirm.confirm({
       header: 'Delete lesson',
-      message: `Delete "${l.title}"? This cannot be undone.`,
+      message: `Delete "${l.title}"? Lessons that any learner has marked complete cannot be deleted.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Delete',
       acceptButtonStyleClass: 'p-button-danger',
@@ -287,6 +286,7 @@ export class LessonDetail {
 
   private delete(): void {
     const lid = this.lessonId();
+    this.banner.set(null);
     this.lessonService.deleteLesson(lid).subscribe({
       next: () => {
         this.messages.add({ severity: 'success', summary: 'Lesson deleted' });
@@ -294,6 +294,11 @@ export class LessonDetail {
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null | undefined;
+        if (err.status === 409 && body?.message === 'lesson_has_progress') {
+          this.bannerSeverity.set('error');
+          this.banner.set('This lesson has been completed by at least one learner and cannot be deleted.');
+          return;
+        }
         this.messages.add({
           severity: 'error',
           summary: 'Delete failed',
