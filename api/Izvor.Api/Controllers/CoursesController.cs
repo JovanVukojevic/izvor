@@ -13,7 +13,7 @@ namespace Izvor.Api.Controllers;
 public sealed class CoursesController : ControllerBase
 {
     private const string CourseSelectColumns =
-        "id, category_id, author_id, title, description, status, sequential, created_at, updated_at";
+        "id, category_id, author_id, title, description, status, created_at, updated_at";
 
     private readonly IDbSessionContext _session;
 
@@ -57,12 +57,11 @@ public sealed class CoursesController : ControllerBase
         CancellationToken cancellationToken)
     {
         await using var command = _session.CreateCommand(
-            "SELECT api.update_course(@id, @title, @description, @categoryId, @sequential)");
+            "SELECT api.update_course(@id, @title, @description, @categoryId)");
         command.Parameters.AddWithValue("id", id);
         command.Parameters.AddWithValue("title", request.Title);
         command.Parameters.AddWithValue("description", (object?)request.Description ?? DBNull.Value);
         command.Parameters.AddWithValue("categoryId", (object?)request.CategoryId ?? DBNull.Value);
-        command.Parameters.AddWithValue("sequential", request.Sequential);
 
         // spec.update_course gates with assert_course_owner_or_admin which raises
         // course_not_found / not_course_owner. Past the assert, false means the

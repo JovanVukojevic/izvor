@@ -31,7 +31,6 @@ public static class ApiErrorMapper
         "enrollment_not_active",
         "enrollment_cancelled",
         "course_has_no_lessons",
-        "prerequisite_lesson_incomplete",
         "not_enrolled"
     };
 

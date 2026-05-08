@@ -9,7 +9,6 @@ import { Card } from 'primeng/card';
 import { InputText } from 'primeng/inputtext';
 import { Textarea } from 'primeng/textarea';
 import { Select } from 'primeng/select';
-import { Checkbox } from 'primeng/checkbox';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { MessageService } from 'primeng/api';
@@ -29,7 +28,6 @@ import { AuthService } from '../../../core/auth/auth.service';
     InputText,
     Textarea,
     Select,
-    Checkbox,
     Button,
     Message,
     RouterLink
@@ -80,13 +78,6 @@ import { AuthService } from '../../../core/auth/auth.service';
                 styleClass="form-select"
               />
             </div>
-
-            @if (isEdit()) {
-              <div class="field-inline">
-                <p-checkbox inputId="sequential" formControlName="sequential" [binary]="true" />
-                <label for="sequential">Sequential lessons (learners must complete in order)</label>
-              </div>
-            }
 
             <div class="actions">
               <p-button
@@ -149,8 +140,7 @@ export class CourseForm {
       nonNullable: true,
       validators: [Validators.maxLength(5000)]
     }),
-    categoryId: new FormControl<string | null>(null),
-    sequential: new FormControl<boolean>(false, { nonNullable: true })
+    categoryId: new FormControl<string | null>(null)
   });
 
   isEdit(): boolean {
@@ -182,8 +172,7 @@ export class CourseForm {
           this.form.patchValue({
             title: course.title,
             description: course.description ?? '',
-            categoryId: course.categoryId,
-            sequential: course.sequential
+            categoryId: course.categoryId
           });
           this.titleService.setTitle(`Edit · ${course.title} · Izvor`);
         }
@@ -230,8 +219,7 @@ export class CourseForm {
         .updateCourse(id, {
           title: raw.title.trim(),
           description,
-          categoryId: raw.categoryId,
-          sequential: raw.sequential
+          categoryId: raw.categoryId
         })
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({

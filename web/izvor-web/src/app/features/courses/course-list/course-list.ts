@@ -76,7 +76,6 @@ interface CategoryOption {
               <th>Title</th>
               <th>Category</th>
               <th>Status</th>
-              <th>Sequential</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-row>
@@ -84,7 +83,6 @@ interface CategoryOption {
               <td>{{ row.title }}</td>
               <td>{{ categoryName(row.categoryId) }}</td>
               <td><p-tag [value]="row.status" [severity]="statusSeverity(row.status)" /></td>
-              <td>{{ row.sequential ? 'Yes' : 'No' }}</td>
             </tr>
           </ng-template>
         </p-table>

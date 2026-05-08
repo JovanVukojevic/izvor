@@ -7,7 +7,6 @@ export interface CourseResponse {
   title: string;
   description: string | null;
   status: CourseStatus;
-  sequential: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,7 +21,6 @@ export interface UpdateCourseRequest {
   title: string;
   description: string | null;
   categoryId: string | null;
-  sequential: boolean;
 }
 
 export interface CourseCompletionStatsResponse {

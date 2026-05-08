@@ -57,9 +57,6 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
             <div class="title-row">
               <h1>{{ c.title }}</h1>
               <p-tag [value]="c.status" [severity]="statusSeverity(c.status)" />
-              @if (c.sequential) {
-                <p-tag value="sequential" severity="warn" />
-              }
             </div>
             <p class="meta">
               Category: {{ categoryName() }} · Author: <code>{{ c.authorId }}</code>

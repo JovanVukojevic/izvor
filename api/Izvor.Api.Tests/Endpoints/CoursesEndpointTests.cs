@@ -63,7 +63,6 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         var body = await response.Content.ReadFromJsonAsync<CourseResponse>();
         body!.Title.Should().Be("Intro to FP");
         body.Status.Should().Be("draft");
-        body.Sequential.Should().BeFalse();
         body.AuthorId.Should().Be(TestIds.AnaUserId);
     }
 
@@ -166,7 +165,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
     {
         var draft = await CreateCourseAsync(AnaClient(), "OldTitle");
         var update = await AnaClient().PutAsJsonAsync($"/api/courses/{draft.Id}",
-            new UpdateCourseRequest("NewTitle", null, _categoryId, false));
+            new UpdateCourseRequest("NewTitle", null, _categoryId));
         update.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var get = await AnaClient().GetAsync($"/api/courses/{draft.Id}");
@@ -181,7 +180,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
 
         var petar = PetarClient();
         var response = await petar.PutAsJsonAsync($"/api/courses/{draft.Id}",
-            new UpdateCourseRequest("Hijack", null, null, false));
+            new UpdateCourseRequest("Hijack", null, null));
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Message.Should().Be("course_not_found");
@@ -193,23 +192,10 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         var draft = await CreateCourseAsync(AnaClient(), "AnaCourse");
         var pera = PeraClient();
         var response = await pera.PutAsJsonAsync($"/api/courses/{draft.Id}",
-            new UpdateCourseRequest("Stolen", null, null, false));
+            new UpdateCourseRequest("Stolen", null, null));
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Message.Should().Be("not_course_owner");
-    }
-
-    [Fact] // K11
-    public async Task Update_can_set_sequential_true()
-    {
-        var draft = await CreateCourseAsync(AnaClient(), "Linear");
-        var response = await AnaClient().PutAsJsonAsync($"/api/courses/{draft.Id}",
-            new UpdateCourseRequest("Linear", null, _categoryId, true));
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-
-        var get = await AnaClient().GetAsync($"/api/courses/{draft.Id}");
-        var body = await get.Content.ReadFromJsonAsync<CourseResponse>();
-        body!.Sequential.Should().BeTrue();
     }
 
     [Fact] // K12
@@ -220,7 +206,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         del.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var update = await AnaClient().PutAsJsonAsync($"/api/courses/{draft.Id}",
-            new UpdateCourseRequest("Wont stick", null, null, false));
+            new UpdateCourseRequest("Wont stick", null, null));
         update.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var body = await update.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Error.Should().Be("state_invalid");
@@ -233,7 +219,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         var draft = await CreateCourseAsync(AnaClient(), "NoChange");
 
         var noOp = await AnaClient().PutAsJsonAsync($"/api/courses/{draft.Id}",
-            new UpdateCourseRequest("NoChange", null, _categoryId, false));
+            new UpdateCourseRequest("NoChange", null, _categoryId));
         noOp.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 

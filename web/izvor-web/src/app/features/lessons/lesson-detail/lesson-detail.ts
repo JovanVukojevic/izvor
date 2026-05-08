@@ -251,9 +251,7 @@ export class LessonDetail {
         this.marking.set(false);
         const body = err.error as ErrorResponse | null | undefined;
         this.bannerSeverity.set('error');
-        if (err.status === 409 && body?.message === 'prerequisite_lesson_incomplete') {
-          this.banner.set('Complete the previous lessons in order before this one.');
-        } else if (err.status === 409 && body?.message === 'not_enrolled') {
+        if (err.status === 409 && body?.message === 'not_enrolled') {
           this.banner.set('You must enroll in this course before marking lessons complete.');
         } else if (err.status === 409 && body?.message === 'enrollment_not_active') {
           this.banner.set('Your enrollment is no longer active.');

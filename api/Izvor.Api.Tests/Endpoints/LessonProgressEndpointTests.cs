@@ -22,11 +22,6 @@ public sealed class LessonProgressEndpointTests : IAsyncLifetime
     private Guid _p1L3;
     private Guid _peraP1EnrollmentId;
 
-    private Guid _p2CourseId;
-    private Guid _p2L1;
-    private Guid _p2L2;
-    private Guid _p2L3;
-
     public LessonProgressEndpointTests(PostgresFixture postgres)
     {
         _postgres = postgres;
@@ -42,20 +37,11 @@ public sealed class LessonProgressEndpointTests : IAsyncLifetime
         catResp.EnsureSuccessStatusCode();
         _categoryId = (await catResp.Content.ReadFromJsonAsync<CategoryResponse>())!.Id;
 
-        // P1: non-sequential, 3 lessons.
         _p1CourseId = await CreateDraftCourseAsync("P1");
         _p1L1 = (await CreateLessonAsync(_p1CourseId, "L1", "a")).Id;
         _p1L2 = (await CreateLessonAsync(_p1CourseId, "L2", "b")).Id;
         _p1L3 = (await CreateLessonAsync(_p1CourseId, "L3", "c")).Id;
         await PublishCourseAsync(_p1CourseId);
-
-        // P2: sequential, 3 lessons.
-        _p2CourseId = await CreateDraftCourseAsync("P2");
-        await SetSequentialAsync(_p2CourseId, true);
-        _p2L1 = (await CreateLessonAsync(_p2CourseId, "L1", "a")).Id;
-        _p2L2 = (await CreateLessonAsync(_p2CourseId, "L2", "b")).Id;
-        _p2L3 = (await CreateLessonAsync(_p2CourseId, "L3", "c")).Id;
-        await PublishCourseAsync(_p2CourseId);
 
         var enr = await EnrollAsync(PeraClient(), _p1CourseId, TestIds.PeraUserId);
         _peraP1EnrollmentId = enr.Id;
@@ -115,27 +101,6 @@ public sealed class LessonProgressEndpointTests : IAsyncLifetime
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Error.Should().Be("state_invalid");
         body.Message.Should().Be("enrollment_cancelled");
-    }
-
-    [Fact] // LP5
-    public async Task Mark_lesson_complete_in_sequential_course_first_lesson_succeeds()
-    {
-        await EnrollAsync(PeraClient(), _p2CourseId, TestIds.PeraUserId);
-
-        var response = await PeraClient().PostAsync($"/api/lessons/{_p2L1}/complete", null);
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-    }
-
-    [Fact] // LP6
-    public async Task Mark_lesson_complete_in_sequential_course_skipping_returns_409()
-    {
-        await EnrollAsync(PeraClient(), _p2CourseId, TestIds.PeraUserId);
-
-        var response = await PeraClient().PostAsync($"/api/lessons/{_p2L3}/complete", null);
-        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-        body!.Error.Should().Be("state_invalid");
-        body.Message.Should().Be("prerequisite_lesson_incomplete");
     }
 
     [Fact] // LP7
@@ -280,16 +245,6 @@ public sealed class LessonProgressEndpointTests : IAsyncLifetime
     {
         var resp = await AnaClient().PostAsync($"/api/courses/{courseId}/publish", null);
         resp.EnsureSuccessStatusCode();
-    }
-
-    private async Task SetSequentialAsync(Guid courseId, bool sequential)
-    {
-        var get = await AnaClient().GetAsync($"/api/courses/{courseId}");
-        get.EnsureSuccessStatusCode();
-        var existing = (await get.Content.ReadFromJsonAsync<CourseResponse>())!;
-        var put = await AnaClient().PutAsJsonAsync($"/api/courses/{courseId}",
-            new UpdateCourseRequest(existing.Title, existing.Description, existing.CategoryId, sequential));
-        put.EnsureSuccessStatusCode();
     }
 
     private async Task<LessonResponse> CreateLessonAsync(Guid courseId, string title, string content)

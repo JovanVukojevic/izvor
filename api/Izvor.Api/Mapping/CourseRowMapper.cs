@@ -13,7 +13,6 @@ public static class CourseRowMapper
         var titleOrdinal = reader.GetOrdinal("title");
         var descOrdinal = reader.GetOrdinal("description");
         var statusOrdinal = reader.GetOrdinal("status");
-        var sequentialOrdinal = reader.GetOrdinal("sequential");
         var createdOrdinal = reader.GetOrdinal("created_at");
         var updatedOrdinal = reader.GetOrdinal("updated_at");
 
@@ -24,7 +23,6 @@ public static class CourseRowMapper
             Title: reader.GetString(titleOrdinal),
             Description: reader.IsDBNull(descOrdinal) ? null : reader.GetString(descOrdinal),
             Status: reader.GetString(statusOrdinal),
-            Sequential: reader.GetBoolean(sequentialOrdinal),
             CreatedAt: reader.GetDateTime(createdOrdinal),
             UpdatedAt: reader.GetDateTime(updatedOrdinal));
     }

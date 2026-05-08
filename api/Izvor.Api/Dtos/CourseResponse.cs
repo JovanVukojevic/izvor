@@ -7,6 +7,5 @@ public sealed record CourseResponse(
     string Title,
     string? Description,
     string Status,
-    bool Sequential,
     DateTime CreatedAt,
     DateTime UpdatedAt);
