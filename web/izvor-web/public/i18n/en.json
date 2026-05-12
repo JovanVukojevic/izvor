@@ -1,0 +1,291 @@
+{
+  "common": {
+    "actions": "Actions",
+    "back": "Back",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "create": "Create",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading…",
+    "no": "No",
+    "notFound": "Not found",
+    "save": "Save",
+    "yes": "Yes"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "browseCourses": "Browse Courses",
+    "myEnrollments": "My Enrollments",
+    "createCourse": "Create Course",
+    "manageCategories": "Manage Categories",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "cardHeader": "Welcome",
+    "welcome": "Welcome, {{email}}",
+    "roleLine": "Role: {{role}}",
+    "body": "Use the navigation above to browse courses, manage your enrollments, or — if you have permission — create courses and manage categories."
+  },
+  "role": {
+    "admin": "Admin",
+    "author": "Author",
+    "learner": "Learner"
+  },
+  "course": {
+    "list": {
+      "title": "Courses",
+      "new": "New Course",
+      "filterActivity": "Activity",
+      "filterCategory": "Category",
+      "anyCategory": "Any category",
+      "loading": "Loading courses…",
+      "empty": "No courses match the selected filters.",
+      "columnTitle": "Title",
+      "columnCategory": "Category"
+    },
+    "detail": {
+      "loading": "Loading course…",
+      "notFound": "Course not found",
+      "backToCourses": "Back to courses",
+      "categoryLabel": "Category:",
+      "authorLabel": "Author:",
+      "lessonsHeader": "Lessons",
+      "lessonsEmpty": "No lessons yet.",
+      "dragToReorder": "Drag to reorder",
+      "editCourse": "Edit Course",
+      "addLesson": "Add Lesson",
+      "enroll": "Enroll",
+      "cancelEnrollment": "Cancel Enrollment",
+      "viewEnrollments": "View Enrollments",
+      "viewStats": "View Stats"
+    },
+    "form": {
+      "headerEdit": "Edit Course",
+      "headerNew": "New Course",
+      "notFound": "Course not found",
+      "backToCourses": "Back to courses",
+      "loading": "Loading…",
+      "fieldTitle": "Title",
+      "fieldDescription": "Description",
+      "fieldCategory": "Category",
+      "selectCategoryPlaceholder": "Select a category",
+      "loadFailed": "Could not load form.",
+      "saveFailed": "Could not save course.",
+      "categoryGoneError": "Selected category no longer exists. Pick a different one."
+    },
+    "activity": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "all": "All"
+    },
+    "actions": {
+      "activate": {
+        "label": "Activate",
+        "confirmHeader": "Activate course",
+        "confirmMessage": "Make this course available to learners?",
+        "accept": "Activate",
+        "successSummary": "Course activated",
+        "noLessonsError": "Add at least one lesson before activating.",
+        "failedDetail": "Could not activate the course."
+      },
+      "deactivate": {
+        "label": "Deactivate",
+        "confirmHeader": "Deactivate course",
+        "confirmMessage": "Hide this course from learners? Existing enrollments are preserved.",
+        "accept": "Deactivate",
+        "successSummary": "Course deactivated",
+        "failedSummary": "Deactivate failed",
+        "failedDetail": "Could not deactivate the course."
+      },
+      "delete": {
+        "label": "Delete Course",
+        "confirmHeader": "Delete course",
+        "confirmMessage": "Delete \"{{title}}\" permanently? This cannot be undone. Courses with any enrollments cannot be deleted; deactivate them instead.",
+        "successSummary": "Course deleted",
+        "hasEnrollmentsError": "This course has enrollments and cannot be deleted. Deactivate it instead.",
+        "failedSummary": "Delete failed",
+        "failedDetail": "Could not delete the course."
+      },
+      "enroll": {
+        "successSummary": "Enrolled",
+        "alreadyActiveWarn": "You already have an active enrollment for this course. Refreshing…",
+        "inactiveWarn": "This course is no longer accepting enrollments.",
+        "failedDetail": "Could not enroll."
+      },
+      "create": {
+        "successSummary": "Course created"
+      },
+      "update": {
+        "successSummary": "Course updated"
+      }
+    },
+    "enrollments": {
+      "sectionHeader": "Enrollments",
+      "filterStatus": "Status",
+      "loading": "Loading enrollments…",
+      "empty": "No enrollments match this filter.",
+      "columnUser": "User",
+      "columnStatus": "Status",
+      "columnEnrolled": "Enrolled",
+      "columnCompleted": "Completed"
+    },
+    "stats": {
+      "sectionHeader": "Completion Stats",
+      "loading": "Loading stats…",
+      "totalEnrollments": "Total enrollments",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "avgProgress": "Avg progress (active)",
+      "forbiddenError": "You do not have permission to view stats for this course.",
+      "loadFailedError": "Could not load completion stats."
+    }
+  },
+  "lesson": {
+    "detail": {
+      "loading": "Loading lesson…",
+      "notFound": "Lesson not found",
+      "backToCourse": "Back to course",
+      "positionFormat": "Lesson {{position}}",
+      "completedBadge": "Completed",
+      "noContent": "(no content)",
+      "markComplete": "Mark Complete",
+      "edit": "Edit Lesson",
+      "delete": "Delete Lesson",
+      "courseCompletedBanner": "Course completed! All lessons marked complete.",
+      "notEnrolledError": "You must enroll in this course before marking lessons complete.",
+      "enrollmentInactiveError": "Your enrollment is no longer active.",
+      "markFailedError": "Could not mark this lesson complete.",
+      "hasProgressError": "This lesson has been completed by at least one learner and cannot be deleted."
+    },
+    "form": {
+      "headerEdit": "Edit Lesson",
+      "headerNew": "New Lesson",
+      "notFound": "Not found",
+      "backToCourse": "Back to course",
+      "loading": "Loading…",
+      "fieldTitle": "Title",
+      "fieldContent": "Content",
+      "positionLabel": "Position:",
+      "positionHint": "(use the up/down controls on the course page to reorder)",
+      "loadFailed": "Could not load form.",
+      "saveFailed": "Could not save the lesson."
+    },
+    "actions": {
+      "delete": {
+        "confirmHeader": "Delete lesson",
+        "confirmMessage": "Delete \"{{title}}\"? Lessons that any learner has marked complete cannot be deleted.",
+        "successSummary": "Lesson deleted",
+        "failedSummary": "Delete failed",
+        "failedDetail": "Could not delete the lesson.",
+        "reorderFailedSummary": "Reorder failed",
+        "reorderFailedDetail": "Could not reorder the lesson."
+      },
+      "markComplete": {
+        "successSummary": "Lesson marked complete",
+        "courseCompletedSummary": "Course completed"
+      },
+      "create": {
+        "successSummary": "Lesson created"
+      },
+      "update": {
+        "successSummary": "Lesson updated"
+      }
+    }
+  },
+  "enrollment": {
+    "list": {
+      "title": "My Enrollments",
+      "filterStatus": "Status",
+      "loading": "Loading enrollments…",
+      "empty": "You have no enrollments matching this filter.",
+      "columnCourse": "Course",
+      "columnStatus": "Status",
+      "columnEnrolled": "Enrolled",
+      "columnCompleted": "Completed"
+    },
+    "status": {
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "all": "Any"
+    },
+    "cancel": {
+      "label": "Cancel",
+      "confirmHeader": "Cancel enrollment",
+      "confirmMessageMy": "Cancel enrollment for \"{{title}}\"?",
+      "confirmMessageCourseDetail": "Cancel your enrollment? Your progress will be preserved but you will need to re-enroll to continue.",
+      "accept": "Cancel enrollment",
+      "rejectMy": "Keep",
+      "rejectCourseDetail": "Keep enrollment",
+      "successSummary": "Enrollment cancelled",
+      "alreadyInactiveSummary": "Already inactive",
+      "failedSummary": "Cancel failed",
+      "failedDetail": "Could not cancel the enrollment."
+    }
+  },
+  "category": {
+    "list": {
+      "title": "Categories",
+      "new": "New Category",
+      "loading": "Loading categories…",
+      "empty": "No categories yet. Click \"New Category\" to create one.",
+      "columnName": "Name",
+      "columnDescription": "Description",
+      "columnCreated": "Created"
+    },
+    "form": {
+      "headerEdit": "Edit Category",
+      "headerNew": "New Category",
+      "notFound": "Category not found",
+      "backToCategories": "Back to categories",
+      "loading": "Loading…",
+      "fieldName": "Name",
+      "fieldDescription": "Description",
+      "loadFailed": "Could not load category.",
+      "saveFailed": "Could not save category."
+    },
+    "actions": {
+      "delete": {
+        "confirmHeader": "Delete category",
+        "confirmMessage": "Delete \"{{name}}\"? This cannot be undone.",
+        "successSummary": "Category deleted",
+        "failedSummary": "Delete failed",
+        "inUseError": "Cannot delete this category — it may be in use by courses.",
+        "failedDetail": "Could not delete the category."
+      },
+      "create": {
+        "successSummary": "Category created"
+      },
+      "update": {
+        "successSummary": "Category updated"
+      }
+    }
+  },
+  "locale": {
+    "switcher": {
+      "en": "English",
+      "srLatn": "Srpski (latinica)",
+      "srCyrl": "Српски (ћирилица)"
+    }
+  },
+  "login": {
+    "title": "Login",
+    "email": {
+      "label": "Email",
+      "required": "Email is required",
+      "invalid": "Enter a valid email address"
+    },
+    "password": {
+      "label": "Password",
+      "required": "Password is required"
+    },
+    "submit": "Sign in",
+    "errors": {
+      "tenantContext": "This URL is not a tenant subdomain. Use https://<your-tenant>.izvor.lvh.me:4200/login",
+      "invalidCredentials": "Invalid email or password",
+      "unavailable": "Login service is unavailable. Please try again later."
+    }
+  }
+}

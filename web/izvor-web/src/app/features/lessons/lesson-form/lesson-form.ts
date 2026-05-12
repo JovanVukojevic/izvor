@@ -12,6 +12,7 @@ import { Textarea } from 'primeng/textarea';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { MessageService } from 'primeng/api';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { LessonService } from '../../../core/api/services/lesson.service';
 import { CourseService } from '../../../core/api/services/course.service';
@@ -22,15 +23,15 @@ import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'izvor-lesson-form',
-  imports: [ReactiveFormsModule, Card, InputText, Textarea, Button, Message, RouterLink],
+  imports: [ReactiveFormsModule, Card, InputText, Textarea, Button, Message, RouterLink, TranslateModule],
   template: `
     <div class="form-page">
-      <p-card [header]="isEdit() ? 'Edit Lesson' : 'New Lesson'">
+      <p-card [header]="(isEdit() ? 'lesson.form.headerEdit' : 'lesson.form.headerNew') | translate">
         @if (notFound()) {
-          <p-message severity="error" text="Not found" />
-          <p><a [routerLink]="['/courses', courseId()]">Back to course</a></p>
+          <p-message severity="error" [text]="'lesson.form.notFound' | translate" />
+          <p><a [routerLink]="['/courses', courseId()]">{{ 'lesson.form.backToCourse' | translate }}</a></p>
         } @else if (isLoading()) {
-          <p>Loading…</p>
+          <p>{{ 'lesson.form.loading' | translate }}</p>
         } @else {
           @if (errorMessage(); as msg) {
             <p-message severity="error" [text]="msg" styleClass="form-message" />
@@ -38,7 +39,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form">
             <div class="field">
-              <label for="title">Title</label>
+              <label for="title">{{ 'lesson.form.fieldTitle' | translate }}</label>
               <input pInputText id="title" formControlName="title" maxlength="200" fluid />
               @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
                 <small class="error">Title is required</small>
@@ -46,11 +47,11 @@ import { AuthService } from '../../../core/auth/auth.service';
             </div>
 
             @if (isEdit() && lesson(); as l) {
-              <div class="field-meta">Position: {{ l.position }} (use the up/down controls on the course page to reorder)</div>
+              <div class="field-meta">{{ 'lesson.form.positionLabel' | translate }} {{ l.position }} {{ 'lesson.form.positionHint' | translate }}</div>
             }
 
             <div class="field">
-              <label for="content">Content</label>
+              <label for="content">{{ 'lesson.form.fieldContent' | translate }}</label>
               <textarea
                 pTextarea
                 id="content"
@@ -63,13 +64,13 @@ import { AuthService } from '../../../core/auth/auth.service';
             <div class="actions">
               <p-button
                 type="submit"
-                [label]="isEdit() ? 'Save' : 'Create'"
+                [label]="(isEdit() ? 'common.save' : 'common.create') | translate"
                 [disabled]="form.invalid || saving()"
                 [loading]="saving()"
               />
               <p-button
                 type="button"
-                label="Cancel"
+                [label]="'common.cancel' | translate"
                 severity="secondary"
                 [text]="true"
                 (onClick)="cancel()"
@@ -100,6 +101,7 @@ export class LessonForm {
   private readonly auth = inject(AuthService);
   private readonly messages = inject(MessageService);
   private readonly titleService = inject(Title);
+  private readonly translate = inject(TranslateService);
 
   readonly courseId = signal<string>('');
   readonly lessonId = signal<string | null>(null);
@@ -168,7 +170,7 @@ export class LessonForm {
           this.notFound.set(true);
           this.titleService.setTitle('Not Found · Izvor');
         } else {
-          this.errorMessage.set('Could not load form.');
+          this.errorMessage.set(this.translate.instant('lesson.form.loadFailed'));
         }
       }
     });
@@ -204,7 +206,7 @@ export class LessonForm {
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({
           next: () => {
-            this.messages.add({ severity: 'success', summary: 'Lesson updated' });
+            this.messages.add({ severity: 'success', summary: this.translate.instant('lesson.actions.update.successSummary') });
             this.router.navigate(['/courses', this.courseId(), 'lessons', lid]);
           },
           error: (err: HttpErrorResponse) => this.handleError(err)
@@ -215,7 +217,7 @@ export class LessonForm {
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({
           next: () => {
-            this.messages.add({ severity: 'success', summary: 'Lesson created' });
+            this.messages.add({ severity: 'success', summary: this.translate.instant('lesson.actions.create.successSummary') });
             this.router.navigate(['/courses', this.courseId()]);
           },
           error: (err: HttpErrorResponse) => this.handleError(err)
@@ -229,6 +231,6 @@ export class LessonForm {
       this.notFound.set(true);
       return;
     }
-    this.errorMessage.set(body?.message ?? 'Could not save the lesson.');
+    this.errorMessage.set(body?.message ?? this.translate.instant('lesson.form.saveFailed'));
   }
 }

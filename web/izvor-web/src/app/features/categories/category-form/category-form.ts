@@ -10,21 +10,22 @@ import { Textarea } from 'primeng/textarea';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { MessageService } from 'primeng/api';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { CategoryService } from '../../../core/api/services/category.service';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
 
 @Component({
   selector: 'izvor-category-form',
-  imports: [ReactiveFormsModule, Card, InputText, Textarea, Button, Message, RouterLink],
+  imports: [ReactiveFormsModule, Card, InputText, Textarea, Button, Message, RouterLink, TranslateModule],
   template: `
     <div class="form-page">
-      <p-card [header]="isEdit() ? 'Edit Category' : 'New Category'">
+      <p-card [header]="(isEdit() ? 'category.form.headerEdit' : 'category.form.headerNew') | translate">
         @if (notFound()) {
-          <p-message severity="error" text="Category not found" />
-          <p><a routerLink="/categories">Back to categories</a></p>
+          <p-message severity="error" [text]="'category.form.notFound' | translate" />
+          <p><a routerLink="/categories">{{ 'category.form.backToCategories' | translate }}</a></p>
         } @else if (isLoading()) {
-          <p>Loading…</p>
+          <p>{{ 'category.form.loading' | translate }}</p>
         } @else {
           @if (errorMessage(); as msg) {
             <p-message severity="error" [text]="msg" styleClass="form-message" />
@@ -32,7 +33,7 @@ import { ErrorResponse } from '../../../core/api/models/error-response.model';
 
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form">
             <div class="field">
-              <label for="name">Name</label>
+              <label for="name">{{ 'category.form.fieldName' | translate }}</label>
               <input pInputText id="name" formControlName="name" maxlength="200" fluid />
               @if (form.controls.name.touched && form.controls.name.invalid) {
                 <small class="error">
@@ -46,7 +47,7 @@ import { ErrorResponse } from '../../../core/api/models/error-response.model';
             </div>
 
             <div class="field">
-              <label for="description">Description</label>
+              <label for="description">{{ 'category.form.fieldDescription' | translate }}</label>
               <textarea
                 pTextarea
                 id="description"
@@ -59,13 +60,13 @@ import { ErrorResponse } from '../../../core/api/models/error-response.model';
             <div class="actions">
               <p-button
                 type="submit"
-                [label]="isEdit() ? 'Save' : 'Create'"
+                [label]="(isEdit() ? 'common.save' : 'common.create') | translate"
                 [disabled]="form.invalid || saving()"
                 [loading]="saving()"
               />
               <p-button
                 type="button"
-                label="Cancel"
+                [label]="'common.cancel' | translate"
                 severity="secondary"
                 [text]="true"
                 routerLink="/categories"
@@ -92,6 +93,7 @@ export class CategoryForm {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly messages = inject(MessageService);
+  private readonly translate = inject(TranslateService);
 
   readonly id = signal<string | null>(null);
   readonly isLoading = signal(false);
@@ -137,7 +139,7 @@ export class CategoryForm {
         if (err.status === 404) {
           this.notFound.set(true);
         } else {
-          this.errorMessage.set('Could not load category.');
+          this.errorMessage.set(this.translate.instant('category.form.loadFailed'));
         }
       }
     });
@@ -159,9 +161,11 @@ export class CategoryForm {
     this.errorMessage.set(null);
 
     const id = this.id();
-    const summary = id !== null ? 'Category updated' : 'Category created';
+    const summaryKey = id !== null
+      ? 'category.actions.update.successSummary'
+      : 'category.actions.create.successSummary';
     const onSuccess = () => {
-      this.messages.add({ severity: 'success', summary });
+      this.messages.add({ severity: 'success', summary: this.translate.instant(summaryKey) });
       this.router.navigate(['/categories']);
     };
     const onError = (err: HttpErrorResponse) => this.handleError(err);
@@ -188,6 +192,6 @@ export class CategoryForm {
       this.notFound.set(true);
       return;
     }
-    this.errorMessage.set(body?.message ?? 'Could not save category.');
+    this.errorMessage.set(body?.message ?? this.translate.instant('category.form.saveFailed'));
   }
 }

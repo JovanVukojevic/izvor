@@ -9,23 +9,29 @@ import { InputText } from 'primeng/inputtext';
 import { Password } from 'primeng/password';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { TenantContextService } from '../../core/tenant-context';
+import { LocaleSwitcher } from '../../core/i18n/locale-switcher/locale-switcher';
 
 @Component({
   selector: 'izvor-login',
-  imports: [ReactiveFormsModule, Card, InputText, Password, Button, Message],
+  imports: [ReactiveFormsModule, Card, InputText, Password, Button, Message, TranslateModule, LocaleSwitcher],
   template: `
     <div class="login-page">
-      <p-card header="Login" styleClass="login-card">
-        @if (errorMessage(); as message) {
-          <p-message severity="error" [text]="message" styleClass="login-message" />
+      <p-card [header]="'login.title' | translate" styleClass="login-card">
+        <div class="login-locale">
+          <izvor-locale-switcher size="small" />
+        </div>
+
+        @if (errorKey(); as key) {
+          <p-message severity="error" [text]="key | translate" styleClass="login-message" />
         }
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form">
           <div class="login-field">
-            <label for="email">Email</label>
+            <label for="email">{{ 'login.email.label' | translate }}</label>
             <input
               pInputText
               id="email"
@@ -37,16 +43,16 @@ import { TenantContextService } from '../../core/tenant-context';
             @if (form.controls.email.touched && form.controls.email.invalid) {
               <small class="login-error">
                 @if (form.controls.email.errors?.['required']) {
-                  Email is required
+                  {{ 'login.email.required' | translate }}
                 } @else if (form.controls.email.errors?.['email']) {
-                  Enter a valid email address
+                  {{ 'login.email.invalid' | translate }}
                 }
               </small>
             }
           </div>
 
           <div class="login-field">
-            <label for="password">Password</label>
+            <label for="password">{{ 'login.password.label' | translate }}</label>
             <p-password
               inputId="password"
               formControlName="password"
@@ -55,13 +61,13 @@ import { TenantContextService } from '../../core/tenant-context';
               fluid
             />
             @if (form.controls.password.touched && form.controls.password.invalid) {
-              <small class="login-error">Password is required</small>
+              <small class="login-error">{{ 'login.password.required' | translate }}</small>
             }
           </div>
 
           <p-button
             type="submit"
-            label="Sign in"
+            [label]="'login.submit' | translate"
             [disabled]="form.invalid || loading()"
             [loading]="loading()"
             styleClass="login-submit"
@@ -83,6 +89,16 @@ import { TenantContextService } from '../../core/tenant-context';
     :host ::ng-deep .login-card {
       width: 100%;
       max-width: 400px;
+    }
+
+    .login-locale {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    :host ::ng-deep .login-locale .p-selectbutton {
+      flex-wrap: wrap;
     }
 
     .login-form {
@@ -123,7 +139,7 @@ export class Login {
   private readonly tenantContext = inject(TenantContextService);
 
   readonly loading = signal(false);
-  readonly errorMessage = signal<string | null>(null);
+  readonly errorKey = signal<string | null>(null);
 
   readonly form = new FormGroup({
     email: new FormControl<string>('', {
@@ -143,14 +159,12 @@ export class Login {
     }
 
     if (!this.tenantContext.isTenantContext) {
-      this.errorMessage.set(
-        'This URL is not a tenant subdomain. Use https://<your-tenant>.izvor.lvh.me:4200/login'
-      );
+      this.errorKey.set('login.errors.tenantContext');
       return;
     }
 
     this.loading.set(true);
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
 
     this.authService
       .login(this.form.getRawValue())
@@ -160,17 +174,15 @@ export class Login {
           this.router.navigate(['/dashboard']);
         },
         error: (err: unknown) => {
-          this.errorMessage.set(this.mapError(err));
+          this.errorKey.set(this.mapErrorKey(err));
         }
       });
   }
 
-  private mapError(err: unknown): string {
-    if (err instanceof HttpErrorResponse) {
-      if (err.status >= 400 && err.status < 500) {
-        return 'Invalid email or password';
-      }
+  private mapErrorKey(err: unknown): string {
+    if (err instanceof HttpErrorResponse && err.status >= 400 && err.status < 500) {
+      return 'login.errors.invalidCredentials';
     }
-    return 'Login service is unavailable. Please try again later.';
+    return 'login.errors.unavailable';
   }
 }

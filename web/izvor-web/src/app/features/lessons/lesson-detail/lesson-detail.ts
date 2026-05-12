@@ -10,6 +10,7 @@ import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { Tag } from 'primeng/tag';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { LessonService } from '../../../core/api/services/lesson.service';
 import { CourseService } from '../../../core/api/services/course.service';
@@ -22,24 +23,24 @@ import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
   selector: 'izvor-lesson-detail',
-  imports: [Button, Message, Tag, RouterLink],
+  imports: [Button, Message, Tag, RouterLink, TranslateModule],
   template: `
     <div class="page">
       @if (isLoading()) {
-        <p>Loading lesson…</p>
+        <p>{{ 'lesson.detail.loading' | translate }}</p>
       } @else if (notFound()) {
-        <p-message severity="error" text="Lesson not found" />
-        <p><a [routerLink]="['/courses', courseId()]">Back to course</a></p>
+        <p-message severity="error" [text]="'lesson.detail.notFound' | translate" />
+        <p><a [routerLink]="['/courses', courseId()]">{{ 'lesson.detail.backToCourse' | translate }}</a></p>
       } @else if (lesson(); as l) {
         <p class="breadcrumb">
-          <a [routerLink]="['/courses', courseId()]">← {{ course()?.title ?? 'Course' }}</a>
+          <a [routerLink]="['/courses', courseId()]">← {{ course()?.title }}</a>
         </p>
 
         <header class="lesson-header">
           <h1>{{ l.title }}</h1>
-          <span class="position">Lesson {{ l.position }}</span>
+          <span class="position">{{ 'lesson.detail.positionFormat' | translate: { position: l.position } }}</span>
           @if (alreadyComplete()) {
-            <p-tag value="completed" severity="success" />
+            <p-tag [value]="'lesson.detail.completedBadge' | translate" severity="success" />
           }
         </header>
 
@@ -51,23 +52,23 @@ import { AuthService } from '../../../core/auth/auth.service';
           @if (l.content) {
             <div class="content" [innerHTML]="renderedContent()"></div>
           } @else {
-            <p class="content empty">(no content)</p>
+            <p class="content empty">{{ 'lesson.detail.noContent' | translate }}</p>
           }
         </article>
 
         <section class="actions">
           @if (canMarkComplete()) {
             <p-button
-              label="Mark Complete"
+              [label]="'lesson.detail.markComplete' | translate"
               icon="pi pi-check"
               [loading]="marking()"
               (onClick)="markComplete()"
             />
           }
           @if (canEdit()) {
-            <p-button label="Edit Lesson" icon="pi pi-pencil" severity="secondary"
+            <p-button [label]="'lesson.detail.edit' | translate" icon="pi pi-pencil" severity="secondary"
               [routerLink]="['/courses', courseId(), 'lessons', l.id, 'edit']" />
-            <p-button label="Delete Lesson" icon="pi pi-trash" severity="danger" [text]="true"
+            <p-button [label]="'lesson.detail.delete' | translate" icon="pi pi-trash" severity="danger" [text]="true"
               (onClick)="confirmDelete()" />
           }
         </section>
@@ -133,6 +134,7 @@ export class LessonDetail {
   private readonly messages = inject(MessageService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly titleService = inject(Title);
+  private readonly translate = inject(TranslateService);
 
   readonly courseId = signal<string>('');
   readonly lessonId = signal<string>('');
@@ -238,10 +240,10 @@ export class LessonDetail {
             });
             if (refreshed.status === 'completed') {
               this.bannerSeverity.set('success');
-              this.banner.set('Course completed! All lessons marked complete.');
-              this.messages.add({ severity: 'success', summary: 'Course completed' });
+              this.banner.set(this.translate.instant('lesson.detail.courseCompletedBanner'));
+              this.messages.add({ severity: 'success', summary: this.translate.instant('lesson.actions.markComplete.courseCompletedSummary') });
             } else {
-              this.messages.add({ severity: 'success', summary: 'Lesson marked complete' });
+              this.messages.add({ severity: 'success', summary: this.translate.instant('lesson.actions.markComplete.successSummary') });
             }
           }
         });
@@ -251,12 +253,12 @@ export class LessonDetail {
         const body = err.error as ErrorResponse | null | undefined;
         this.bannerSeverity.set('error');
         if (err.status === 409 && body?.message === 'not_enrolled') {
-          this.banner.set('You must enroll in this course before marking lessons complete.');
+          this.banner.set(this.translate.instant('lesson.detail.notEnrolledError'));
         } else if (err.status === 409 && body?.message === 'enrollment_not_active') {
-          this.banner.set('Your enrollment is no longer active.');
+          this.banner.set(this.translate.instant('lesson.detail.enrollmentInactiveError'));
           this.refreshEnrollment();
         } else {
-          this.banner.set(body?.message ?? 'Could not mark this lesson complete.');
+          this.banner.set(body?.message ?? this.translate.instant('lesson.detail.markFailedError'));
         }
       }
     });
@@ -274,12 +276,12 @@ export class LessonDetail {
     const l = this.lesson();
     if (!l) return;
     this.confirm.confirm({
-      header: 'Delete lesson',
-      message: `Delete "${l.title}"? Lessons that any learner has marked complete cannot be deleted.`,
+      header: this.translate.instant('lesson.actions.delete.confirmHeader'),
+      message: this.translate.instant('lesson.actions.delete.confirmMessage', { title: l.title }),
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Delete',
+      acceptLabel: this.translate.instant('common.delete'),
       acceptButtonStyleClass: 'p-button-danger',
-      rejectLabel: 'Cancel',
+      rejectLabel: this.translate.instant('common.cancel'),
       accept: () => this.delete()
     });
   }
@@ -289,20 +291,20 @@ export class LessonDetail {
     this.banner.set(null);
     this.lessonService.deleteLesson(lid).subscribe({
       next: () => {
-        this.messages.add({ severity: 'success', summary: 'Lesson deleted' });
+        this.messages.add({ severity: 'success', summary: this.translate.instant('lesson.actions.delete.successSummary') });
         this.router.navigate(['/courses', this.courseId()]);
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null | undefined;
         if (err.status === 409 && body?.message === 'lesson_has_progress') {
           this.bannerSeverity.set('error');
-          this.banner.set('This lesson has been completed by at least one learner and cannot be deleted.');
+          this.banner.set(this.translate.instant('lesson.detail.hasProgressError'));
           return;
         }
         this.messages.add({
           severity: 'error',
-          summary: 'Delete failed',
-          detail: body?.message ?? 'Could not delete the lesson.'
+          summary: this.translate.instant('lesson.actions.delete.failedSummary'),
+          detail: body?.message ?? this.translate.instant('lesson.actions.delete.failedDetail')
         });
       }
     });

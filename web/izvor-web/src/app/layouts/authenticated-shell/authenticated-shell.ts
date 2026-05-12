@@ -2,13 +2,16 @@ import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { Button } from 'primeng/button';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { RequiresRoleDirective } from '../../core/auth/role.directive';
+import { LocaleSwitcher } from '../../core/i18n/locale-switcher/locale-switcher';
+import { RoleLabelPipe } from '../../core/i18n/role-label.pipe';
 
 @Component({
   selector: 'izvor-authenticated-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Button, RequiresRoleDirective],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Button, RequiresRoleDirective, TranslateModule, LocaleSwitcher, RoleLabelPipe],
   template: `
     <div class="shell">
       <header class="shell-topbar">
@@ -20,18 +23,19 @@ import { RequiresRoleDirective } from '../../core/auth/role.directive';
         </div>
 
         <nav class="shell-nav">
-          <a routerLink="/dashboard" routerLinkActive="shell-nav-active">Dashboard</a>
-          <a routerLink="/courses" routerLinkActive="shell-nav-active">Browse Courses</a>
-          <a routerLink="/my-enrollments" routerLinkActive="shell-nav-active">My Enrollments</a>
-          <a *izvorRequiresRole="'author'" routerLink="/courses/new" routerLinkActive="shell-nav-active">Create Course</a>
-          <a *izvorRequiresRole="'admin'" routerLink="/categories" routerLinkActive="shell-nav-active">Manage Categories</a>
+          <a routerLink="/dashboard" routerLinkActive="shell-nav-active">{{ 'nav.dashboard' | translate }}</a>
+          <a routerLink="/courses" routerLinkActive="shell-nav-active">{{ 'nav.browseCourses' | translate }}</a>
+          <a routerLink="/my-enrollments" routerLinkActive="shell-nav-active">{{ 'nav.myEnrollments' | translate }}</a>
+          <a *izvorRequiresRole="'author'" routerLink="/courses/new" routerLinkActive="shell-nav-active">{{ 'nav.createCourse' | translate }}</a>
+          <a *izvorRequiresRole="'admin'" routerLink="/categories" routerLinkActive="shell-nav-active">{{ 'nav.manageCategories' | translate }}</a>
         </nav>
 
         <div class="shell-user">
+          <izvor-locale-switcher size="small" />
           @if (user(); as u) {
-            <span class="shell-user-meta">{{ u.email }} · {{ u.role }}</span>
+            <span class="shell-user-meta">{{ u.email }} · {{ u.role | roleLabel }}</span>
           }
-          <p-button label="Logout" severity="secondary" size="small" (onClick)="onLogout()" />
+          <p-button [label]="'nav.logout' | translate" severity="secondary" size="small" (onClick)="onLogout()" />
         </div>
       </header>
 

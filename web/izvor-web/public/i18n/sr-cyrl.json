@@ -1,0 +1,291 @@
+{
+  "common": {
+    "actions": "Акције",
+    "back": "Назад",
+    "cancel": "Откажи",
+    "confirm": "Потврди",
+    "create": "Креирај",
+    "delete": "Обриши",
+    "edit": "Измени",
+    "loading": "Учитавање…",
+    "no": "Не",
+    "notFound": "Није пронађено",
+    "save": "Сачувај",
+    "yes": "Да"
+  },
+  "nav": {
+    "dashboard": "Почетна",
+    "browseCourses": "Преглед курсева",
+    "myEnrollments": "Моји уписи",
+    "createCourse": "Нови курс",
+    "manageCategories": "Категорије",
+    "logout": "Одјава"
+  },
+  "dashboard": {
+    "cardHeader": "Добродошли",
+    "welcome": "Добродошли, {{email}}",
+    "roleLine": "Улога: {{role}}",
+    "body": "Користите навигацију изнад да прегледате курсеве, управљате својим уписима или — ако имате дозволу — креирате курсеве и управљате категоријама."
+  },
+  "role": {
+    "admin": "Администратор",
+    "author": "Аутор",
+    "learner": "Ученик"
+  },
+  "course": {
+    "list": {
+      "title": "Курсеви",
+      "new": "Нови курс",
+      "filterActivity": "Активност",
+      "filterCategory": "Категорија",
+      "anyCategory": "Било која категорија",
+      "loading": "Учитавање курсева…",
+      "empty": "Нема курсева који одговарају изабраним филтерима.",
+      "columnTitle": "Наслов",
+      "columnCategory": "Категорија"
+    },
+    "detail": {
+      "loading": "Учитавање курса…",
+      "notFound": "Курс није пронађен",
+      "backToCourses": "Назад на курсеве",
+      "categoryLabel": "Категорија:",
+      "authorLabel": "Аутор:",
+      "lessonsHeader": "Лекције",
+      "lessonsEmpty": "Још нема лекција.",
+      "dragToReorder": "Превуците за промену редоследа",
+      "editCourse": "Измени курс",
+      "addLesson": "Додај лекцију",
+      "enroll": "Упиши се",
+      "cancelEnrollment": "Откажи упис",
+      "viewEnrollments": "Преглед уписа",
+      "viewStats": "Статистика"
+    },
+    "form": {
+      "headerEdit": "Измена курса",
+      "headerNew": "Нови курс",
+      "notFound": "Курс није пронађен",
+      "backToCourses": "Назад на курсеве",
+      "loading": "Учитавање…",
+      "fieldTitle": "Наслов",
+      "fieldDescription": "Опис",
+      "fieldCategory": "Категорија",
+      "selectCategoryPlaceholder": "Изаберите категорију",
+      "loadFailed": "Неуспешно учитавање форме.",
+      "saveFailed": "Неуспешно чување курса.",
+      "categoryGoneError": "Изабрана категорија више не постоји. Изаберите другу."
+    },
+    "activity": {
+      "active": "Активан",
+      "inactive": "Неактиван",
+      "all": "Сви"
+    },
+    "actions": {
+      "activate": {
+        "label": "Активирај",
+        "confirmHeader": "Активирање курса",
+        "confirmMessage": "Учинити овај курс доступним ученицима?",
+        "accept": "Активирај",
+        "successSummary": "Курс активиран",
+        "noLessonsError": "Додајте бар једну лекцију пре активирања.",
+        "failedDetail": "Неуспешно активирање курса."
+      },
+      "deactivate": {
+        "label": "Деактивирај",
+        "confirmHeader": "Деактивирање курса",
+        "confirmMessage": "Сакрити овај курс од ученика? Постојећи уписи биће сачувани.",
+        "accept": "Деактивирај",
+        "successSummary": "Курс деактивиран",
+        "failedSummary": "Неуспешна деактивација",
+        "failedDetail": "Неуспешна деактивација курса."
+      },
+      "delete": {
+        "label": "Обриши курс",
+        "confirmHeader": "Брисање курса",
+        "confirmMessage": "Обрисати „{{title}}“ трајно? Ова операција не може бити поништена. Курсеви са уписима не могу бити обрисани; уместо тога их деактивирајте.",
+        "successSummary": "Курс обрисан",
+        "hasEnrollmentsError": "Овај курс има уписе и не може бити обрисан. Уместо тога га деактивирајте.",
+        "failedSummary": "Неуспешно брисање",
+        "failedDetail": "Неуспешно брисање курса."
+      },
+      "enroll": {
+        "successSummary": "Уписани сте",
+        "alreadyActiveWarn": "Већ имате активан упис за овај курс. Освежавање…",
+        "inactiveWarn": "Овај курс више не прихвата уписе.",
+        "failedDetail": "Неуспешан упис."
+      },
+      "create": {
+        "successSummary": "Курс креиран"
+      },
+      "update": {
+        "successSummary": "Курс ажуриран"
+      }
+    },
+    "enrollments": {
+      "sectionHeader": "Уписи",
+      "filterStatus": "Статус",
+      "loading": "Учитавање уписа…",
+      "empty": "Нема уписа који одговарају овом филтеру.",
+      "columnUser": "Корисник",
+      "columnStatus": "Статус",
+      "columnEnrolled": "Уписан",
+      "columnCompleted": "Завршен"
+    },
+    "stats": {
+      "sectionHeader": "Статистика завршавања",
+      "loading": "Учитавање статистике…",
+      "totalEnrollments": "Укупно уписа",
+      "active": "Активни",
+      "completed": "Завршени",
+      "cancelled": "Отказани",
+      "avgProgress": "Просечан напредак (активни)",
+      "forbiddenError": "Немате дозволу за преглед статистике овог курса.",
+      "loadFailedError": "Неуспешно учитавање статистике."
+    }
+  },
+  "lesson": {
+    "detail": {
+      "loading": "Учитавање лекције…",
+      "notFound": "Лекција није пронађена",
+      "backToCourse": "Назад на курс",
+      "positionFormat": "Лекција {{position}}",
+      "completedBadge": "Завршена",
+      "noContent": "(без садржаја)",
+      "markComplete": "Означи као завршену",
+      "edit": "Измени лекцију",
+      "delete": "Обриши лекцију",
+      "courseCompletedBanner": "Курс је завршен! Све лекције су означене као завршене.",
+      "notEnrolledError": "Морате се уписати на овај курс пре него што означите лекције као завршене.",
+      "enrollmentInactiveError": "Ваш упис више није активан.",
+      "markFailedError": "Неуспешно означавање лекције као завршене.",
+      "hasProgressError": "Ову лекцију је бар један ученик означио као завршену и не може бити обрисана."
+    },
+    "form": {
+      "headerEdit": "Измена лекције",
+      "headerNew": "Нова лекција",
+      "notFound": "Није пронађено",
+      "backToCourse": "Назад на курс",
+      "loading": "Учитавање…",
+      "fieldTitle": "Наслов",
+      "fieldContent": "Садржај",
+      "positionLabel": "Позиција:",
+      "positionHint": "(за промену редоследа користите контроле на страници курса)",
+      "loadFailed": "Неуспешно учитавање форме.",
+      "saveFailed": "Неуспешно чување лекције."
+    },
+    "actions": {
+      "delete": {
+        "confirmHeader": "Брисање лекције",
+        "confirmMessage": "Обрисати „{{title}}“? Лекције које је бар један ученик означио као завршене не могу бити обрисане.",
+        "successSummary": "Лекција обрисана",
+        "failedSummary": "Неуспешно брисање",
+        "failedDetail": "Неуспешно брисање лекције.",
+        "reorderFailedSummary": "Неуспешна промена редоследа",
+        "reorderFailedDetail": "Неуспешна промена редоследа лекције."
+      },
+      "markComplete": {
+        "successSummary": "Лекција означена као завршена",
+        "courseCompletedSummary": "Курс завршен"
+      },
+      "create": {
+        "successSummary": "Лекција креирана"
+      },
+      "update": {
+        "successSummary": "Лекција ажурирана"
+      }
+    }
+  },
+  "enrollment": {
+    "list": {
+      "title": "Моји уписи",
+      "filterStatus": "Статус",
+      "loading": "Учитавање уписа…",
+      "empty": "Немате уписа који одговарају овом филтеру.",
+      "columnCourse": "Курс",
+      "columnStatus": "Статус",
+      "columnEnrolled": "Уписан",
+      "columnCompleted": "Завршен"
+    },
+    "status": {
+      "active": "Активан",
+      "completed": "Завршен",
+      "cancelled": "Отказан",
+      "all": "Било који"
+    },
+    "cancel": {
+      "label": "Откажи",
+      "confirmHeader": "Отказивање уписа",
+      "confirmMessageMy": "Отказати упис за „{{title}}“?",
+      "confirmMessageCourseDetail": "Отказати ваш упис? Ваш напредак биће сачуван, али морате се поново уписати да наставите.",
+      "accept": "Откажи упис",
+      "rejectMy": "Задржи",
+      "rejectCourseDetail": "Задржи упис",
+      "successSummary": "Упис отказан",
+      "alreadyInactiveSummary": "Већ неактивно",
+      "failedSummary": "Неуспешно отказивање",
+      "failedDetail": "Неуспешно отказивање уписа."
+    }
+  },
+  "category": {
+    "list": {
+      "title": "Категорије",
+      "new": "Нова категорија",
+      "loading": "Учитавање категорија…",
+      "empty": "Још нема категорија. Кликните „Нова категорија“ да креирате.",
+      "columnName": "Назив",
+      "columnDescription": "Опис",
+      "columnCreated": "Креирано"
+    },
+    "form": {
+      "headerEdit": "Измена категорије",
+      "headerNew": "Нова категорија",
+      "notFound": "Категорија није пронађена",
+      "backToCategories": "Назад на категорије",
+      "loading": "Учитавање…",
+      "fieldName": "Назив",
+      "fieldDescription": "Опис",
+      "loadFailed": "Неуспешно учитавање категорије.",
+      "saveFailed": "Неуспешно чување категорије."
+    },
+    "actions": {
+      "delete": {
+        "confirmHeader": "Брисање категорије",
+        "confirmMessage": "Обрисати „{{name}}“? Ова операција не може бити поништена.",
+        "successSummary": "Категорија обрисана",
+        "failedSummary": "Неуспешно брисање",
+        "inUseError": "Ова категорија не може бити обрисана — можда је у употреби од стране курсева.",
+        "failedDetail": "Неуспешно брисање категорије."
+      },
+      "create": {
+        "successSummary": "Категорија креирана"
+      },
+      "update": {
+        "successSummary": "Категорија ажурирана"
+      }
+    }
+  },
+  "locale": {
+    "switcher": {
+      "en": "English",
+      "srLatn": "Srpski (latinica)",
+      "srCyrl": "Српски (ћирилица)"
+    }
+  },
+  "login": {
+    "title": "Пријава",
+    "email": {
+      "label": "Имејл",
+      "required": "Имејл је обавезан",
+      "invalid": "Унесите исправну имејл адресу"
+    },
+    "password": {
+      "label": "Лозинка",
+      "required": "Лозинка је обавезна"
+    },
+    "submit": "Пријави се",
+    "errors": {
+      "tenantContext": "Овај URL није поддомен клијента. Користите https://<ваш-клијент>.izvor.lvh.me:4200/login",
+      "invalidCredentials": "Погрешан имејл или лозинка",
+      "unavailable": "Сервис за пријаву тренутно није доступан. Покушајте поново касније."
+    }
+  }
+}

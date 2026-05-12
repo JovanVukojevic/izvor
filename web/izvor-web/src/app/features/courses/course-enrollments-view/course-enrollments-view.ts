@@ -1,13 +1,16 @@
-import { Component, Input, OnChanges, SimpleChanges, inject, signal } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { TableModule } from 'primeng/table';
 import { Select } from 'primeng/select';
 import { Tag } from 'primeng/tag';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { CourseService } from '../../../core/api/services/course.service';
 import { EnrollmentResponse, EnrollmentStatus } from '../../../core/api/models/enrollment.model';
+import { LanguageService } from '../../../core/i18n/language.service';
+import { EnrollmentStatusLabelPipe } from '../../../core/i18n/enrollment-status-label.pipe';
 
 interface StatusOption {
   label: string;
@@ -16,14 +19,14 @@ interface StatusOption {
 
 @Component({
   selector: 'izvor-course-enrollments-view',
-  imports: [TableModule, Select, Tag, FormsModule, DatePipe],
+  imports: [TableModule, Select, Tag, FormsModule, DatePipe, TranslateModule, EnrollmentStatusLabelPipe],
   template: `
     <div class="view">
-      <h3>Enrollments</h3>
+      <h3>{{ 'course.enrollments.sectionHeader' | translate }}</h3>
       <div class="filter">
-        <label>Status</label>
+        <label>{{ 'course.enrollments.filterStatus' | translate }}</label>
         <p-select
-          [options]="statusOptions"
+          [options]="statusOptions()"
           [(ngModel)]="statusFilter"
           (onChange)="reload()"
           optionLabel="label"
@@ -33,23 +36,23 @@ interface StatusOption {
       </div>
 
       @if (isLoading()) {
-        <p>Loading enrollments…</p>
+        <p>{{ 'course.enrollments.loading' | translate }}</p>
       } @else if (rows().length === 0) {
-        <p class="empty">No enrollments match this filter.</p>
+        <p class="empty">{{ 'course.enrollments.empty' | translate }}</p>
       } @else {
         <p-table [value]="rows()" stripedRows>
           <ng-template pTemplate="header">
             <tr>
-              <th>User</th>
-              <th>Status</th>
-              <th>Enrolled</th>
-              <th>Completed</th>
+              <th>{{ 'course.enrollments.columnUser' | translate }}</th>
+              <th>{{ 'course.enrollments.columnStatus' | translate }}</th>
+              <th>{{ 'course.enrollments.columnEnrolled' | translate }}</th>
+              <th>{{ 'course.enrollments.columnCompleted' | translate }}</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-row>
             <tr>
               <td><code>{{ row.userId }}</code></td>
-              <td><p-tag [value]="row.status" [severity]="severity(row.status)" /></td>
+              <td><p-tag [value]="row.status | enrollmentStatusLabel" [severity]="severity(row.status)" /></td>
               <td>{{ row.enrolledAt | date:'medium' }}</td>
               <td>{{ row.completedAt ? (row.completedAt | date:'medium') : '—' }}</td>
             </tr>
@@ -70,15 +73,20 @@ interface StatusOption {
 })
 export class CourseEnrollmentsView implements OnChanges {
   private readonly courseService = inject(CourseService);
+  private readonly translate = inject(TranslateService);
+  private readonly languageService = inject(LanguageService);
 
   @Input({ required: true }) courseId!: string;
 
-  readonly statusOptions: StatusOption[] = [
-    { label: 'Active', value: 'active' },
-    { label: 'Completed', value: 'completed' },
-    { label: 'Cancelled', value: 'cancelled' },
-    { label: 'Any', value: 'all' }
-  ];
+  readonly statusOptions = computed<StatusOption[]>(() => {
+    this.languageService.currentLocale();
+    return [
+      { label: this.translate.instant('enrollment.status.active'), value: 'active' },
+      { label: this.translate.instant('enrollment.status.completed'), value: 'completed' },
+      { label: this.translate.instant('enrollment.status.cancelled'), value: 'cancelled' },
+      { label: this.translate.instant('enrollment.status.all'), value: 'all' }
+    ];
+  });
   statusFilter: EnrollmentStatus | 'all' = 'active';
 
   readonly isLoading = signal(false);

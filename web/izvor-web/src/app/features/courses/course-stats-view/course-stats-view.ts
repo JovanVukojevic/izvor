@@ -3,27 +3,28 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { Card } from 'primeng/card';
 import { Message } from 'primeng/message';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { CourseService } from '../../../core/api/services/course.service';
 import { CourseCompletionStatsResponse } from '../../../core/api/models/course.model';
 
 @Component({
   selector: 'izvor-course-stats-view',
-  imports: [Card, Message],
+  imports: [Card, Message, TranslateModule],
   template: `
     <div class="view">
-      <h3>Completion Stats</h3>
+      <h3>{{ 'course.stats.sectionHeader' | translate }}</h3>
       @if (isLoading()) {
-        <p>Loading stats…</p>
+        <p>{{ 'course.stats.loading' | translate }}</p>
       } @else if (errorMessage(); as msg) {
         <p-message severity="error" [text]="msg" />
       } @else if (stats(); as s) {
         <div class="grid">
-          <p-card><strong>{{ s.totalEnrollments }}</strong><span>Total enrollments</span></p-card>
-          <p-card><strong>{{ s.activeCount }}</strong><span>Active</span></p-card>
-          <p-card><strong>{{ s.completedCount }}</strong><span>Completed</span></p-card>
-          <p-card><strong>{{ s.cancelledCount }}</strong><span>Cancelled</span></p-card>
-          <p-card><strong>{{ s.averageProgressPct }}%</strong><span>Avg progress (active)</span></p-card>
+          <p-card><strong>{{ s.totalEnrollments }}</strong><span>{{ 'course.stats.totalEnrollments' | translate }}</span></p-card>
+          <p-card><strong>{{ s.activeCount }}</strong><span>{{ 'course.stats.active' | translate }}</span></p-card>
+          <p-card><strong>{{ s.completedCount }}</strong><span>{{ 'course.stats.completed' | translate }}</span></p-card>
+          <p-card><strong>{{ s.cancelledCount }}</strong><span>{{ 'course.stats.cancelled' | translate }}</span></p-card>
+          <p-card><strong>{{ s.averageProgressPct }}%</strong><span>{{ 'course.stats.avgProgress' | translate }}</span></p-card>
         </div>
       }
     </div>
@@ -46,6 +47,7 @@ import { CourseCompletionStatsResponse } from '../../../core/api/models/course.m
 })
 export class CourseStatsView implements OnChanges {
   private readonly courseService = inject(CourseService);
+  private readonly translate = inject(TranslateService);
 
   @Input({ required: true }) courseId!: string;
 
@@ -68,9 +70,9 @@ export class CourseStatsView implements OnChanges {
       error: (err: HttpErrorResponse) => {
         this.isLoading.set(false);
         if (err.status === 403) {
-          this.errorMessage.set('You do not have permission to view stats for this course.');
+          this.errorMessage.set(this.translate.instant('course.stats.forbiddenError'));
         } else {
-          this.errorMessage.set('Could not load completion stats.');
+          this.errorMessage.set(this.translate.instant('course.stats.loadFailedError'));
         }
       }
     });

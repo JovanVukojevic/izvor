@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { Button } from 'primeng/button';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { CategoryService } from '../../../core/api/services/category.service';
 import { CategoryResponse } from '../../../core/api/models/category.model';
@@ -13,26 +14,26 @@ import { ErrorResponse } from '../../../core/api/models/error-response.model';
 
 @Component({
   selector: 'izvor-category-list',
-  imports: [TableModule, Button, RouterLink, DatePipe],
+  imports: [TableModule, Button, RouterLink, DatePipe, TranslateModule],
   template: `
     <div class="page">
       <header class="page-header">
-        <h1>Categories</h1>
-        <p-button label="New Category" icon="pi pi-plus" routerLink="/categories/new" />
+        <h1>{{ 'category.list.title' | translate }}</h1>
+        <p-button [label]="'category.list.new' | translate" icon="pi pi-plus" routerLink="/categories/new" />
       </header>
 
       @if (isLoading()) {
-        <p>Loading categories…</p>
+        <p>{{ 'category.list.loading' | translate }}</p>
       } @else if (categories().length === 0) {
-        <p class="empty">No categories yet. Click "New Category" to create one.</p>
+        <p class="empty">{{ 'category.list.empty' | translate }}</p>
       } @else {
         <p-table [value]="categories()" stripedRows>
           <ng-template pTemplate="header">
             <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Created</th>
-              <th class="actions-col">Actions</th>
+              <th>{{ 'category.list.columnName' | translate }}</th>
+              <th>{{ 'category.list.columnDescription' | translate }}</th>
+              <th>{{ 'category.list.columnCreated' | translate }}</th>
+              <th class="actions-col">{{ 'common.actions' | translate }}</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-row>
@@ -91,6 +92,7 @@ export class CategoryList {
   private readonly service = inject(CategoryService);
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
+  private readonly translate = inject(TranslateService);
 
   readonly isLoading = signal(true);
   readonly categories = signal<CategoryResponse[]>([]);
@@ -114,12 +116,12 @@ export class CategoryList {
 
   confirmDelete(row: CategoryResponse): void {
     this.confirm.confirm({
-      header: 'Delete category',
-      message: `Delete "${row.name}"? This cannot be undone.`,
+      header: this.translate.instant('category.actions.delete.confirmHeader'),
+      message: this.translate.instant('category.actions.delete.confirmMessage', { name: row.name }),
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Delete',
+      acceptLabel: this.translate.instant('common.delete'),
       acceptButtonStyleClass: 'p-button-danger',
-      rejectLabel: 'Cancel',
+      rejectLabel: this.translate.instant('common.cancel'),
       accept: () => this.delete(row)
     });
   }
@@ -127,16 +129,20 @@ export class CategoryList {
   private delete(row: CategoryResponse): void {
     this.service.deleteCategory(row.id).subscribe({
       next: () => {
-        this.messages.add({ severity: 'success', summary: 'Category deleted' });
+        this.messages.add({ severity: 'success', summary: this.translate.instant('category.actions.delete.successSummary') });
         this.load();
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null | undefined;
         const detail =
           err.status === 409
-            ? 'Cannot delete this category — it may be in use by courses.'
-            : body?.message ?? 'Could not delete the category.';
-        this.messages.add({ severity: 'error', summary: 'Delete failed', detail });
+            ? this.translate.instant('category.actions.delete.inUseError')
+            : body?.message ?? this.translate.instant('category.actions.delete.failedDetail');
+        this.messages.add({
+          severity: 'error',
+          summary: this.translate.instant('category.actions.delete.failedSummary'),
+          detail
+        });
       }
     });
   }

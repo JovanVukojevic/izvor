@@ -7,12 +7,15 @@ import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
 import { Tag } from 'primeng/tag';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { CourseService } from '../../../core/api/services/course.service';
 import { CategoryService } from '../../../core/api/services/category.service';
 import { CourseResponse } from '../../../core/api/models/course.model';
 import { CategoryResponse } from '../../../core/api/models/category.model';
 import { RequiresRoleDirective } from '../../../core/auth/role.directive';
+import { LanguageService } from '../../../core/i18n/language.service';
+import { CourseActivityLabelPipe } from '../../../core/i18n/course-activity-label.pipe';
 
 interface CategoryOption {
   label: string;
@@ -28,14 +31,14 @@ interface ActiveOption {
 
 @Component({
   selector: 'izvor-course-list',
-  imports: [TableModule, Select, Button, Tag, FormsModule, RouterLink, RequiresRoleDirective],
+  imports: [TableModule, Select, Button, Tag, FormsModule, RouterLink, RequiresRoleDirective, TranslateModule, CourseActivityLabelPipe],
   template: `
     <div class="page">
       <header class="page-header">
-        <h1>Courses</h1>
+        <h1>{{ 'course.list.title' | translate }}</h1>
         <p-button
           *izvorRequiresRole="'author'"
-          label="New Course"
+          [label]="'course.list.new' | translate"
           icon="pi pi-plus"
           routerLink="/courses/new"
         />
@@ -43,9 +46,9 @@ interface ActiveOption {
 
       <div class="filters">
         <div class="filter">
-          <label>Activity</label>
+          <label>{{ 'course.list.filterActivity' | translate }}</label>
           <p-select
-            [options]="activeOptions"
+            [options]="activeOptions()"
             [(ngModel)]="activeFilter"
             (onChange)="reload()"
             optionLabel="label"
@@ -54,7 +57,7 @@ interface ActiveOption {
           />
         </div>
         <div class="filter">
-          <label>Category</label>
+          <label>{{ 'course.list.filterCategory' | translate }}</label>
           <p-select
             [options]="categoryOptions()"
             [(ngModel)]="categoryFilter"
@@ -67,15 +70,15 @@ interface ActiveOption {
       </div>
 
       @if (isLoading()) {
-        <p>Loading courses…</p>
+        <p>{{ 'course.list.loading' | translate }}</p>
       } @else if (courses().length === 0) {
-        <p class="empty">No courses match the selected filters.</p>
+        <p class="empty">{{ 'course.list.empty' | translate }}</p>
       } @else {
         <p-table [value]="courses()" stripedRows [rowHover]="true">
           <ng-template pTemplate="header">
             <tr>
-              <th>Title</th>
-              <th>Category</th>
+              <th>{{ 'course.list.columnTitle' | translate }}</th>
+              <th>{{ 'course.list.columnCategory' | translate }}</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-row>
@@ -83,7 +86,7 @@ interface ActiveOption {
               <td>
                 <span>{{ row.title }}</span>
                 @if (!row.isActive) {
-                  <p-tag value="Inactive" severity="warn" styleClass="inactive-badge" />
+                  <p-tag [value]="false | courseActivityLabel" severity="warn" styleClass="inactive-badge" />
                 }
               </td>
               <td>{{ categoryName(row.categoryId) }}</td>
@@ -110,12 +113,17 @@ export class CourseList {
   private readonly courseService = inject(CourseService);
   private readonly categoryService = inject(CategoryService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
+  private readonly languageService = inject(LanguageService);
 
-  readonly activeOptions: ActiveOption[] = [
-    { label: 'Active', value: 'active' },
-    { label: 'Inactive', value: 'inactive' },
-    { label: 'All', value: 'all' }
-  ];
+  readonly activeOptions = computed<ActiveOption[]>(() => {
+    this.languageService.currentLocale();
+    return [
+      { label: this.translate.instant('course.activity.active'), value: 'active' },
+      { label: this.translate.instant('course.activity.inactive'), value: 'inactive' },
+      { label: this.translate.instant('course.activity.all'), value: 'all' }
+    ];
+  });
 
   activeFilter: ActiveFilter = 'active';
   categoryFilter: string | 'all' = 'all';
@@ -124,10 +132,13 @@ export class CourseList {
   readonly courses = signal<CourseResponse[]>([]);
   readonly categories = signal<CategoryResponse[]>([]);
 
-  readonly categoryOptions = computed<CategoryOption[]>(() => [
-    { label: 'Any category', value: 'all' },
-    ...this.categories().map(c => ({ label: c.name, value: c.id }))
-  ]);
+  readonly categoryOptions = computed<CategoryOption[]>(() => {
+    this.languageService.currentLocale();
+    return [
+      { label: this.translate.instant('course.list.anyCategory'), value: 'all' },
+      ...this.categories().map(c => ({ label: c.name, value: c.id }))
+    ];
+  });
 
   ngOnInit(): void {
     this.isLoading.set(true);

@@ -12,6 +12,7 @@ import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { MessageService } from 'primeng/api';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { CourseService } from '../../../core/api/services/course.service';
 import { CategoryService } from '../../../core/api/services/category.service';
@@ -30,16 +31,17 @@ import { AuthService } from '../../../core/auth/auth.service';
     Select,
     Button,
     Message,
-    RouterLink
+    RouterLink,
+    TranslateModule
   ],
   template: `
     <div class="form-page">
-      <p-card [header]="isEdit() ? 'Edit Course' : 'New Course'">
+      <p-card [header]="(isEdit() ? 'course.form.headerEdit' : 'course.form.headerNew') | translate">
         @if (notFound()) {
-          <p-message severity="error" text="Course not found" />
-          <p><a routerLink="/courses">Back to courses</a></p>
+          <p-message severity="error" [text]="'course.form.notFound' | translate" />
+          <p><a routerLink="/courses">{{ 'course.form.backToCourses' | translate }}</a></p>
         } @else if (isLoading()) {
-          <p>Loading…</p>
+          <p>{{ 'course.form.loading' | translate }}</p>
         } @else {
           @if (errorMessage(); as msg) {
             <p-message severity="error" [text]="msg" styleClass="form-message" />
@@ -47,7 +49,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form">
             <div class="field">
-              <label for="title">Title</label>
+              <label for="title">{{ 'course.form.fieldTitle' | translate }}</label>
               <input pInputText id="title" formControlName="title" maxlength="200" fluid />
               @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
                 <small class="error">Title is required</small>
@@ -55,7 +57,7 @@ import { AuthService } from '../../../core/auth/auth.service';
             </div>
 
             <div class="field">
-              <label for="description">Description</label>
+              <label for="description">{{ 'course.form.fieldDescription' | translate }}</label>
               <textarea
                 pTextarea
                 id="description"
@@ -66,14 +68,14 @@ import { AuthService } from '../../../core/auth/auth.service';
             </div>
 
             <div class="field">
-              <label for="categoryId">Category</label>
+              <label for="categoryId">{{ 'course.form.fieldCategory' | translate }}</label>
               <p-select
                 inputId="categoryId"
                 [options]="categoryOptions()"
                 formControlName="categoryId"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="Select a category"
+                [placeholder]="'course.form.selectCategoryPlaceholder' | translate"
                 styleClass="form-select"
               />
               @if (form.controls.categoryId.touched && form.controls.categoryId.errors?.['required']) {
@@ -84,13 +86,13 @@ import { AuthService } from '../../../core/auth/auth.service';
             <div class="actions">
               <p-button
                 type="submit"
-                [label]="isEdit() ? 'Save' : 'Create'"
+                [label]="(isEdit() ? 'common.save' : 'common.create') | translate"
                 [disabled]="form.invalid || saving()"
                 [loading]="saving()"
               />
               <p-button
                 type="button"
-                label="Cancel"
+                [label]="'common.cancel' | translate"
                 severity="secondary"
                 [text]="true"
                 (onClick)="cancel()"
@@ -122,6 +124,7 @@ export class CourseForm {
   private readonly auth = inject(AuthService);
   private readonly messages = inject(MessageService);
   private readonly titleService = inject(Title);
+  private readonly translate = inject(TranslateService);
 
   readonly id = signal<string | null>(null);
   readonly isLoading = signal(false);
@@ -186,7 +189,7 @@ export class CourseForm {
           this.notFound.set(true);
           this.titleService.setTitle('Not Found · Izvor');
         } else {
-          this.errorMessage.set('Could not load form.');
+          this.errorMessage.set(this.translate.instant('course.form.loadFailed'));
         }
       }
     });
@@ -226,7 +229,7 @@ export class CourseForm {
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({
           next: () => {
-            this.messages.add({ severity: 'success', summary: 'Course updated' });
+            this.messages.add({ severity: 'success', summary: this.translate.instant('course.actions.update.successSummary') });
             this.router.navigate(['/courses', id]);
           },
           error: (err: HttpErrorResponse) => this.handleError(err)
@@ -241,7 +244,7 @@ export class CourseForm {
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({
           next: created => {
-            this.messages.add({ severity: 'success', summary: 'Course created' });
+            this.messages.add({ severity: 'success', summary: this.translate.instant('course.actions.create.successSummary') });
             this.router.navigate(['/courses', created.id]);
           },
           error: (err: HttpErrorResponse) => this.handleError(err)
@@ -257,13 +260,13 @@ export class CourseForm {
       return;
     }
     if (err.status === 404 && body?.message === 'category_not_found') {
-      this.errorMessage.set('Selected category no longer exists. Pick a different one.');
+      this.errorMessage.set(this.translate.instant('course.form.categoryGoneError'));
       return;
     }
     if (err.status === 404) {
       this.notFound.set(true);
       return;
     }
-    this.errorMessage.set(body?.message ?? 'Could not save course.');
+    this.errorMessage.set(body?.message ?? this.translate.instant('course.form.saveFailed'));
   }
 }

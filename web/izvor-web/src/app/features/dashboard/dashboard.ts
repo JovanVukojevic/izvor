@@ -1,20 +1,22 @@
 import { Component, inject } from '@angular/core';
 
 import { Card } from 'primeng/card';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { RoleLabelPipe } from '../../core/i18n/role-label.pipe';
 
 @Component({
   selector: 'izvor-dashboard',
-  imports: [Card],
+  imports: [Card, TranslateModule, RoleLabelPipe],
   template: `
     <div class="dashboard">
-      <p-card header="Welcome">
+      <p-card [header]="'dashboard.cardHeader' | translate">
         @if (user(); as u) {
-          <p>Welcome, <strong>{{ u.email }}</strong></p>
-          <p class="dashboard-meta">Role: {{ u.role }}</p>
+          <p>{{ 'dashboard.welcome' | translate: { email: u.email } }}</p>
+          <p class="dashboard-meta">{{ 'dashboard.roleLine' | translate: { role: (u.role | roleLabel) } }}</p>
         }
-        <p>Use the navigation above to browse courses, manage your enrollments, or — if you have permission — create courses and manage categories.</p>
+        <p>{{ 'dashboard.body' | translate }}</p>
       </p-card>
     </div>
   `,
