@@ -32,6 +32,45 @@
     "author": "Author",
     "learner": "Learner"
   },
+  "error": {
+    "unknown": "An error occurred. Please try again.",
+    "session": {
+      "signedOutSummary": "Signed out",
+      "tenantMismatchDetail": "Session does not match this tenant.",
+      "expiredDetail": "Session expired. Please sign in again."
+    },
+    "network": {
+      "summary": "Network error",
+      "detail": "Could not reach the server. Check your connection.",
+      "tooManyRequestsSummary": "Too many requests",
+      "tooManyRequestsDetail": "Please slow down and try again shortly."
+    },
+    "server": {
+      "summary": "Server error",
+      "generic": "Something went wrong. Please try again."
+    },
+    "course_not_found": "Course not found.",
+    "lesson_not_found": "Lesson not found.",
+    "enrollment_not_found": "Enrollment not found.",
+    "user_not_found": "User not found.",
+    "category_not_found": "Selected category no longer exists.",
+    "course_inactive": "This course is no longer accepting enrollments.",
+    "course_has_enrollments": "This course has enrollments and cannot be deleted.",
+    "course_has_no_lessons": "Add at least one lesson before activating.",
+    "lesson_has_progress": "This lesson has been completed by at least one learner and cannot be deleted.",
+    "enrollment_not_active": "Enrollment is no longer active.",
+    "enrollment_cancelled": "Enrollment has been cancelled.",
+    "not_enrolled": "You must enroll in this course first.",
+    "enrollment_already_active": "You already have an active enrollment for this course.",
+    "not_course_owner": "You do not have permission for this course.",
+    "not_authorized": "You do not have permission to perform this action.",
+    "no_active_user_in_session": "Your session is no longer valid.",
+    "cannot_deactivate_self": "You cannot deactivate your own account.",
+    "user_inactive": "This account is inactive.",
+    "position_out_of_range": "Position is out of range.",
+    "category_required": "Category is required.",
+    "invalid_refresh_token": "Your session has expired."
+  },
   "course": {
     "list": {
       "title": "Courses",
@@ -72,7 +111,11 @@
       "selectCategoryPlaceholder": "Select a category",
       "loadFailed": "Could not load form.",
       "saveFailed": "Could not save course.",
-      "categoryGoneError": "Selected category no longer exists. Pick a different one."
+      "categoryGoneError": "Selected category no longer exists. Pick a different one.",
+      "errors": {
+        "titleRequired": "Title is required",
+        "categoryRequired": "Category is required"
+      }
     },
     "activity": {
       "active": "Active",
@@ -170,7 +213,10 @@
       "positionLabel": "Position:",
       "positionHint": "(use the up/down controls on the course page to reorder)",
       "loadFailed": "Could not load form.",
-      "saveFailed": "Could not save the lesson."
+      "saveFailed": "Could not save the lesson.",
+      "errors": {
+        "titleRequired": "Title is required"
+      }
     },
     "actions": {
       "delete": {
@@ -244,7 +290,11 @@
       "fieldName": "Name",
       "fieldDescription": "Description",
       "loadFailed": "Could not load category.",
-      "saveFailed": "Could not save category."
+      "saveFailed": "Could not save category.",
+      "errors": {
+        "nameRequired": "Name is required",
+        "alreadyExists": "A category with this name already exists"
+      }
     },
     "actions": {
       "delete": {

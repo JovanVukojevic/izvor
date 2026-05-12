@@ -18,6 +18,7 @@ import { CourseService } from '../../../core/api/services/course.service';
 import { EnrollmentResponse, EnrollmentStatus } from '../../../core/api/models/enrollment.model';
 import { CourseResponse } from '../../../core/api/models/course.model';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
+import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { EnrollmentStatusLabelPipe } from '../../../core/i18n/enrollment-status-label.pipe';
@@ -200,7 +201,7 @@ export class MyEnrollments {
         this.messages.add({
           severity: 'error',
           summary: this.translate.instant('enrollment.cancel.failedSummary'),
-          detail: body?.message ?? this.translate.instant('enrollment.cancel.failedDetail')
+          detail: translateApiErrorCode(this.translate, body?.message, 'enrollment.cancel.failedDetail')
         });
       }
     });

@@ -1,10 +1,12 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { MessageService } from 'primeng/api';
+import { TranslateService } from '@ngx-translate/core';
 import { catchError, throwError } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { ErrorResponse } from './models/error-response.model';
+import { translateApiErrorCode } from './translate-api-error';
 
 const AUTH_ENDPOINTS = ['/api/auth/login', '/api/auth/refresh', '/api/auth/logout'];
 
@@ -16,6 +18,7 @@ const DEAD_SESSION_CODES: ReadonlySet<string> = new Set([
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const messageService = inject(MessageService);
   const authService = inject(AuthService);
+  const translate = inject(TranslateService);
 
   const isAuthRequest = AUTH_ENDPOINTS.some(path => req.url.endsWith(path));
 
@@ -37,10 +40,14 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (matchedDeadSession) {
         const isTenantMismatch =
           body?.error === 'tenant_mismatch' || body?.message === 'tenant_mismatch';
-        const detail = isTenantMismatch
-          ? 'Session does not match this tenant.'
-          : 'Session expired. Please sign in again.';
-        messageService.add({ severity: 'error', summary: 'Signed out', detail });
+        const detailKey = isTenantMismatch
+          ? 'error.session.tenantMismatchDetail'
+          : 'error.session.expiredDetail';
+        messageService.add({
+          severity: 'error',
+          summary: translate.instant('error.session.signedOutSummary'),
+          detail: translate.instant(detailKey)
+        });
         authService.logout();
         return throwError(() => error);
       }
@@ -48,8 +55,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status >= 500) {
         messageService.add({
           severity: 'error',
-          summary: 'Server error',
-          detail: body?.message ?? 'Something went wrong. Please try again.'
+          summary: translate.instant('error.server.summary'),
+          detail: translateApiErrorCode(translate, body?.message, 'error.server.generic')
         });
         return throwError(() => error);
       }
@@ -57,8 +64,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status === 429) {
         messageService.add({
           severity: 'warn',
-          summary: 'Too many requests',
-          detail: body?.message ?? 'Please slow down and try again shortly.'
+          summary: translate.instant('error.network.tooManyRequestsSummary'),
+          detail: translateApiErrorCode(translate, body?.message, 'error.network.tooManyRequestsDetail')
         });
         return throwError(() => error);
       }
@@ -66,8 +73,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status === 0) {
         messageService.add({
           severity: 'error',
-          summary: 'Network error',
-          detail: 'Could not reach the server. Check your connection.'
+          summary: translate.instant('error.network.summary'),
+          detail: translate.instant('error.network.detail')
         });
         return throwError(() => error);
       }

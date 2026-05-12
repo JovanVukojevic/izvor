@@ -11,6 +11,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CategoryService } from '../../../core/api/services/category.service';
 import { CategoryResponse } from '../../../core/api/models/category.model';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
+import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 
 @Component({
   selector: 'izvor-category-list',
@@ -137,7 +138,7 @@ export class CategoryList {
         const detail =
           err.status === 409
             ? this.translate.instant('category.actions.delete.inUseError')
-            : body?.message ?? this.translate.instant('category.actions.delete.failedDetail');
+            : translateApiErrorCode(this.translate, body?.message, 'category.actions.delete.failedDetail');
         this.messages.add({
           severity: 'error',
           summary: this.translate.instant('category.actions.delete.failedSummary'),

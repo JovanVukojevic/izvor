@@ -32,6 +32,45 @@
     "author": "Autor",
     "learner": "Učenik"
   },
+  "error": {
+    "unknown": "Došlo je do greške. Pokušajte ponovo.",
+    "session": {
+      "signedOutSummary": "Odjavljeni ste",
+      "tenantMismatchDetail": "Sesija ne odgovara ovom klijentu.",
+      "expiredDetail": "Sesija je istekla. Prijavite se ponovo."
+    },
+    "network": {
+      "summary": "Mrežna greška",
+      "detail": "Server nije dostupan. Proverite konekciju.",
+      "tooManyRequestsSummary": "Previše zahteva",
+      "tooManyRequestsDetail": "Usporite i pokušajte ponovo za trenutak."
+    },
+    "server": {
+      "summary": "Greška servera",
+      "generic": "Nešto je pošlo po zlu. Pokušajte ponovo."
+    },
+    "course_not_found": "Kurs nije pronađen.",
+    "lesson_not_found": "Lekcija nije pronađena.",
+    "enrollment_not_found": "Upis nije pronađen.",
+    "user_not_found": "Korisnik nije pronađen.",
+    "category_not_found": "Izabrana kategorija više ne postoji.",
+    "course_inactive": "Ovaj kurs više ne prihvata upise.",
+    "course_has_enrollments": "Ovaj kurs ima upise i ne može biti obrisan.",
+    "course_has_no_lessons": "Dodajte bar jednu lekciju pre aktiviranja.",
+    "lesson_has_progress": "Ovu lekciju je bar jedan učenik označio kao završenu i ne može biti obrisana.",
+    "enrollment_not_active": "Upis više nije aktivan.",
+    "enrollment_cancelled": "Upis je otkazan.",
+    "not_enrolled": "Prvo se morate upisati na ovaj kurs.",
+    "enrollment_already_active": "Već imate aktivan upis za ovaj kurs.",
+    "not_course_owner": "Nemate dozvolu za ovaj kurs.",
+    "not_authorized": "Nemate dozvolu za ovu operaciju.",
+    "no_active_user_in_session": "Vaša sesija više nije važeća.",
+    "cannot_deactivate_self": "Ne možete deaktivirati sopstveni nalog.",
+    "user_inactive": "Ovaj nalog je neaktivan.",
+    "position_out_of_range": "Pozicija je van opsega.",
+    "category_required": "Kategorija je obavezna.",
+    "invalid_refresh_token": "Vaša sesija je istekla."
+  },
   "course": {
     "list": {
       "title": "Kursevi",
@@ -72,7 +111,11 @@
       "selectCategoryPlaceholder": "Izaberite kategoriju",
       "loadFailed": "Neuspešno učitavanje forme.",
       "saveFailed": "Neuspešno čuvanje kursa.",
-      "categoryGoneError": "Izabrana kategorija više ne postoji. Izaberite drugu."
+      "categoryGoneError": "Izabrana kategorija više ne postoji. Izaberite drugu.",
+      "errors": {
+        "titleRequired": "Naslov je obavezan",
+        "categoryRequired": "Kategorija je obavezna"
+      }
     },
     "activity": {
       "active": "Aktivan",
@@ -170,7 +213,10 @@
       "positionLabel": "Pozicija:",
       "positionHint": "(za promenu redosleda koristite kontrole na stranici kursa)",
       "loadFailed": "Neuspešno učitavanje forme.",
-      "saveFailed": "Neuspešno čuvanje lekcije."
+      "saveFailed": "Neuspešno čuvanje lekcije.",
+      "errors": {
+        "titleRequired": "Naslov je obavezan"
+      }
     },
     "actions": {
       "delete": {
@@ -244,7 +290,11 @@
       "fieldName": "Naziv",
       "fieldDescription": "Opis",
       "loadFailed": "Neuspešno učitavanje kategorije.",
-      "saveFailed": "Neuspešno čuvanje kategorije."
+      "saveFailed": "Neuspešno čuvanje kategorije.",
+      "errors": {
+        "nameRequired": "Naziv je obavezan",
+        "alreadyExists": "Kategorija sa ovim nazivom već postoji"
+      }
     },
     "actions": {
       "delete": {

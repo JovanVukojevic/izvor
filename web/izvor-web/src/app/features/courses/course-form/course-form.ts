@@ -19,6 +19,7 @@ import { CategoryService } from '../../../core/api/services/category.service';
 import { CategoryResponse } from '../../../core/api/models/category.model';
 import { CourseResponse } from '../../../core/api/models/course.model';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
+import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
@@ -52,7 +53,7 @@ import { AuthService } from '../../../core/auth/auth.service';
               <label for="title">{{ 'course.form.fieldTitle' | translate }}</label>
               <input pInputText id="title" formControlName="title" maxlength="200" fluid />
               @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-                <small class="error">Title is required</small>
+                <small class="error">{{ 'course.form.errors.titleRequired' | translate }}</small>
               }
             </div>
 
@@ -79,7 +80,7 @@ import { AuthService } from '../../../core/auth/auth.service';
                 styleClass="form-select"
               />
               @if (form.controls.categoryId.touched && form.controls.categoryId.errors?.['required']) {
-                <small class="error">Category is required</small>
+                <small class="error">{{ 'course.form.errors.categoryRequired' | translate }}</small>
               }
             </div>
 
@@ -267,6 +268,6 @@ export class CourseForm {
       this.notFound.set(true);
       return;
     }
-    this.errorMessage.set(body?.message ?? this.translate.instant('course.form.saveFailed'));
+    this.errorMessage.set(translateApiErrorCode(this.translate, body?.message, 'course.form.saveFailed'));
   }
 }

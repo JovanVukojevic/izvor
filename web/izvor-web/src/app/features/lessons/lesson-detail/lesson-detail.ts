@@ -19,6 +19,7 @@ import { LessonResponse } from '../../../core/api/models/lesson.model';
 import { CourseResponse } from '../../../core/api/models/course.model';
 import { EnrollmentResponse, LessonProgressResponse } from '../../../core/api/models/enrollment.model';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
+import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
@@ -258,7 +259,7 @@ export class LessonDetail {
           this.banner.set(this.translate.instant('lesson.detail.enrollmentInactiveError'));
           this.refreshEnrollment();
         } else {
-          this.banner.set(body?.message ?? this.translate.instant('lesson.detail.markFailedError'));
+          this.banner.set(translateApiErrorCode(this.translate, body?.message, 'lesson.detail.markFailedError'));
         }
       }
     });
@@ -304,7 +305,7 @@ export class LessonDetail {
         this.messages.add({
           severity: 'error',
           summary: this.translate.instant('lesson.actions.delete.failedSummary'),
-          detail: body?.message ?? this.translate.instant('lesson.actions.delete.failedDetail')
+          detail: translateApiErrorCode(this.translate, body?.message, 'lesson.actions.delete.failedDetail')
         });
       }
     });

@@ -19,6 +19,7 @@ import { CourseService } from '../../../core/api/services/course.service';
 import { CourseResponse } from '../../../core/api/models/course.model';
 import { LessonResponse } from '../../../core/api/models/lesson.model';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
+import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
 
 @Component({
@@ -42,7 +43,7 @@ import { AuthService } from '../../../core/auth/auth.service';
               <label for="title">{{ 'lesson.form.fieldTitle' | translate }}</label>
               <input pInputText id="title" formControlName="title" maxlength="200" fluid />
               @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-                <small class="error">Title is required</small>
+                <small class="error">{{ 'lesson.form.errors.titleRequired' | translate }}</small>
               }
             </div>
 
@@ -231,6 +232,6 @@ export class LessonForm {
       this.notFound.set(true);
       return;
     }
-    this.errorMessage.set(body?.message ?? this.translate.instant('lesson.form.saveFailed'));
+    this.errorMessage.set(translateApiErrorCode(this.translate, body?.message, 'lesson.form.saveFailed'));
   }
 }

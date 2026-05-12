@@ -14,6 +14,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { CategoryService } from '../../../core/api/services/category.service';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
+import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 
 @Component({
   selector: 'izvor-category-form',
@@ -38,9 +39,9 @@ import { ErrorResponse } from '../../../core/api/models/error-response.model';
               @if (form.controls.name.touched && form.controls.name.invalid) {
                 <small class="error">
                   @if (form.controls.name.errors?.['required']) {
-                    Name is required
+                    {{ 'category.form.errors.nameRequired' | translate }}
                   } @else if (form.controls.name.errors?.['alreadyExists']) {
-                    A category with this name already exists
+                    {{ 'category.form.errors.alreadyExists' | translate }}
                   }
                 </small>
               }
@@ -192,6 +193,6 @@ export class CategoryForm {
       this.notFound.set(true);
       return;
     }
-    this.errorMessage.set(body?.message ?? this.translate.instant('category.form.saveFailed'));
+    this.errorMessage.set(translateApiErrorCode(this.translate, body?.message, 'category.form.saveFailed'));
   }
 }

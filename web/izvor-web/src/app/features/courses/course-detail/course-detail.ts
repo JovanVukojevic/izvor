@@ -21,6 +21,7 @@ import { LessonResponse } from '../../../core/api/models/lesson.model';
 import { EnrollmentResponse } from '../../../core/api/models/enrollment.model';
 import { CategoryResponse } from '../../../core/api/models/category.model';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
+import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
 import { CourseActivityLabelPipe } from '../../../core/i18n/course-activity-label.pipe';
 import { CourseEnrollmentsView } from '../course-enrollments-view/course-enrollments-view';
@@ -340,7 +341,7 @@ export class CourseDetail {
         if (err.status === 409 && body?.message === 'course_has_no_lessons') {
           this.activateError.set(this.translate.instant('course.actions.activate.noLessonsError'));
         } else {
-          this.activateError.set(body?.message ?? this.translate.instant('course.actions.activate.failedDetail'));
+          this.activateError.set(translateApiErrorCode(this.translate, body?.message, 'course.actions.activate.failedDetail'));
         }
       }
     });
@@ -375,7 +376,7 @@ export class CourseDetail {
         this.messages.add({
           severity: 'error',
           summary: this.translate.instant('course.actions.deactivate.failedSummary'),
-          detail: body?.message ?? this.translate.instant('course.actions.deactivate.failedDetail')
+          detail: translateApiErrorCode(this.translate, body?.message, 'course.actions.deactivate.failedDetail')
         });
       }
     });
@@ -412,7 +413,7 @@ export class CourseDetail {
         this.messages.add({
           severity: 'error',
           summary: this.translate.instant('course.actions.delete.failedSummary'),
-          detail: body?.message ?? this.translate.instant('course.actions.delete.failedDetail')
+          detail: translateApiErrorCode(this.translate, body?.message, 'course.actions.delete.failedDetail')
         });
       }
     });
@@ -446,7 +447,7 @@ export class CourseDetail {
           return;
         }
         this.enrollMessageSeverity.set('error');
-        this.enrollMessage.set(body?.message ?? this.translate.instant('course.actions.enroll.failedDetail'));
+        this.enrollMessage.set(translateApiErrorCode(this.translate, body?.message, 'course.actions.enroll.failedDetail'));
       }
     });
   }
@@ -488,7 +489,7 @@ export class CourseDetail {
         this.messages.add({
           severity: 'error',
           summary: this.translate.instant('enrollment.cancel.failedSummary'),
-          detail: body?.message ?? this.translate.instant('enrollment.cancel.failedDetail')
+          detail: translateApiErrorCode(this.translate, body?.message, 'enrollment.cancel.failedDetail')
         });
       }
     });
@@ -532,7 +533,7 @@ export class CourseDetail {
         this.messages.add({
           severity: 'error',
           summary: this.translate.instant('lesson.actions.delete.reorderFailedSummary'),
-          detail: body?.message ?? this.translate.instant('lesson.actions.delete.reorderFailedDetail')
+          detail: translateApiErrorCode(this.translate, body?.message, 'lesson.actions.delete.reorderFailedDetail')
         });
       }
     });
@@ -568,7 +569,7 @@ export class CourseDetail {
         this.messages.add({
           severity: 'error',
           summary: this.translate.instant('lesson.actions.delete.failedSummary'),
-          detail: body?.message ?? this.translate.instant('lesson.actions.delete.failedDetail')
+          detail: translateApiErrorCode(this.translate, body?.message, 'lesson.actions.delete.failedDetail')
         });
       }
     });
