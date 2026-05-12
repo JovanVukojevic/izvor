@@ -57,6 +57,11 @@ public static class ApiErrorMapper
         "position_out_of_range"
     };
 
+    private static readonly HashSet<string> ValidationFailedCodes = new(StringComparer.Ordinal)
+    {
+        "category_required"
+    };
+
     private static readonly HashSet<string> UnauthorizedCodes = new(StringComparer.Ordinal)
     {
         "invalid_refresh_token"
@@ -102,6 +107,9 @@ public static class ApiErrorMapper
 
         if (BadRequestCodes.Contains(text))
             return (StatusCodes.Status400BadRequest, new ErrorResponse("bad_request", text));
+
+        if (ValidationFailedCodes.Contains(text))
+            return (StatusCodes.Status400BadRequest, new ErrorResponse("validation_failed", text));
 
         if (UnauthorizedCodes.Contains(text))
             return (StatusCodes.Status401Unauthorized, new ErrorResponse("unauthorized", text));

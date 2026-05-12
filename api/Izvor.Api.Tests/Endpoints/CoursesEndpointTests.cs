@@ -101,6 +101,28 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         body.Message.Should().Be("category_not_found");
     }
 
+    [Fact] // K4b
+    public async Task Create_with_null_category_returns_400_validation_failed()
+    {
+        var ana = AnaClient();
+        var response = await ana.PostAsJsonAsync("/api/courses",
+            new CreateCourseRequest("Missing cat", null, null));
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        body!.Error.Should().Be("validation_failed");
+    }
+
+    [Fact] // K4c
+    public async Task Update_with_null_category_returns_400_validation_failed()
+    {
+        var draft = await CreateCourseAsync(AnaClient(), "NeedsCat");
+        var response = await AnaClient().PutAsJsonAsync($"/api/courses/{draft.Id}",
+            new UpdateCourseRequest("NewTitle", null, null));
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        body!.Error.Should().Be("validation_failed");
+    }
+
     [Fact] // K6b
     public async Task List_with_no_filter_returns_active_and_inactive()
     {
@@ -146,7 +168,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
 
         var petar = PetarClient();
         var response = await petar.PutAsJsonAsync($"/api/courses/{draft.Id}",
-            new UpdateCourseRequest("Hijack", null, null));
+            new UpdateCourseRequest("Hijack", null, _categoryId));
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Message.Should().Be("course_not_found");
@@ -158,7 +180,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         var draft = await CreateCourseAsync(AnaClient(), "AnaCourse");
         var pera = PeraClient();
         var response = await pera.PutAsJsonAsync($"/api/courses/{draft.Id}",
-            new UpdateCourseRequest("Stolen", null, null));
+            new UpdateCourseRequest("Stolen", null, _categoryId));
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Message.Should().Be("not_course_owner");

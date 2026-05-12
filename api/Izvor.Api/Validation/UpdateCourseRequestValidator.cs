@@ -12,5 +12,8 @@ public sealed class UpdateCourseRequestValidator : AbstractValidator<UpdateCours
             .NotEmpty().WithMessage("Title is required")
             .Must(t => t is not null && t.Trim().Length >= 1 && t.Trim().Length <= 300)
             .WithMessage("Title must be between 1 and 300 characters after trimming");
+
+        RuleFor(x => x.CategoryId)
+            .NotNull().WithMessage("Category is required");
     }
 }

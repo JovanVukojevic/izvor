@@ -166,8 +166,7 @@ export class CourseList {
     this.router.navigate(['/courses', row.id]);
   }
 
-  categoryName(id: string | null): string {
-    if (id === null) return '—';
+  categoryName(id: string): string {
     return this.categories().find(c => c.id === id)?.name ?? '—';
   }
 }

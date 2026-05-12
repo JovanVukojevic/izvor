@@ -73,10 +73,12 @@ import { AuthService } from '../../../core/auth/auth.service';
                 formControlName="categoryId"
                 optionLabel="label"
                 optionValue="value"
-                placeholder="(no category)"
-                [showClear]="true"
+                placeholder="Select a category"
                 styleClass="form-select"
               />
+              @if (form.controls.categoryId.touched && form.controls.categoryId.errors?.['required']) {
+                <small class="error">Category is required</small>
+              }
             </div>
 
             <div class="actions">
@@ -140,7 +142,7 @@ export class CourseForm {
       nonNullable: true,
       validators: [Validators.maxLength(5000)]
     }),
-    categoryId: new FormControl<string | null>(null)
+    categoryId: new FormControl<string | null>(null, { validators: [Validators.required] })
   });
 
   isEdit(): boolean {
@@ -219,7 +221,7 @@ export class CourseForm {
         .updateCourse(id, {
           title: raw.title.trim(),
           description,
-          categoryId: raw.categoryId
+          categoryId: raw.categoryId!
         })
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({
@@ -234,7 +236,7 @@ export class CourseForm {
         .createCourse({
           title: raw.title.trim(),
           description,
-          categoryId: raw.categoryId
+          categoryId: raw.categoryId!
         })
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({
@@ -249,6 +251,11 @@ export class CourseForm {
 
   private handleError(err: HttpErrorResponse): void {
     const body = err.error as ErrorResponse | null | undefined;
+    if (err.status === 400 && body?.message === 'category_required') {
+      this.form.controls.categoryId.setErrors({ required: true });
+      this.form.controls.categoryId.markAsTouched();
+      return;
+    }
     if (err.status === 404 && body?.message === 'category_not_found') {
       this.errorMessage.set('Selected category no longer exists. Pick a different one.');
       return;
