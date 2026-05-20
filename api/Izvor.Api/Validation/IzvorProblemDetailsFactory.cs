@@ -1,6 +1,6 @@
 using FluentValidation;
 using FluentValidation.Results;
-using Izvor.Api.Models;
+using Izvor.Api.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Results;

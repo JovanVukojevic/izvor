@@ -1,6 +1,6 @@
 using Izvor.Api.Configuration;
 using Izvor.Api.Extensions;
-using Izvor.Api.Models;
+using Izvor.Api.Dtos;
 using Izvor.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;

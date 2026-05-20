@@ -1,4 +1,4 @@
-namespace Izvor.Api.Models;
+namespace Izvor.Api.Dtos;
 
 public sealed record UserInfo(Guid Id, string Email, string Role, TenantInfo Tenant);
 

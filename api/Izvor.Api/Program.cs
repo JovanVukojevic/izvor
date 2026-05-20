@@ -3,11 +3,13 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.RateLimiting;
+using Dapper;
 using FluentValidation;
 using Izvor.Api.Configuration;
+using Izvor.Api.Database;
 using Izvor.Api.Extensions;
 using Izvor.Api.Middleware;
-using Izvor.Api.Models;
+using Izvor.Api.Dtos;
 using Izvor.Api.Services;
 using Izvor.Api.Validation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,6 +26,8 @@ const int RateLimitWindowSeconds = 60;
 const int RateLimitSegmentsPerWindow = 6;
 const string LoginPath = "/api/auth/login";
 const string RefreshPath = "/api/auth/refresh";
+
+DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,7 +100,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddScoped<IDbSessionContext, DbSessionContext>();
+builder.Services.AddScoped<IDbAccess, DbAccess>();
+builder.Services.AddHttpContextAccessor();
 
 var jwtSettings = builder.Configuration
     .GetSection(JwtSettings.SectionName)
@@ -263,7 +268,6 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<JwtTenantMatchMiddleware>();
 app.UseAuthorization();
-app.UseMiddleware<DatabaseSessionContextMiddleware>();
 app.UseMiddleware<PostgresExceptionHandlerMiddleware>();
 
 app.MapOpenApi();

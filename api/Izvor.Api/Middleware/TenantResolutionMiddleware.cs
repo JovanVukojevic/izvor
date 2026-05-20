@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Izvor.Api.Configuration;
 using Izvor.Api.Extensions;
-using Izvor.Api.Models;
+using Izvor.Api.Dtos;
 using Microsoft.Extensions.Options;
 using Npgsql;
 

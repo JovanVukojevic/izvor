@@ -1,3 +1,3 @@
-namespace Izvor.Api.Models;
+namespace Izvor.Api.Dtos;
 
 public sealed record ErrorResponse(string Error, string Message);

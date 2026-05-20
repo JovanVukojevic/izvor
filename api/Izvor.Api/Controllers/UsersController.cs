@@ -1,7 +1,5 @@
+using Izvor.Api.Database;
 using Izvor.Api.Dtos;
-using Izvor.Api.Mapping;
-using Izvor.Api.Models;
-using Izvor.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,11 +10,11 @@ namespace Izvor.Api.Controllers;
 [Authorize]
 public sealed class UsersController : ControllerBase
 {
-    private readonly IDbSessionContext _session;
+    private readonly IDbAccess _db;
 
-    public UsersController(IDbSessionContext session)
+    public UsersController(IDbAccess db)
     {
-        _session = session;
+        _db = db;
     }
 
     [HttpGet]
@@ -27,17 +25,10 @@ public sealed class UsersController : ControllerBase
         [FromQuery] ListUsersQuery query,
         CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand(
-            $"SELECT {UserRowMapper.UserSelectColumns} FROM api.list_users(@roleFilter, @activeFilter)");
-        command.Parameters.AddWithValue("roleFilter", (object?)query.Role ?? DBNull.Value);
-        command.Parameters.AddWithValue("activeFilter", (object?)query.IsActive ?? DBNull.Value);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        var results = new List<UserResponse>();
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            results.Add(UserRowMapper.Map(reader));
-        }
+        var results = await _db.QueryAsync<UserResponse>(
+            "api.list_users",
+            new { p_role_filter = query.Role, p_active_filter = query.IsActive },
+            cancellationToken);
         return Ok(results);
     }
 
@@ -47,16 +38,16 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserResponse>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand(
-            $"SELECT {UserRowMapper.UserSelectColumns} FROM api.get_user(@id)");
-        command.Parameters.AddWithValue("id", id);
+        var user = await _db.CallAsync<UserResponse>(
+            "api.get_user",
+            new { p_id = id },
+            cancellationToken);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
+        if (user is null)
         {
             return NotFound(new ErrorResponse("not_found", "user_not_found"));
         }
-        return Ok(UserRowMapper.Map(reader));
+        return Ok(user);
     }
 
     [HttpPost]
@@ -70,17 +61,18 @@ public sealed class UsersController : ControllerBase
     {
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-        Guid id;
-        await using (var insertCommand = _session.CreateCommand(
-            "SELECT api.create_user(@email, @hash, @role)"))
-        {
-            insertCommand.Parameters.AddWithValue("email", request.Email);
-            insertCommand.Parameters.AddWithValue("hash", passwordHash);
-            insertCommand.Parameters.AddWithValue("role", request.Role);
-            id = (Guid)(await insertCommand.ExecuteScalarAsync(cancellationToken))!;
-        }
+        var id = await _db.CallAsync<Guid>(
+            "api.create_user",
+            new { p_email = request.Email, p_password_hash = passwordHash, p_role = request.Role },
+            cancellationToken);
 
-        var created = await ReadUserAsync(id, cancellationToken);
+        var created = await _db.CallAsync<UserResponse>(
+            "api.get_user",
+            new { p_id = id },
+            cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"User {id} disappeared after creation — RLS or transaction issue");
+
         return Created($"/api/users/{id}", created);
     }
 
@@ -90,9 +82,10 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeactivateAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand("SELECT api.deactivate_user(@id)");
-        command.Parameters.AddWithValue("id", id);
-        await command.ExecuteScalarAsync(cancellationToken);
+        await _db.ExecuteAsync(
+            "api.deactivate_user",
+            new { p_user_id = id },
+            cancellationToken);
         return NoContent();
     }
 
@@ -102,9 +95,10 @@ public sealed class UsersController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ActivateAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand("SELECT api.activate_user(@id)");
-        command.Parameters.AddWithValue("id", id);
-        await command.ExecuteScalarAsync(cancellationToken);
+        await _db.ExecuteAsync(
+            "api.activate_user",
+            new { p_user_id = id },
+            cancellationToken);
         return NoContent();
     }
 
@@ -120,26 +114,10 @@ public sealed class UsersController : ControllerBase
     {
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
-        await using var command = _session.CreateCommand(
-            "SELECT api.admin_reset_password(@id, @hash)");
-        command.Parameters.AddWithValue("id", id);
-        command.Parameters.AddWithValue("hash", passwordHash);
-        await command.ExecuteScalarAsync(cancellationToken);
+        await _db.ExecuteAsync(
+            "api.admin_reset_password",
+            new { p_user_id = id, p_password_hash = passwordHash },
+            cancellationToken);
         return NoContent();
-    }
-
-    private async Task<UserResponse> ReadUserAsync(Guid id, CancellationToken cancellationToken)
-    {
-        await using var command = _session.CreateCommand(
-            $"SELECT {UserRowMapper.UserSelectColumns} FROM api.get_user(@id)");
-        command.Parameters.AddWithValue("id", id);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            throw new InvalidOperationException(
-                $"User {id} disappeared after creation — RLS or transaction issue");
-        }
-        return UserRowMapper.Map(reader);
     }
 }

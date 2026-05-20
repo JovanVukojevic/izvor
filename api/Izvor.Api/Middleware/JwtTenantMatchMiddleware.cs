@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Izvor.Api.Extensions;
-using Izvor.Api.Models;
+using Izvor.Api.Dtos;
 
 namespace Izvor.Api.Middleware;
 

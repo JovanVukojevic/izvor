@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using System.Text;
 using FluentAssertions;
 using Izvor.Api.Dtos;
-using Izvor.Api.Models;
 using Izvor.Api.Tests.Fixtures;
 using Izvor.Api.Tests.Helpers;
 using Microsoft.AspNetCore.Mvc.Testing;

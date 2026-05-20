@@ -1,5 +1,5 @@
-using Izvor.Api.Models;
-using Izvor.Api.Services;
+using Izvor.Api.Database;
+using Izvor.Api.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,36 +10,39 @@ namespace Izvor.Api.Controllers;
 [Authorize]
 public sealed class MeController : ControllerBase
 {
-    private readonly IDbSessionContext _session;
+    private readonly IDbAccess _db;
 
-    public MeController(IDbSessionContext session)
+    public MeController(IDbAccess db)
     {
-        _session = session;
+        _db = db;
     }
 
     [HttpGet("me")]
     public async Task<IActionResult> GetAsync(CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand(
-            "SELECT id, email, role, tenant_id, tenant_name, tenant_subdomain FROM api.get_current_user()");
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
+        var row = await _db.CallAsync<MeRow>("api.get_current_user", cancellationToken: cancellationToken);
+        if (row is null)
         {
             return Unauthorized(new ErrorResponse(
                 "user_no_longer_valid",
                 "Current user no longer exists"));
         }
 
-        var user = new UserInfo(
-            Id: reader.GetGuid(0),
-            Email: reader.GetString(1),
-            Role: reader.GetString(2),
-            Tenant: new TenantInfo(
-                Id: reader.GetGuid(3),
-                Name: reader.GetString(4),
-                Subdomain: reader.GetString(5)));
-
-        return Ok(user);
+        return Ok(new UserInfo(
+            row.Id,
+            row.Email,
+            row.Role,
+            new TenantInfo(row.TenantId, row.TenantName, row.TenantSubdomain)));
     }
+
+    // api.get_current_user returns api.user_with_tenant (flat columns); Dapper
+    // doesn't flatten composite columns into nested DTOs natively, so this
+    // intermediate record maps the row before the controller assembles UserInfo.
+    private sealed record MeRow(
+        Guid Id,
+        string Email,
+        string Role,
+        Guid TenantId,
+        string TenantName,
+        string TenantSubdomain);
 }

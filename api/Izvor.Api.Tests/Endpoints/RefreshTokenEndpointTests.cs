@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using FluentAssertions;
-using Izvor.Api.Models;
+using Izvor.Api.Dtos;
 using Izvor.Api.Tests.Fixtures;
 using Izvor.Api.Tests.Helpers;
 using Microsoft.AspNetCore.Mvc.Testing;

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Izvor.Api.Dtos;
-using Izvor.Api.Models;
 using Izvor.Api.Tests.Fixtures;
 using Izvor.Api.Tests.Helpers;
 using Xunit;

@@ -1,7 +1,5 @@
+using Izvor.Api.Database;
 using Izvor.Api.Dtos;
-using Izvor.Api.Mapping;
-using Izvor.Api.Models;
-using Izvor.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,14 +10,11 @@ namespace Izvor.Api.Controllers;
 [Authorize]
 public sealed class CoursesController : ControllerBase
 {
-    private const string CourseSelectColumns =
-        "id, category_id, author_id, title, description, created_at, updated_at, is_active";
+    private readonly IDbAccess _db;
 
-    private readonly IDbSessionContext _session;
-
-    public CoursesController(IDbSessionContext session)
+    public CoursesController(IDbAccess db)
     {
-        _session = session;
+        _db = db;
     }
 
     [HttpPost]
@@ -31,17 +26,18 @@ public sealed class CoursesController : ControllerBase
         [FromBody] CreateCourseRequest request,
         CancellationToken cancellationToken)
     {
-        Guid id;
-        await using (var insertCommand = _session.CreateCommand(
-            "SELECT api.create_course(@title, @description, @categoryId)"))
-        {
-            insertCommand.Parameters.AddWithValue("title", request.Title);
-            insertCommand.Parameters.AddWithValue("description", (object?)request.Description ?? DBNull.Value);
-            insertCommand.Parameters.AddWithValue("categoryId", (object?)request.CategoryId ?? DBNull.Value);
-            id = (Guid)(await insertCommand.ExecuteScalarAsync(cancellationToken))!;
-        }
+        var id = await _db.CallAsync<Guid>(
+            "api.create_course",
+            new { p_title = request.Title, p_description = request.Description, p_category_id = request.CategoryId },
+            cancellationToken);
 
-        var created = await ReadCourseAsync(id, cancellationToken);
+        var created = await _db.CallAsync<CourseResponse>(
+            "api.get_course",
+            new { p_id = id },
+            cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Course {id} disappeared after creation — RLS or transaction issue");
+
         return Created($"/api/courses/{id}", created);
     }
 
@@ -56,17 +52,13 @@ public sealed class CoursesController : ControllerBase
         [FromBody] UpdateCourseRequest request,
         CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand(
-            "SELECT api.update_course(@id, @title, @description, @categoryId)");
-        command.Parameters.AddWithValue("id", id);
-        command.Parameters.AddWithValue("title", request.Title);
-        command.Parameters.AddWithValue("description", (object?)request.Description ?? DBNull.Value);
-        command.Parameters.AddWithValue("categoryId", (object?)request.CategoryId ?? DBNull.Value);
-
         // spec.update_course gates with assert_course_owner_or_admin which raises
         // course_not_found / not_course_owner. Past the assert, false means the
         // no-change short-circuit (idempotent no-op). Both paths return 204.
-        await command.ExecuteScalarAsync(cancellationToken);
+        await _db.ExecuteAsync(
+            "api.update_course",
+            new { p_id = id, p_title = request.Title, p_description = request.Description, p_category_id = request.CategoryId },
+            cancellationToken);
         return NoContent();
     }
 
@@ -77,10 +69,10 @@ public sealed class CoursesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand("SELECT api.delete_course(@id)");
-        command.Parameters.AddWithValue("id", id);
-
-        await command.ExecuteScalarAsync(cancellationToken);
+        await _db.ExecuteAsync(
+            "api.delete_course",
+            new { p_id = id },
+            cancellationToken);
         return NoContent();
     }
 
@@ -89,16 +81,16 @@ public sealed class CoursesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CourseResponse>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand(
-            $"SELECT {CourseSelectColumns} FROM api.get_course(@id)");
-        command.Parameters.AddWithValue("id", id);
+        var course = await _db.CallAsync<CourseResponse>(
+            "api.get_course",
+            new { p_id = id },
+            cancellationToken);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
+        if (course is null)
         {
             return NotFound(new ErrorResponse("not_found", "course_not_found"));
         }
-        return Ok(CourseRowMapper.Map(reader));
+        return Ok(course);
     }
 
     [HttpGet]
@@ -108,17 +100,10 @@ public sealed class CoursesController : ControllerBase
         [FromQuery] ListCoursesQuery query,
         CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand(
-            $"SELECT {CourseSelectColumns} FROM api.list_courses(@categoryFilter, @activeFilter)");
-        command.Parameters.AddWithValue("categoryFilter", (object?)query.CategoryId ?? DBNull.Value);
-        command.Parameters.AddWithValue("activeFilter", (object?)query.Active ?? DBNull.Value);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        var results = new List<CourseResponse>();
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            results.Add(CourseRowMapper.Map(reader));
-        }
+        var results = await _db.QueryAsync<CourseResponse>(
+            "api.list_courses",
+            new { p_category_filter = query.CategoryId, p_active_filter = query.Active },
+            cancellationToken);
         return Ok(results);
     }
 
@@ -129,13 +114,17 @@ public sealed class CoursesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CourseResponse>> ActivateAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using (var activate = _session.CreateCommand("SELECT api.activate_course(@id)"))
-        {
-            activate.Parameters.AddWithValue("id", id);
-            await activate.ExecuteScalarAsync(cancellationToken);
-        }
+        await _db.ExecuteAsync(
+            "api.activate_course",
+            new { p_course_id = id },
+            cancellationToken);
 
-        var refreshed = await ReadCourseAsync(id, cancellationToken);
+        var refreshed = await _db.CallAsync<CourseResponse>(
+            "api.get_course",
+            new { p_id = id },
+            cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Course {id} disappeared after activate — RLS or transaction issue");
         return Ok(refreshed);
     }
 
@@ -145,28 +134,17 @@ public sealed class CoursesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CourseResponse>> DeactivateAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using (var deactivate = _session.CreateCommand("SELECT api.deactivate_course(@id)"))
-        {
-            deactivate.Parameters.AddWithValue("id", id);
-            await deactivate.ExecuteScalarAsync(cancellationToken);
-        }
+        await _db.ExecuteAsync(
+            "api.deactivate_course",
+            new { p_course_id = id },
+            cancellationToken);
 
-        var refreshed = await ReadCourseAsync(id, cancellationToken);
+        var refreshed = await _db.CallAsync<CourseResponse>(
+            "api.get_course",
+            new { p_id = id },
+            cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Course {id} disappeared after deactivate — RLS or transaction issue");
         return Ok(refreshed);
-    }
-
-    private async Task<CourseResponse> ReadCourseAsync(Guid id, CancellationToken cancellationToken)
-    {
-        await using var command = _session.CreateCommand(
-            $"SELECT {CourseSelectColumns} FROM api.get_course(@id)");
-        command.Parameters.AddWithValue("id", id);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            throw new InvalidOperationException(
-                $"Course {id} disappeared after creation — RLS or transaction issue");
-        }
-        return CourseRowMapper.Map(reader);
     }
 }

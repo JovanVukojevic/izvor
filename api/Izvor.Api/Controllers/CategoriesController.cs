@@ -1,7 +1,5 @@
+using Izvor.Api.Database;
 using Izvor.Api.Dtos;
-using Izvor.Api.Mapping;
-using Izvor.Api.Models;
-using Izvor.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,11 +10,11 @@ namespace Izvor.Api.Controllers;
 [Authorize]
 public sealed class CategoriesController : ControllerBase
 {
-    private readonly IDbSessionContext _session;
+    private readonly IDbAccess _db;
 
-    public CategoriesController(IDbSessionContext session)
+    public CategoriesController(IDbAccess db)
     {
-        _session = session;
+        _db = db;
     }
 
     [HttpPost]
@@ -28,16 +26,18 @@ public sealed class CategoriesController : ControllerBase
         [FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        Guid id;
-        await using (var insertCommand = _session.CreateCommand(
-            "SELECT api.create_category(@name, @description)"))
-        {
-            insertCommand.Parameters.AddWithValue("name", request.Name);
-            insertCommand.Parameters.AddWithValue("description", (object?)request.Description ?? DBNull.Value);
-            id = (Guid)(await insertCommand.ExecuteScalarAsync(cancellationToken))!;
-        }
+        var id = await _db.CallAsync<Guid>(
+            "api.create_category",
+            new { p_name = request.Name, p_description = request.Description },
+            cancellationToken);
 
-        var created = await ReadCategoryAsync(id, cancellationToken);
+        var created = await _db.CallAsync<CategoryResponse>(
+            "api.get_category",
+            new { p_id = id },
+            cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Category {id} disappeared after creation — RLS or transaction issue");
+
         return Created($"/api/categories/{id}", created);
     }
 
@@ -52,20 +52,17 @@ public sealed class CategoriesController : ControllerBase
         [FromBody] UpdateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand(
-            "SELECT api.update_category(@id, @name, @description)");
-        command.Parameters.AddWithValue("id", id);
-        command.Parameters.AddWithValue("name", request.Name);
-        command.Parameters.AddWithValue("description", (object?)request.Description ?? DBNull.Value);
-
         // spec.update_category has no pre-existence check, so RETURN FOUND from
         // the UPDATE means false → row didn't exist (under RLS).
-        var result = (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
+        var result = await _db.CallAsync<bool>(
+            "api.update_category",
+            new { p_id = id, p_name = request.Name, p_description = request.Description },
+            cancellationToken);
+
         if (!result)
         {
             return NotFound(new ErrorResponse("not_found", "category_not_found"));
         }
-
         return NoContent();
     }
 
@@ -76,15 +73,15 @@ public sealed class CategoriesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand("SELECT api.delete_category(@id)");
-        command.Parameters.AddWithValue("id", id);
+        var result = await _db.CallAsync<bool>(
+            "api.delete_category",
+            new { p_id = id },
+            cancellationToken);
 
-        var result = (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
         if (!result)
         {
             return NotFound(new ErrorResponse("not_found", "category_not_found"));
         }
-
         return NoContent();
     }
 
@@ -93,7 +90,11 @@ public sealed class CategoriesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CategoryResponse>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var category = await TryReadCategoryAsync(id, cancellationToken);
+        var category = await _db.CallAsync<CategoryResponse>(
+            "api.get_category",
+            new { p_id = id },
+            cancellationToken);
+
         if (category is null)
         {
             return NotFound(new ErrorResponse("not_found", "category_not_found"));
@@ -105,37 +106,9 @@ public sealed class CategoriesController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<CategoryResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<CategoryResponse>>> ListAsync(CancellationToken cancellationToken)
     {
-        await using var command = _session.CreateCommand(
-            "SELECT id, name, description, created_at, updated_at FROM api.list_categories()");
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        var results = new List<CategoryResponse>();
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            results.Add(CategoryRowMapper.Map(reader));
-        }
+        var results = await _db.QueryAsync<CategoryResponse>(
+            "api.list_categories",
+            cancellationToken: cancellationToken);
         return Ok(results);
-    }
-
-    private async Task<CategoryResponse> ReadCategoryAsync(Guid id, CancellationToken cancellationToken)
-    {
-        var category = await TryReadCategoryAsync(id, cancellationToken)
-            ?? throw new InvalidOperationException(
-                $"Category {id} disappeared after creation — RLS or transaction issue");
-        return category;
-    }
-
-    private async Task<CategoryResponse?> TryReadCategoryAsync(Guid id, CancellationToken cancellationToken)
-    {
-        await using var command = _session.CreateCommand(
-            "SELECT id, name, description, created_at, updated_at FROM api.get_category(@id)");
-        command.Parameters.AddWithValue("id", id);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            return null;
-        }
-        return CategoryRowMapper.Map(reader);
     }
 }
