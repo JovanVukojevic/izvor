@@ -28,7 +28,14 @@ public sealed class CoursesController : ControllerBase
     {
         var id = await _db.CallAsync<Guid>(
             "api.create_course",
-            new { p_title = request.Title, p_description = request.Description, p_category_id = request.CategoryId },
+            new
+            {
+                p_title = request.Title,
+                p_description = request.Description,
+                p_category_id = request.CategoryId,
+                p_first_lesson_title = request.FirstLessonTitle,
+                p_first_lesson_content = request.FirstLessonContent
+            },
             cancellationToken);
 
         var created = await _db.CallAsync<CourseResponse>(

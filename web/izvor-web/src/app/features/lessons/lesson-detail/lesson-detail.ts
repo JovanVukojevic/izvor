@@ -302,6 +302,11 @@ export class LessonDetail {
           this.banner.set(this.translate.instant('lesson.detail.hasProgressError'));
           return;
         }
+        if (err.status === 409 && body?.message === 'course_must_have_lessons') {
+          this.bannerSeverity.set('error');
+          this.banner.set(this.translate.instant('lesson.detail.mustHaveLessonsError'));
+          return;
+        }
         this.messages.add({
           severity: 'error',
           summary: this.translate.instant('lesson.actions.delete.failedSummary'),

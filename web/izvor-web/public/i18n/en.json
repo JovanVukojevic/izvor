@@ -57,6 +57,7 @@
     "course_inactive": "This course is no longer accepting enrollments.",
     "course_has_enrollments": "This course has enrollments and cannot be deleted.",
     "course_has_no_lessons": "Add at least one lesson before activating.",
+    "course_must_have_lessons": "A course must always have at least one lesson; the last lesson cannot be deleted.",
     "lesson_has_progress": "This lesson has been completed by at least one learner and cannot be deleted.",
     "enrollment_not_active": "Enrollment is no longer active.",
     "enrollment_cancelled": "Enrollment has been cancelled.",
@@ -109,12 +110,17 @@
       "fieldDescription": "Description",
       "fieldCategory": "Category",
       "selectCategoryPlaceholder": "Select a category",
+      "fieldFirstLessonTitle": "First lesson title",
+      "fieldFirstLessonContent": "First lesson content",
+      "firstLessonHint": "A course must always have at least one lesson. The first lesson is created together with the course; you can add more lessons afterwards.",
       "loadFailed": "Could not load form.",
       "saveFailed": "Could not save course.",
       "categoryGoneError": "Selected category no longer exists. Pick a different one.",
       "errors": {
         "titleRequired": "Title is required",
-        "categoryRequired": "Category is required"
+        "categoryRequired": "Category is required",
+        "firstLessonTitleRequired": "First lesson title is required",
+        "firstLessonContentRequired": "First lesson content is required"
       }
     },
     "activity": {
@@ -200,7 +206,8 @@
       "notEnrolledError": "You must enroll in this course before marking lessons complete.",
       "enrollmentInactiveError": "Your enrollment is no longer active.",
       "markFailedError": "Could not mark this lesson complete.",
-      "hasProgressError": "This lesson has been completed by at least one learner and cannot be deleted."
+      "hasProgressError": "This lesson has been completed by at least one learner and cannot be deleted.",
+      "mustHaveLessonsError": "A course must always have at least one lesson. Add another lesson before deleting this one."
     },
     "form": {
       "headerEdit": "Edit Lesson",

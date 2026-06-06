@@ -13,6 +13,8 @@ export interface CreateCourseRequest {
   title: string;
   description: string | null;
   categoryId: string;
+  firstLessonTitle: string;
+  firstLessonContent: string;
 }
 
 export interface UpdateCourseRequest {

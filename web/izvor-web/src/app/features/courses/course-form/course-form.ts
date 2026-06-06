@@ -84,6 +84,34 @@ import { AuthService } from '../../../core/auth/auth.service';
               }
             </div>
 
+            @if (!isEdit()) {
+              <div class="first-lesson-block">
+                <p class="first-lesson-hint">{{ 'course.form.firstLessonHint' | translate }}</p>
+
+                <div class="field">
+                  <label for="firstLessonTitle">{{ 'course.form.fieldFirstLessonTitle' | translate }}</label>
+                  <input pInputText id="firstLessonTitle" formControlName="firstLessonTitle" maxlength="200" fluid />
+                  @if (form.controls.firstLessonTitle.touched && form.controls.firstLessonTitle.errors?.['required']) {
+                    <small class="error">{{ 'course.form.errors.firstLessonTitleRequired' | translate }}</small>
+                  }
+                </div>
+
+                <div class="field">
+                  <label for="firstLessonContent">{{ 'course.form.fieldFirstLessonContent' | translate }}</label>
+                  <textarea
+                    pTextarea
+                    id="firstLessonContent"
+                    formControlName="firstLessonContent"
+                    rows="6"
+                    maxlength="20000"
+                  ></textarea>
+                  @if (form.controls.firstLessonContent.touched && form.controls.firstLessonContent.errors?.['required']) {
+                    <small class="error">{{ 'course.form.errors.firstLessonContentRequired' | translate }}</small>
+                  }
+                </div>
+              </div>
+            }
+
             <div class="actions">
               <p-button
                 type="submit"
@@ -110,6 +138,20 @@ import { AuthService } from '../../../core/auth/auth.service';
     .field { display: flex; flex-direction: column; gap: 0.375rem; }
     .field label { font-weight: 500; }
     .field-inline { display: flex; align-items: center; gap: 0.5rem; }
+    .first-lesson-block {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--p-content-border-color, #e5e7eb);
+      border-radius: 6px;
+      background: var(--p-content-hover-background, #f9fafb);
+    }
+    .first-lesson-hint {
+      margin: 0;
+      color: var(--p-text-muted-color, #6b7280);
+      font-size: 0.9rem;
+    }
     .actions { display: flex; gap: 0.5rem; }
     .error { color: var(--p-message-error-color, #b91c1c); font-size: 0.85rem; }
     :host ::ng-deep .form-message { width: 100%; margin-bottom: 1rem; }
@@ -146,7 +188,15 @@ export class CourseForm {
       nonNullable: true,
       validators: [Validators.maxLength(5000)]
     }),
-    categoryId: new FormControl<string | null>(null, { validators: [Validators.required] })
+    categoryId: new FormControl<string | null>(null, { validators: [Validators.required] }),
+    firstLessonTitle: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)]
+    }),
+    firstLessonContent: new FormControl<string>('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(20000)]
+    })
   });
 
   isEdit(): boolean {
@@ -157,6 +207,10 @@ export class CourseForm {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam !== null) {
       this.id.set(idParam);
+      // First-lesson fields are create-only; in edit mode they are not in the
+      // template, so the form-wide validity must ignore them.
+      this.form.controls.firstLessonTitle.disable({ emitEvent: false });
+      this.form.controls.firstLessonContent.disable({ emitEvent: false });
     }
     this.load();
   }
@@ -240,7 +294,9 @@ export class CourseForm {
         .createCourse({
           title: raw.title.trim(),
           description,
-          categoryId: raw.categoryId!
+          categoryId: raw.categoryId!,
+          firstLessonTitle: raw.firstLessonTitle.trim(),
+          firstLessonContent: raw.firstLessonContent
         })
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({
