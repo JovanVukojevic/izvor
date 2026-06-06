@@ -29,6 +29,8 @@ public static class ApiErrorMapper
         "course_has_enrollments",
         "course_has_no_lessons",
         "course_must_have_lessons",
+        "course_must_have_categories",
+        "category_in_use",
         "lesson_has_progress",
         "enrollment_not_active",
         "enrollment_cancelled",

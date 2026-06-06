@@ -32,7 +32,7 @@ public sealed class CoursesController : ControllerBase
             {
                 p_title = request.Title,
                 p_description = request.Description,
-                p_category_id = request.CategoryId,
+                p_category_ids = request.CategoryIds,
                 p_first_lesson_title = request.FirstLessonTitle,
                 p_first_lesson_content = request.FirstLessonContent
             },
@@ -64,7 +64,7 @@ public sealed class CoursesController : ControllerBase
         // no-change short-circuit (idempotent no-op). Both paths return 204.
         await _db.ExecuteAsync(
             "api.update_course",
-            new { p_id = id, p_title = request.Title, p_description = request.Description, p_category_id = request.CategoryId },
+            new { p_id = id, p_title = request.Title, p_description = request.Description, p_category_ids = request.CategoryIds },
             cancellationToken);
         return NoContent();
     }
