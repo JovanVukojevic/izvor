@@ -58,7 +58,6 @@ ALTER TABLE ONLY impl.categories FORCE ROW LEVEL SECURITY;
 CREATE TABLE impl.courses (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     tenant_id uuid NOT NULL,
-    category_id uuid NOT NULL,
     author_id uuid NOT NULL,
     title text NOT NULL,
     description text,
@@ -69,6 +68,15 @@ CREATE TABLE impl.courses (
 );
 
 ALTER TABLE ONLY impl.courses FORCE ROW LEVEL SECURITY;
+
+
+CREATE TABLE impl.course_categories (
+    tenant_id uuid NOT NULL,
+    course_id uuid NOT NULL,
+    category_id uuid NOT NULL
+);
+
+ALTER TABLE ONLY impl.course_categories FORCE ROW LEVEL SECURITY;
 
 
 CREATE TABLE impl.lessons (
@@ -148,6 +156,10 @@ ALTER TABLE ONLY impl.courses
     ADD CONSTRAINT courses_pkey PRIMARY KEY (tenant_id, id);
 
 
+ALTER TABLE ONLY impl.course_categories
+    ADD CONSTRAINT course_categories_pkey PRIMARY KEY (tenant_id, course_id, category_id);
+
+
 ALTER TABLE ONLY impl.lessons
     ADD CONSTRAINT lessons_pkey PRIMARY KEY (tenant_id, id);
 
@@ -180,8 +192,12 @@ ALTER TABLE ONLY impl.courses
     ADD CONSTRAINT courses_tenant_id_author_id_fkey FOREIGN KEY (tenant_id, author_id) REFERENCES impl.users(tenant_id, id);
 
 
-ALTER TABLE ONLY impl.courses
-    ADD CONSTRAINT courses_tenant_id_category_id_fkey FOREIGN KEY (tenant_id, category_id) REFERENCES impl.categories(tenant_id, id) ON DELETE RESTRICT;
+ALTER TABLE ONLY impl.course_categories
+    ADD CONSTRAINT course_categories_tenant_id_category_id_fkey FOREIGN KEY (tenant_id, category_id) REFERENCES impl.categories(tenant_id, id) ON DELETE RESTRICT;
+
+
+ALTER TABLE ONLY impl.course_categories
+    ADD CONSTRAINT course_categories_tenant_id_course_id_fkey FOREIGN KEY (tenant_id, course_id) REFERENCES impl.courses(tenant_id, id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY impl.lessons
@@ -228,7 +244,7 @@ CREATE INDEX courses_tenant_active_idx ON impl.courses USING btree (tenant_id) W
 CREATE INDEX courses_tenant_author_idx ON impl.courses USING btree (tenant_id, author_id);
 
 
-CREATE INDEX courses_tenant_category_idx ON impl.courses USING btree (tenant_id, category_id);
+CREATE INDEX course_categories_tenant_category_idx ON impl.course_categories USING btree (tenant_id, category_id);
 
 
 CREATE UNIQUE INDEX enrollments_active_unique ON impl.enrollments USING btree (tenant_id, course_id, user_id) WHERE (status = 'active'::impl.enrollment_status);
@@ -272,6 +288,12 @@ ALTER TABLE impl.courses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON impl.courses USING ((tenant_id = app.current_tenant())) WITH CHECK ((tenant_id = app.current_tenant()));
 
 
+ALTER TABLE impl.course_categories ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY tenant_isolation ON impl.course_categories USING ((tenant_id = app.current_tenant())) WITH CHECK ((tenant_id = app.current_tenant()));
+
+
 ALTER TABLE impl.lessons ENABLE ROW LEVEL SECURITY;
 
 
@@ -296,6 +318,46 @@ ALTER TABLE impl.refresh_tokens ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON impl.refresh_tokens USING ((tenant_id = app.current_tenant())) WITH CHECK ((tenant_id = app.current_tenant()));
 
 -- === Trigger Functions ===
+
+
+CREATE FUNCTION impl.assert_course_has_category() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'impl', 'app', 'pg_temp'
+    AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM impl.courses
+         WHERE tenant_id = OLD.tenant_id AND id = OLD.course_id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM impl.course_categories
+         WHERE tenant_id = OLD.tenant_id AND course_id = OLD.course_id
+    ) THEN
+        RAISE EXCEPTION 'course_must_have_categories';
+    END IF;
+    RETURN NULL;
+END;
+$$;
+
+
+CREATE FUNCTION impl.assert_course_has_lesson() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'impl', 'app', 'pg_temp'
+    AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM impl.courses
+         WHERE tenant_id = OLD.tenant_id AND id = OLD.course_id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM impl.lessons
+         WHERE tenant_id = OLD.tenant_id AND course_id = OLD.course_id
+    ) THEN
+        RAISE EXCEPTION 'course_must_have_lessons';
+    END IF;
+    RETURN NULL;
+END;
+$$;
 
 
 CREATE FUNCTION impl.auto_complete_enrollment() RETURNS trigger
@@ -333,6 +395,21 @@ END;
 $$;
 
 
+CREATE FUNCTION impl.normalize_email() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- IS NOT NULL guard: BEFORE triggers fire before CHECK constraints,
+    -- so a NULL email must pass through untouched to let the existing
+    -- NOT NULL CHECK from migration 005 reject it cleanly.
+    IF NEW.email IS NOT NULL THEN
+        NEW.email := LOWER(TRIM(NEW.email));
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+
 CREATE FUNCTION impl.stamp_enrollment_terminal_timestamp() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -350,19 +427,9 @@ END;
 $$;
 
 
-CREATE FUNCTION impl.normalize_email() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    -- IS NOT NULL guard: BEFORE triggers fire before CHECK constraints,
-    -- so a NULL email must pass through untouched to let the existing
-    -- NOT NULL CHECK from migration 005 reject it cleanly.
-    IF NEW.email IS NOT NULL THEN
-        NEW.email := LOWER(TRIM(NEW.email));
-    END IF;
-    RETURN NEW;
-END;
-$$;
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
 
 -- === Triggers ===
 
@@ -380,6 +447,18 @@ CREATE TRIGGER categories_set_updated_at BEFORE UPDATE ON impl.categories FOR EA
 
 
 CREATE TRIGGER courses_set_updated_at BEFORE UPDATE ON impl.courses FOR EACH ROW EXECUTE FUNCTION app.set_updated_at();
+
+
+CREATE CONSTRAINT TRIGGER course_categories_has_category_on_delete AFTER DELETE ON impl.course_categories DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_course_has_category();
+
+
+CREATE CONSTRAINT TRIGGER course_categories_has_category_on_update AFTER UPDATE OF course_id ON impl.course_categories DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_course_has_category();
+
+
+CREATE CONSTRAINT TRIGGER lessons_course_has_lesson_on_delete AFTER DELETE ON impl.lessons DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_course_has_lesson();
+
+
+CREATE CONSTRAINT TRIGGER lessons_course_has_lesson_on_update AFTER UPDATE OF course_id ON impl.lessons DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_course_has_lesson();
 
 
 CREATE TRIGGER lessons_set_updated_at BEFORE UPDATE ON impl.lessons FOR EACH ROW EXECUTE FUNCTION app.set_updated_at();

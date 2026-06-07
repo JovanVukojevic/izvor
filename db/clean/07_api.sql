@@ -1,35 +1,19 @@
 -- === Wrappers: Users ===
 
 
-CREATE FUNCTION api.create_user(p_email text, p_password_hash text, p_role text DEFAULT 'learner'::text) RETURNS uuid
+CREATE FUNCTION api.activate_user(p_user_id uuid) RETURNS boolean
     LANGUAGE sql SECURITY DEFINER
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
-    SELECT spec.create_user(p_email, p_password_hash, p_role);
+    SELECT spec.activate_user(p_user_id);
 $$;
 
 
-CREATE FUNCTION api.get_user(p_user_id uuid) RETURNS SETOF api."user"
-    LANGUAGE sql STABLE SECURITY DEFINER
+CREATE FUNCTION api.admin_reset_password(p_user_id uuid, p_password_hash text) RETURNS boolean
+    LANGUAGE sql SECURITY DEFINER
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
-    SELECT * FROM spec.get_user(p_user_id);
-$$;
-
-
-CREATE FUNCTION api.get_current_user() RETURNS SETOF api.user_with_tenant
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT * FROM spec.get_current_user();
-$$;
-
-
-CREATE FUNCTION api.list_users(p_role_filter text, p_active_filter boolean) RETURNS SETOF api."user"
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT * FROM spec.list_users(p_role_filter, p_active_filter);
+    SELECT spec.admin_reset_password(p_user_id, p_password_hash);
 $$;
 
 
@@ -51,19 +35,11 @@ CREATE FUNCTION api.change_password(p_user_id uuid, p_new_password_hash text) RE
 $$;
 
 
-CREATE FUNCTION api.admin_reset_password(p_user_id uuid, p_password_hash text) RETURNS boolean
+CREATE FUNCTION api.create_user(p_email text, p_password_hash text, p_role text DEFAULT 'learner'::text) RETURNS uuid
     LANGUAGE sql SECURITY DEFINER
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
-    SELECT spec.admin_reset_password(p_user_id, p_password_hash);
-$$;
-
-
-CREATE FUNCTION api.activate_user(p_user_id uuid) RETURNS boolean
-    LANGUAGE sql SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT spec.activate_user(p_user_id);
+    SELECT spec.create_user(p_email, p_password_hash, p_role);
 $$;
 
 
@@ -74,6 +50,30 @@ CREATE FUNCTION api.deactivate_user(p_user_id uuid) RETURNS boolean
     SELECT spec.deactivate_user(p_user_id);
 $$;
 
+
+CREATE FUNCTION api.get_current_user() RETURNS SETOF api.user_with_tenant
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT * FROM spec.get_current_user();
+$$;
+
+
+CREATE FUNCTION api.get_user(p_user_id uuid) RETURNS SETOF api."user"
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT * FROM spec.get_user(p_user_id);
+$$;
+
+
+CREATE FUNCTION api.list_users(p_role_filter text, p_active_filter boolean) RETURNS SETOF api."user"
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT * FROM spec.list_users(p_role_filter, p_active_filter);
+$$;
+
 -- === Wrappers: Categories ===
 
 
@@ -82,6 +82,14 @@ CREATE FUNCTION api.create_category(p_name text, p_description text) RETURNS uui
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
     SELECT spec.create_category(p_name, p_description);
+$$;
+
+
+CREATE FUNCTION api.delete_category(p_id uuid) RETURNS boolean
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT spec.delete_category(p_id);
 $$;
 
 
@@ -110,59 +118,7 @@ CREATE FUNCTION api.update_category(p_id uuid, p_name text, p_description text) 
     SELECT spec.update_category(p_id, p_name, p_description);
 $$;
 
-
-CREATE FUNCTION api.delete_category(p_id uuid) RETURNS boolean
-    LANGUAGE sql SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT spec.delete_category(p_id);
-$$;
-
 -- === Wrappers: Courses ===
-
-
-CREATE FUNCTION api.create_course(p_title text, p_description text, p_category_id uuid) RETURNS uuid
-    LANGUAGE sql SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT spec.create_course(p_title, p_description, p_category_id);
-$$;
-
-
-CREATE FUNCTION api.get_course(p_id uuid) RETURNS SETOF api.course
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT id, category_id, author_id, title, description,
-           created_at, updated_at, is_active
-    FROM spec.get_course(p_id);
-$$;
-
-
-CREATE FUNCTION api.get_course_completion_stats(p_course_id uuid) RETURNS api.course_completion_stats
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT spec.get_course_completion_stats(p_course_id);
-$$;
-
-
-CREATE FUNCTION api.list_courses(p_category_filter uuid DEFAULT NULL::uuid, p_active_filter boolean DEFAULT NULL::boolean) RETURNS SETOF api.course
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT id, category_id, author_id, title, description,
-           created_at, updated_at, is_active
-    FROM spec.list_courses(p_category_filter, p_active_filter);
-$$;
-
-
-CREATE FUNCTION api.update_course(p_id uuid, p_title text, p_description text, p_category_id uuid) RETURNS boolean
-    LANGUAGE sql SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT spec.update_course(p_id, p_title, p_description, p_category_id);
-$$;
 
 
 CREATE FUNCTION api.activate_course(p_course_id uuid) RETURNS boolean
@@ -170,6 +126,15 @@ CREATE FUNCTION api.activate_course(p_course_id uuid) RETURNS boolean
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
     SELECT spec.activate_course(p_course_id);
+$$;
+
+
+CREATE FUNCTION api.create_course(p_title text, p_description text, p_category_ids uuid[], p_first_lesson_title text, p_first_lesson_content text) RETURNS uuid
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT spec.create_course(p_title, p_description, p_category_ids,
+                              p_first_lesson_title, p_first_lesson_content);
 $$;
 
 
@@ -188,6 +153,38 @@ CREATE FUNCTION api.delete_course(p_id uuid) RETURNS boolean
     SELECT spec.delete_course(p_id);
 $$;
 
+
+CREATE FUNCTION api.get_course(p_id uuid) RETURNS SETOF api.course
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT * FROM spec.get_course(p_id);
+$$;
+
+
+CREATE FUNCTION api.get_course_completion_stats(p_course_id uuid) RETURNS api.course_completion_stats
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT spec.get_course_completion_stats(p_course_id);
+$$;
+
+
+CREATE FUNCTION api.list_courses(p_category_filter uuid DEFAULT NULL::uuid, p_active_filter boolean DEFAULT NULL::boolean) RETURNS SETOF api.course
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT * FROM spec.list_courses(p_category_filter, p_active_filter);
+$$;
+
+
+CREATE FUNCTION api.update_course(p_id uuid, p_title text, p_description text, p_category_ids uuid[]) RETURNS boolean
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT spec.update_course(p_id, p_title, p_description, p_category_ids);
+$$;
+
 -- === Wrappers: Lessons ===
 
 
@@ -196,6 +193,14 @@ CREATE FUNCTION api.create_lesson(p_course_id uuid, p_title text, p_content text
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
     SELECT spec.create_lesson(p_course_id, p_title, p_content);
+$$;
+
+
+CREATE FUNCTION api.delete_lesson(p_lesson_id uuid) RETURNS boolean
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT spec.delete_lesson(p_lesson_id);
 $$;
 
 
@@ -224,14 +229,6 @@ CREATE FUNCTION api.list_lessons_by_course(p_course_id uuid) RETURNS SETOF api.l
 $$;
 
 
-CREATE FUNCTION api.update_lesson(p_lesson_id uuid, p_title text, p_content text) RETURNS boolean
-    LANGUAGE sql SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT spec.update_lesson(p_lesson_id, p_title, p_content);
-$$;
-
-
 CREATE FUNCTION api.reorder_lesson(p_lesson_id uuid, p_new_position integer) RETURNS boolean
     LANGUAGE sql SECURITY DEFINER
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
@@ -240,14 +237,22 @@ CREATE FUNCTION api.reorder_lesson(p_lesson_id uuid, p_new_position integer) RET
 $$;
 
 
-CREATE FUNCTION api.delete_lesson(p_lesson_id uuid) RETURNS boolean
+CREATE FUNCTION api.update_lesson(p_lesson_id uuid, p_title text, p_content text) RETURNS boolean
     LANGUAGE sql SECURITY DEFINER
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
-    SELECT spec.delete_lesson(p_lesson_id);
+    SELECT spec.update_lesson(p_lesson_id, p_title, p_content);
 $$;
 
 -- === Wrappers: Enrollments ===
+
+
+CREATE FUNCTION api.cancel_enrollment(p_enrollment_id uuid) RETURNS boolean
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT spec.cancel_enrollment(p_enrollment_id);
+$$;
 
 
 CREATE FUNCTION api.enroll_user(p_user_id uuid, p_course_id uuid) RETURNS uuid
@@ -297,23 +302,7 @@ CREATE FUNCTION api.list_enrollments_by_user(p_user_id uuid, p_status_filter tex
     FROM spec.list_enrollments_by_user(p_user_id, p_status_filter);
 $$;
 
-
-CREATE FUNCTION api.cancel_enrollment(p_enrollment_id uuid) RETURNS boolean
-    LANGUAGE sql SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT spec.cancel_enrollment(p_enrollment_id);
-$$;
-
 -- === Wrappers: Lesson Progress ===
-
-
-CREATE FUNCTION api.mark_lesson_complete(p_lesson_id uuid) RETURNS boolean
-    LANGUAGE sql SECURITY DEFINER
-    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
-    AS $$
-    SELECT spec.mark_lesson_complete(p_lesson_id);
-$$;
 
 
 CREATE FUNCTION api.get_lesson_progress_by_enrollment(p_enrollment_id uuid) RETURNS SETOF api.lesson_progress
@@ -321,6 +310,14 @@ CREATE FUNCTION api.get_lesson_progress_by_enrollment(p_enrollment_id uuid) RETU
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
     SELECT * FROM spec.get_lesson_progress_by_enrollment(p_enrollment_id);
+$$;
+
+
+CREATE FUNCTION api.mark_lesson_complete(p_lesson_id uuid) RETURNS boolean
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
+    AS $$
+    SELECT spec.mark_lesson_complete(p_lesson_id);
 $$;
 
 -- === Wrappers: Refresh Tokens ===
@@ -334,11 +331,11 @@ CREATE FUNCTION api.create_refresh_token(p_lifetime_days integer) RETURNS api.re
 $$;
 
 
-CREATE FUNCTION api.rotate_refresh_token(p_token text, p_lifetime_days integer) RETURNS api.refresh_token
+CREATE FUNCTION api.revoke_all_user_refresh_tokens(p_user_id uuid) RETURNS integer
     LANGUAGE sql SECURITY DEFINER
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
-    SELECT spec.rotate_refresh_token(p_token, p_lifetime_days);
+    SELECT spec.revoke_all_user_refresh_tokens(p_user_id);
 $$;
 
 
@@ -350,9 +347,9 @@ CREATE FUNCTION api.revoke_refresh_token(p_token text) RETURNS boolean
 $$;
 
 
-CREATE FUNCTION api.revoke_all_user_refresh_tokens(p_user_id uuid) RETURNS integer
+CREATE FUNCTION api.rotate_refresh_token(p_token text, p_lifetime_days integer) RETURNS api.refresh_token
     LANGUAGE sql SECURITY DEFINER
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
-    SELECT spec.revoke_all_user_refresh_tokens(p_user_id);
+    SELECT spec.rotate_refresh_token(p_token, p_lifetime_days);
 $$;
