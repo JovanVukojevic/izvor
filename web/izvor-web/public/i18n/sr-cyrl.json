@@ -58,6 +58,8 @@
     "course_has_enrollments": "Овај курс има уписе и не може бити обрисан.",
     "course_has_no_lessons": "Додајте бар једну лекцију пре активирања.",
     "course_must_have_lessons": "Курс мора увек имати бар једну лекцију; последња лекција не може бити обрисана.",
+    "course_must_have_categories": "Курс мора увек имати бар једну категорију.",
+    "category_in_use": "Ова категорија је у употреби и не може бити обрисана.",
     "lesson_has_progress": "Ову лекцију је бар један ученик означио као завршену и не може бити обрисана.",
     "enrollment_not_active": "Упис више није активан.",
     "enrollment_cancelled": "Упис је отказан.",
@@ -88,7 +90,7 @@
       "loading": "Учитавање курса…",
       "notFound": "Курс није пронађен",
       "backToCourses": "Назад на курсеве",
-      "categoryLabel": "Категорија:",
+      "categoryLabel": "Категорије:",
       "authorLabel": "Аутор:",
       "lessonsHeader": "Лекције",
       "lessonsEmpty": "Још нема лекција.",
@@ -108,8 +110,8 @@
       "loading": "Учитавање…",
       "fieldTitle": "Наслов",
       "fieldDescription": "Опис",
-      "fieldCategory": "Категорија",
-      "selectCategoryPlaceholder": "Изаберите категорију",
+      "fieldCategory": "Категорије",
+      "selectCategoryPlaceholder": "Изаберите једну или више категорија",
       "fieldFirstLessonTitle": "Наслов прве лекције",
       "fieldFirstLessonContent": "Садржај прве лекције",
       "firstLessonHint": "Курс мора увек имати бар једну лекцију. Прва лекција се креира заједно са курсом; додатне лекције можете додати накнадно.",
@@ -118,7 +120,7 @@
       "categoryGoneError": "Изабрана категорија више не постоји. Изаберите другу.",
       "errors": {
         "titleRequired": "Наслов је обавезан",
-        "categoryRequired": "Категорија је обавезна",
+        "categoryRequired": "Бар једна категорија је обавезна",
         "firstLessonTitleRequired": "Наслов прве лекције је обавезан",
         "firstLessonContentRequired": "Садржај прве лекције је обавезан"
       }

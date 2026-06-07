@@ -76,9 +76,13 @@ BEGIN
                 ('a0000001-0000-0000-0000-000000000000', v_tenant_id, 'Matematika', 'Kursovi iz matematičkih disciplina.'),
                 ('a0000002-0000-0000-0000-000000000000', v_tenant_id, 'Menadžment', 'Kursovi iz menadžmenta i organizacije.');
 
-            INSERT INTO impl.courses (id, tenant_id, category_id, author_id, title, description, is_active) VALUES
-                ('c0000001-0000-0000-0000-000000000000', v_tenant_id, 'a0000001-0000-0000-0000-000000000000', v_author_id, 'Teorija igara',      'Uvod u matematičku teoriju strateškog odlučivanja.', true),
-                ('c0000002-0000-0000-0000-000000000000', v_tenant_id, 'a0000002-0000-0000-0000-000000000000', v_author_id, 'Osnove menadžmenta', 'Osnovni pojmovi menadžmenta i liderstva.',           true);
+            INSERT INTO impl.courses (id, tenant_id, author_id, title, description, is_active) VALUES
+                ('c0000001-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Teorija igara',      'Uvod u matematičku teoriju strateškog odlučivanja.', true),
+                ('c0000002-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Osnove menadžmenta', 'Osnovni pojmovi menadžmenta i liderstva.',           true);
+
+            INSERT INTO impl.course_categories (tenant_id, course_id, category_id) VALUES
+                (v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'a0000001-0000-0000-0000-000000000000'),
+                (v_tenant_id, 'c0000002-0000-0000-0000-000000000000', 'a0000002-0000-0000-0000-000000000000');
 
             INSERT INTO impl.lessons (id, tenant_id, course_id, title, content, position) VALUES
                 ('e0000001-0000-0000-0000-000000000000', v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'Uvod u teoriju igara',
@@ -210,9 +214,17 @@ SMART je dobar za *taktičke* ciljeve — one koji se mogu jasno opisati unapred
                 ('a0000003-0000-0000-0000-000000000000', v_tenant_id, 'Onboarding', 'Kursovi za nove zaposlene.'),
                 ('a0000004-0000-0000-0000-000000000000', v_tenant_id, 'HR',         'Interna HR pravila i procedure.');
 
-            INSERT INTO impl.courses (id, tenant_id, category_id, author_id, title, description, is_active) VALUES
-                ('c0000003-0000-0000-0000-000000000000', v_tenant_id, 'a0000003-0000-0000-0000-000000000000', v_author_id, 'Onboarding za Junior programere', 'Prvi koraci za novog člana razvojnog tima.', true),
-                ('c0000004-0000-0000-0000-000000000000', v_tenant_id, 'a0000004-0000-0000-0000-000000000000', v_author_id, 'HR pravila',                      'Osnovna HR pravila i procedure.',            true);
+            INSERT INTO impl.courses (id, tenant_id, author_id, title, description, is_active) VALUES
+                ('c0000003-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Onboarding za Junior programere', 'Prvi koraci za novog člana razvojnog tima.', true),
+                ('c0000004-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'HR pravila',                      'Osnovna HR pravila i procedure.',            true);
+
+            -- c0000003 carries TWO categories: onboarding for engineers genuinely touches
+            -- HR procedures (working hours, sick leave) — the demo data exercises the M:N
+            -- relationship explicitly so a fresh DB shows the feature working.
+            INSERT INTO impl.course_categories (tenant_id, course_id, category_id) VALUES
+                (v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'a0000003-0000-0000-0000-000000000000'),
+                (v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'a0000004-0000-0000-0000-000000000000'),
+                (v_tenant_id, 'c0000004-0000-0000-0000-000000000000', 'a0000004-0000-0000-0000-000000000000');
 
             INSERT INTO impl.lessons (id, tenant_id, course_id, title, content, position) VALUES
                 ('e0000007-0000-0000-0000-000000000000', v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'Dobrodošli u tim',
@@ -388,17 +400,19 @@ DECLARE
     v_course_count     INT := 0;
     v_lesson_count     INT := 0;
     v_enrollment_count INT := 0;
+    v_link_count       INT := 0;
     v_partial INT;
 BEGIN
     FOR rec IN SELECT id FROM system_impl.tenants LOOP
         PERFORM set_config('app.current_tenant', rec.id::TEXT, true);
-        SELECT COUNT(*) INTO v_partial FROM impl.users;       v_user_count       := v_user_count       + v_partial;
-        SELECT COUNT(*) INTO v_partial FROM impl.categories;  v_category_count   := v_category_count   + v_partial;
-        SELECT COUNT(*) INTO v_partial FROM impl.courses;     v_course_count     := v_course_count     + v_partial;
-        SELECT COUNT(*) INTO v_partial FROM impl.lessons;     v_lesson_count     := v_lesson_count     + v_partial;
-        SELECT COUNT(*) INTO v_partial FROM impl.enrollments; v_enrollment_count := v_enrollment_count + v_partial;
+        SELECT COUNT(*) INTO v_partial FROM impl.users;              v_user_count       := v_user_count       + v_partial;
+        SELECT COUNT(*) INTO v_partial FROM impl.categories;         v_category_count   := v_category_count   + v_partial;
+        SELECT COUNT(*) INTO v_partial FROM impl.courses;            v_course_count     := v_course_count     + v_partial;
+        SELECT COUNT(*) INTO v_partial FROM impl.lessons;            v_lesson_count     := v_lesson_count     + v_partial;
+        SELECT COUNT(*) INTO v_partial FROM impl.enrollments;        v_enrollment_count := v_enrollment_count + v_partial;
+        SELECT COUNT(*) INTO v_partial FROM impl.course_categories;  v_link_count       := v_link_count       + v_partial;
     END LOOP;
-    RAISE NOTICE 'tenants=%, users=%, categories=%, courses=%, lessons=%, enrollments=%',
+    RAISE NOTICE 'tenants=%, users=%, categories=%, courses=%, lessons=%, enrollments=%, course_categories=%',
         (SELECT COUNT(*) FROM system_impl.tenants),
-        v_user_count, v_category_count, v_course_count, v_lesson_count, v_enrollment_count;
+        v_user_count, v_category_count, v_course_count, v_lesson_count, v_enrollment_count, v_link_count;
 END $$;

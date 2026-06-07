@@ -89,7 +89,13 @@ interface ActiveOption {
                   <p-tag [value]="false | courseActivityLabel" severity="warn" styleClass="inactive-badge" />
                 }
               </td>
-              <td>{{ categoryName(row.categoryId) }}</td>
+              <td>
+                <div class="category-chips">
+                  @for (id of row.categoryIds; track id) {
+                    <p-tag [value]="categoryName(id)" severity="info" />
+                  }
+                </div>
+              </td>
             </tr>
           </ng-template>
         </p-table>
@@ -105,6 +111,7 @@ interface ActiveOption {
     .filter label { font-size: 0.85rem; color: var(--p-text-muted-color, #6b7280); }
     :host ::ng-deep .filter-select { min-width: 200px; }
     :host ::ng-deep .inactive-badge { margin-left: 0.5rem; }
+    .category-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; }
     .empty { color: var(--p-text-muted-color, #6b7280); }
     .row-clickable { cursor: pointer; }
   `]
@@ -126,6 +133,11 @@ export class CourseList {
   });
 
   activeFilter: ActiveFilter = 'active';
+  // Deliberately single-select: backend api.list_courses takes a single UUID and
+  // handles membership server-side (a course matches if the filter category is
+  // among its tags). Extending to multi-category filtering is just an array
+  // param + ANY filter on the backend plus p-multiselect here; omitted now to
+  // keep this pass bounded to the M:N display change.
   categoryFilter: string | 'all' = 'all';
 
   readonly isLoading = signal(true);

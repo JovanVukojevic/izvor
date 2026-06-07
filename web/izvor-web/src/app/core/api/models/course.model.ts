@@ -1,6 +1,6 @@
 export interface CourseResponse {
   id: string;
-  categoryId: string;
+  categoryIds: string[];
   authorId: string;
   title: string;
   description: string | null;
@@ -12,7 +12,7 @@ export interface CourseResponse {
 export interface CreateCourseRequest {
   title: string;
   description: string | null;
-  categoryId: string;
+  categoryIds: string[];
   firstLessonTitle: string;
   firstLessonContent: string;
 }
@@ -20,7 +20,7 @@ export interface CreateCourseRequest {
 export interface UpdateCourseRequest {
   title: string;
   description: string | null;
-  categoryId: string;
+  categoryIds: string[];
 }
 
 export interface CourseCompletionStatsResponse {

@@ -72,7 +72,13 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
               }
             </div>
             <p class="meta">
-              {{ 'course.detail.categoryLabel' | translate }} {{ categoryName() }} · {{ 'course.detail.authorLabel' | translate }} <code>{{ c.authorId }}</code>
+              <span class="category-label">{{ 'course.detail.categoryLabel' | translate }}</span>
+              <span class="category-chips">
+                @for (name of categoryNames(); track name) {
+                  <p-tag [value]="name" severity="info" />
+                }
+              </span>
+              · {{ 'course.detail.authorLabel' | translate }} <code>{{ c.authorId }}</code>
             </p>
           </div>
         </header>
@@ -207,6 +213,8 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
     }
     .empty { color: var(--p-text-muted-color, #6b7280); }
     code { font-size: 0.75rem; color: var(--p-text-muted-color, #6b7280); }
+    .category-chips { display: inline-flex; flex-wrap: wrap; gap: 0.25rem; vertical-align: middle; }
+    .category-label { margin-right: 0.25rem; }
     :host ::ng-deep .banner { width: 100%; }
   `]
 })
@@ -268,10 +276,16 @@ export class CourseDetail {
 
   readonly canCancelEnrollment = computed(() => this.myEnrollment()?.status === 'active');
 
-  readonly categoryName = computed(() => {
-    const id = this.course()?.categoryId;
-    if (!id) return '—';
-    return this.categories().find(c => c.id === id)?.name ?? '—';
+  // Memoized: re-runs only when course() or categories() change, not per chip
+  // per change-detection cycle. Returns resolved names only; unresolved ids
+  // (cache lag during initial load) are dropped — the invariant guarantees
+  // ≥1 category, so the empty case is the loading-window edge only.
+  readonly categoryNames = computed<string[]>(() => {
+    const ids = this.course()?.categoryIds ?? [];
+    const cats = this.categories();
+    return ids
+      .map(id => cats.find(c => c.id === id)?.name)
+      .filter((name): name is string => name !== undefined);
   });
 
   ngOnInit(): void {

@@ -58,6 +58,8 @@
     "course_has_enrollments": "This course has enrollments and cannot be deleted.",
     "course_has_no_lessons": "Add at least one lesson before activating.",
     "course_must_have_lessons": "A course must always have at least one lesson; the last lesson cannot be deleted.",
+    "course_must_have_categories": "A course must always have at least one category.",
+    "category_in_use": "This category is in use by one or more courses and cannot be deleted.",
     "lesson_has_progress": "This lesson has been completed by at least one learner and cannot be deleted.",
     "enrollment_not_active": "Enrollment is no longer active.",
     "enrollment_cancelled": "Enrollment has been cancelled.",
@@ -88,7 +90,7 @@
       "loading": "Loading course…",
       "notFound": "Course not found",
       "backToCourses": "Back to courses",
-      "categoryLabel": "Category:",
+      "categoryLabel": "Categories:",
       "authorLabel": "Author:",
       "lessonsHeader": "Lessons",
       "lessonsEmpty": "No lessons yet.",
@@ -108,8 +110,8 @@
       "loading": "Loading…",
       "fieldTitle": "Title",
       "fieldDescription": "Description",
-      "fieldCategory": "Category",
-      "selectCategoryPlaceholder": "Select a category",
+      "fieldCategory": "Categories",
+      "selectCategoryPlaceholder": "Select one or more categories",
       "fieldFirstLessonTitle": "First lesson title",
       "fieldFirstLessonContent": "First lesson content",
       "firstLessonHint": "A course must always have at least one lesson. The first lesson is created together with the course; you can add more lessons afterwards.",
@@ -118,7 +120,7 @@
       "categoryGoneError": "Selected category no longer exists. Pick a different one.",
       "errors": {
         "titleRequired": "Title is required",
-        "categoryRequired": "Category is required",
+        "categoryRequired": "At least one category is required",
         "firstLessonTitleRequired": "First lesson title is required",
         "firstLessonContentRequired": "First lesson content is required"
       }

@@ -58,6 +58,8 @@
     "course_has_enrollments": "Ovaj kurs ima upise i ne može biti obrisan.",
     "course_has_no_lessons": "Dodajte bar jednu lekciju pre aktiviranja.",
     "course_must_have_lessons": "Kurs mora uvek imati bar jednu lekciju; poslednja lekcija ne može biti obrisana.",
+    "course_must_have_categories": "Kurs mora uvek imati bar jednu kategoriju.",
+    "category_in_use": "Ova kategorija je u upotrebi i ne može biti obrisana.",
     "lesson_has_progress": "Ovu lekciju je bar jedan učenik označio kao završenu i ne može biti obrisana.",
     "enrollment_not_active": "Upis više nije aktivan.",
     "enrollment_cancelled": "Upis je otkazan.",
@@ -88,7 +90,7 @@
       "loading": "Učitavanje kursa…",
       "notFound": "Kurs nije pronađen",
       "backToCourses": "Nazad na kurseve",
-      "categoryLabel": "Kategorija:",
+      "categoryLabel": "Kategorije:",
       "authorLabel": "Autor:",
       "lessonsHeader": "Lekcije",
       "lessonsEmpty": "Još nema lekcija.",
@@ -108,8 +110,8 @@
       "loading": "Učitavanje…",
       "fieldTitle": "Naslov",
       "fieldDescription": "Opis",
-      "fieldCategory": "Kategorija",
-      "selectCategoryPlaceholder": "Izaberite kategoriju",
+      "fieldCategory": "Kategorije",
+      "selectCategoryPlaceholder": "Izaberite jednu ili više kategorija",
       "fieldFirstLessonTitle": "Naslov prve lekcije",
       "fieldFirstLessonContent": "Sadržaj prve lekcije",
       "firstLessonHint": "Kurs mora uvek imati bar jednu lekciju. Prva lekcija se kreira zajedno sa kursom; dodatne lekcije možete dodati naknadno.",
@@ -118,7 +120,7 @@
       "categoryGoneError": "Izabrana kategorija više ne postoji. Izaberite drugu.",
       "errors": {
         "titleRequired": "Naslov je obavezan",
-        "categoryRequired": "Kategorija je obavezna",
+        "categoryRequired": "Bar jedna kategorija je obavezna",
         "firstLessonTitleRequired": "Naslov prve lekcije je obavezan",
         "firstLessonContentRequired": "Sadržaj prve lekcije je obavezan"
       }

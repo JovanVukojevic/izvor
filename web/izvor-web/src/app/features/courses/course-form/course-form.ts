@@ -2,13 +2,13 @@ import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { finalize, forkJoin, of } from 'rxjs';
 
 import { Card } from 'primeng/card';
 import { InputText } from 'primeng/inputtext';
 import { Textarea } from 'primeng/textarea';
-import { Select } from 'primeng/select';
+import { MultiSelect } from 'primeng/multiselect';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { MessageService } from 'primeng/api';
@@ -29,7 +29,7 @@ import { AuthService } from '../../../core/auth/auth.service';
     Card,
     InputText,
     Textarea,
-    Select,
+    MultiSelect,
     Button,
     Message,
     RouterLink,
@@ -69,17 +69,18 @@ import { AuthService } from '../../../core/auth/auth.service';
             </div>
 
             <div class="field">
-              <label for="categoryId">{{ 'course.form.fieldCategory' | translate }}</label>
-              <p-select
-                inputId="categoryId"
+              <label for="categoryIds">{{ 'course.form.fieldCategory' | translate }}</label>
+              <p-multiselect
+                inputId="categoryIds"
                 [options]="categoryOptions()"
-                formControlName="categoryId"
+                formControlName="categoryIds"
                 optionLabel="label"
                 optionValue="value"
                 [placeholder]="'course.form.selectCategoryPlaceholder' | translate"
+                display="chip"
                 styleClass="form-select"
               />
-              @if (form.controls.categoryId.touched && form.controls.categoryId.errors?.['required']) {
+              @if (form.controls.categoryIds.touched && form.controls.categoryIds.errors?.['required']) {
                 <small class="error">{{ 'course.form.errors.categoryRequired' | translate }}</small>
               }
             </div>
@@ -188,7 +189,15 @@ export class CourseForm {
       nonNullable: true,
       validators: [Validators.maxLength(5000)]
     }),
-    categoryId: new FormControl<string | null>(null, { validators: [Validators.required] }),
+    // Validators.required on an array returns valid for []; the inline validator
+    // mirrors the backend NotEmpty() contract by raising 'required' when empty.
+    categoryIds: new FormControl<string[]>([], {
+      nonNullable: true,
+      validators: [
+        (c: AbstractControl): ValidationErrors | null =>
+          Array.isArray(c.value) && c.value.length > 0 ? null : { required: true }
+      ]
+    }),
     firstLessonTitle: new FormControl<string>('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(200)]
@@ -232,7 +241,7 @@ export class CourseForm {
           this.form.patchValue({
             title: course.title,
             description: course.description ?? '',
-            categoryId: course.categoryId
+            categoryIds: course.categoryIds ?? []
           });
           this.titleService.setTitle(`Edit · ${course.title} · Izvor`);
         }
@@ -279,7 +288,7 @@ export class CourseForm {
         .updateCourse(id, {
           title: raw.title.trim(),
           description,
-          categoryId: raw.categoryId!
+          categoryIds: raw.categoryIds
         })
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({
@@ -294,7 +303,7 @@ export class CourseForm {
         .createCourse({
           title: raw.title.trim(),
           description,
-          categoryId: raw.categoryId!,
+          categoryIds: raw.categoryIds,
           firstLessonTitle: raw.firstLessonTitle.trim(),
           firstLessonContent: raw.firstLessonContent
         })
@@ -312,8 +321,8 @@ export class CourseForm {
   private handleError(err: HttpErrorResponse): void {
     const body = err.error as ErrorResponse | null | undefined;
     if (err.status === 400 && body?.message === 'category_required') {
-      this.form.controls.categoryId.setErrors({ required: true });
-      this.form.controls.categoryId.markAsTouched();
+      this.form.controls.categoryIds.setErrors({ required: true });
+      this.form.controls.categoryIds.markAsTouched();
       return;
     }
     if (err.status === 404 && body?.message === 'category_not_found') {
