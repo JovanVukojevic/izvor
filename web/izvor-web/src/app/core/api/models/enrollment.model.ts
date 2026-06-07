@@ -18,7 +18,6 @@ export interface EnrollUserRequest {
 }
 
 export interface LessonProgressResponse {
-  id: string;
   enrollmentId: string;
   lessonId: string;
   completedAt: string;
