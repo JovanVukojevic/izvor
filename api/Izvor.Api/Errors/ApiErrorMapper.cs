@@ -31,7 +31,7 @@ public static class ApiErrorMapper
         "course_must_have_lessons",
         "course_must_have_categories",
         "category_in_use",
-        "lesson_has_progress",
+        "lesson_has_completions",
         "enrollment_not_active",
         "enrollment_cancelled",
         "not_enrolled"

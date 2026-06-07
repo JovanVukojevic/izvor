@@ -60,7 +60,7 @@
     "course_must_have_lessons": "Kurs mora uvek imati bar jednu lekciju; poslednja lekcija ne može biti obrisana.",
     "course_must_have_categories": "Kurs mora uvek imati bar jednu kategoriju.",
     "category_in_use": "Ova kategorija je u upotrebi i ne može biti obrisana.",
-    "lesson_has_progress": "Ovu lekciju je bar jedan učenik označio kao završenu i ne može biti obrisana.",
+    "lesson_has_completions": "Ovu lekciju je bar jedan učenik označio kao završenu i ne može biti obrisana.",
     "enrollment_not_active": "Upis više nije aktivan.",
     "enrollment_cancelled": "Upis je otkazan.",
     "not_enrolled": "Prvo se morate upisati na ovaj kurs.",
@@ -208,7 +208,7 @@
       "notEnrolledError": "Morate se upisati na ovaj kurs pre nego što označite lekcije kao završene.",
       "enrollmentInactiveError": "Vaš upis više nije aktivan.",
       "markFailedError": "Neuspešno označavanje lekcije kao završene.",
-      "hasProgressError": "Ovu lekciju je bar jedan učenik označio kao završenu i ne može biti obrisana.",
+      "hasCompletionsError": "Ovu lekciju je bar jedan učenik označio kao završenu i ne može biti obrisana.",
       "mustHaveLessonsError": "Kurs mora uvek imati bar jednu lekciju. Dodajte drugu lekciju pre nego što obrišete ovu."
     },
     "form": {

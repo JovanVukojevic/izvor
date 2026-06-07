@@ -99,7 +99,7 @@ public sealed class LessonsController : ControllerBase
     public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         // spec.delete_lesson is silently idempotent on missing (per 7.2 hard-delete
-        // pattern); raises lesson_has_progress when committed progress exists.
+        // pattern); raises lesson_has_completions when any learner has completed it.
         await _db.ExecuteAsync(
             "api.delete_lesson",
             new { p_lesson_id = id },

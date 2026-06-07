@@ -17,7 +17,7 @@ export interface EnrollUserRequest {
   userId: string;
 }
 
-export interface LessonProgressResponse {
+export interface LessonCompletionResponse {
   enrollmentId: string;
   lessonId: string;
   completedAt: string;

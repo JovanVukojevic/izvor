@@ -60,7 +60,7 @@
     "course_must_have_lessons": "A course must always have at least one lesson; the last lesson cannot be deleted.",
     "course_must_have_categories": "A course must always have at least one category.",
     "category_in_use": "This category is in use by one or more courses and cannot be deleted.",
-    "lesson_has_progress": "This lesson has been completed by at least one learner and cannot be deleted.",
+    "lesson_has_completions": "This lesson has been completed by at least one learner and cannot be deleted.",
     "enrollment_not_active": "Enrollment is no longer active.",
     "enrollment_cancelled": "Enrollment has been cancelled.",
     "not_enrolled": "You must enroll in this course first.",
@@ -208,7 +208,7 @@
       "notEnrolledError": "You must enroll in this course before marking lessons complete.",
       "enrollmentInactiveError": "Your enrollment is no longer active.",
       "markFailedError": "Could not mark this lesson complete.",
-      "hasProgressError": "This lesson has been completed by at least one learner and cannot be deleted.",
+      "hasCompletionsError": "This lesson has been completed by at least one learner and cannot be deleted.",
       "mustHaveLessonsError": "A course must always have at least one lesson. Add another lesson before deleting this one."
     },
     "form": {

@@ -7,7 +7,7 @@ import {
   EnrollmentResponse,
   EnrollmentStatus,
   EnrollUserRequest,
-  LessonProgressResponse
+  LessonCompletionResponse
 } from '../models/enrollment.model';
 
 @Injectable({ providedIn: 'root' })
@@ -38,9 +38,9 @@ export class EnrollmentService {
     );
   }
 
-  getEnrollmentProgress(enrollmentId: string): Observable<LessonProgressResponse[]> {
-    return this.http.get<LessonProgressResponse[]>(
-      `${this.apiBaseUrl}/api/enrollments/${enrollmentId}/progress`
+  getEnrollmentCompletions(enrollmentId: string): Observable<LessonCompletionResponse[]> {
+    return this.http.get<LessonCompletionResponse[]>(
+      `${this.apiBaseUrl}/api/enrollments/${enrollmentId}/completions`
     );
   }
 }

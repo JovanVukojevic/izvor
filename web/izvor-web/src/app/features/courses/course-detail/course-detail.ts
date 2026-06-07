@@ -576,8 +576,8 @@ export class CourseDetail {
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null | undefined;
-        if (err.status === 409 && body?.message === 'lesson_has_progress') {
-          this.lessonDeleteError.set(this.translate.instant('lesson.detail.hasProgressError'));
+        if (err.status === 409 && body?.message === 'lesson_has_completions') {
+          this.lessonDeleteError.set(this.translate.instant('lesson.detail.hasCompletionsError'));
           return;
         }
         this.messages.add({

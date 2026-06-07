@@ -17,7 +17,7 @@ import { CourseService } from '../../../core/api/services/course.service';
 import { EnrollmentService } from '../../../core/api/services/enrollment.service';
 import { LessonResponse } from '../../../core/api/models/lesson.model';
 import { CourseResponse } from '../../../core/api/models/course.model';
-import { EnrollmentResponse, LessonProgressResponse } from '../../../core/api/models/enrollment.model';
+import { EnrollmentResponse, LessonCompletionResponse } from '../../../core/api/models/enrollment.model';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
 import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -144,7 +144,7 @@ export class LessonDetail {
   readonly lesson = signal<LessonResponse | null>(null);
   readonly course = signal<CourseResponse | null>(null);
   readonly myEnrollment = signal<EnrollmentResponse | null>(null);
-  readonly progress = signal<LessonProgressResponse[]>([]);
+  readonly completions = signal<LessonCompletionResponse[]>([]);
 
   readonly marking = signal(false);
   readonly banner = signal<string | null>(null);
@@ -160,7 +160,7 @@ export class LessonDetail {
   readonly alreadyComplete = computed(() => {
     const lid = this.lesson()?.id;
     if (!lid) return false;
-    return this.progress().some(p => p.lessonId === lid);
+    return this.completions().some(c => c.lessonId === lid);
   });
 
   readonly canMarkComplete = computed(() => {
@@ -203,9 +203,9 @@ export class LessonDetail {
         const myE = activeEnrollments.find(e => e.courseId === course.id) ?? null;
         this.myEnrollment.set(myE);
         if (myE) {
-          this.enrollmentService.getEnrollmentProgress(myE.id).subscribe({
+          this.enrollmentService.getEnrollmentCompletions(myE.id).subscribe({
             next: rows => {
-              this.progress.set(rows);
+              this.completions.set(rows);
               this.isLoading.set(false);
             },
             error: () => this.isLoading.set(false)
@@ -236,8 +236,8 @@ export class LessonDetail {
         this.enrollmentService.getEnrollment(e.id).subscribe({
           next: refreshed => {
             this.myEnrollment.set(refreshed);
-            this.enrollmentService.getEnrollmentProgress(e.id).subscribe({
-              next: rows => this.progress.set(rows)
+            this.enrollmentService.getEnrollmentCompletions(e.id).subscribe({
+              next: rows => this.completions.set(rows)
             });
             if (refreshed.status === 'completed') {
               this.bannerSeverity.set('success');
@@ -297,9 +297,9 @@ export class LessonDetail {
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null | undefined;
-        if (err.status === 409 && body?.message === 'lesson_has_progress') {
+        if (err.status === 409 && body?.message === 'lesson_has_completions') {
           this.bannerSeverity.set('error');
-          this.banner.set(this.translate.instant('lesson.detail.hasProgressError'));
+          this.banner.set(this.translate.instant('lesson.detail.hasCompletionsError'));
           return;
         }
         if (err.status === 409 && body?.message === 'course_must_have_lessons') {

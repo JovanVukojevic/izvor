@@ -8,11 +8,11 @@ namespace Izvor.Api.Controllers;
 [ApiController]
 [Route("api")]
 [Authorize]
-public sealed class LessonProgressController : ControllerBase
+public sealed class LessonCompletionController : ControllerBase
 {
     private readonly IDbAccess _db;
 
-    public LessonProgressController(IDbAccess db)
+    public LessonCompletionController(IDbAccess db)
     {
         _db = db;
     }
@@ -35,16 +35,16 @@ public sealed class LessonProgressController : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("enrollments/{id:guid}/progress")]
-    [ProducesResponseType(typeof(IEnumerable<LessonProgressResponse>), StatusCodes.Status200OK)]
+    [HttpGet("enrollments/{id:guid}/completions")]
+    [ProducesResponseType(typeof(IEnumerable<LessonCompletionResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<LessonProgressResponse>>> GetProgressByEnrollmentAsync(
+    public async Task<ActionResult<IEnumerable<LessonCompletionResponse>>> GetCompletionsByEnrollmentAsync(
         Guid id,
         CancellationToken cancellationToken)
     {
-        var results = await _db.QueryAsync<LessonProgressResponse>(
-            "api.get_lesson_progress_by_enrollment",
+        var results = await _db.QueryAsync<LessonCompletionResponse>(
+            "api.get_lesson_completion_by_enrollment",
             new { p_enrollment_id = id },
             cancellationToken);
         return Ok(results);
