@@ -112,15 +112,14 @@ CREATE TABLE impl.enrollments (
 ALTER TABLE ONLY impl.enrollments FORCE ROW LEVEL SECURITY;
 
 
-CREATE TABLE impl.lesson_progress (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
+CREATE TABLE impl.lesson_completion (
     tenant_id uuid NOT NULL,
     enrollment_id uuid NOT NULL,
     lesson_id uuid NOT NULL,
     completed_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-ALTER TABLE ONLY impl.lesson_progress FORCE ROW LEVEL SECURITY;
+ALTER TABLE ONLY impl.lesson_completion FORCE ROW LEVEL SECURITY;
 
 
 CREATE TABLE impl.refresh_tokens (
@@ -172,12 +171,8 @@ ALTER TABLE ONLY impl.enrollments
     ADD CONSTRAINT enrollments_pkey PRIMARY KEY (tenant_id, id);
 
 
-ALTER TABLE ONLY impl.lesson_progress
-    ADD CONSTRAINT lesson_progress_pkey PRIMARY KEY (tenant_id, id);
-
-
-ALTER TABLE ONLY impl.lesson_progress
-    ADD CONSTRAINT lesson_progress_unique UNIQUE (tenant_id, enrollment_id, lesson_id);
+ALTER TABLE ONLY impl.lesson_completion
+    ADD CONSTRAINT lesson_completion_pkey PRIMARY KEY (tenant_id, enrollment_id, lesson_id);
 
 
 ALTER TABLE ONLY impl.refresh_tokens
@@ -212,12 +207,12 @@ ALTER TABLE ONLY impl.enrollments
     ADD CONSTRAINT enrollments_tenant_id_user_id_fkey FOREIGN KEY (tenant_id, user_id) REFERENCES impl.users(tenant_id, id) ON DELETE RESTRICT;
 
 
-ALTER TABLE ONLY impl.lesson_progress
-    ADD CONSTRAINT lesson_progress_tenant_id_enrollment_id_fkey FOREIGN KEY (tenant_id, enrollment_id) REFERENCES impl.enrollments(tenant_id, id) ON DELETE RESTRICT;
+ALTER TABLE ONLY impl.lesson_completion
+    ADD CONSTRAINT lesson_completion_tenant_id_enrollment_id_fkey FOREIGN KEY (tenant_id, enrollment_id) REFERENCES impl.enrollments(tenant_id, id) ON DELETE RESTRICT;
 
 
-ALTER TABLE ONLY impl.lesson_progress
-    ADD CONSTRAINT lesson_progress_tenant_id_lesson_id_fkey FOREIGN KEY (tenant_id, lesson_id) REFERENCES impl.lessons(tenant_id, id) ON DELETE RESTRICT;
+ALTER TABLE ONLY impl.lesson_completion
+    ADD CONSTRAINT lesson_completion_tenant_id_lesson_id_fkey FOREIGN KEY (tenant_id, lesson_id) REFERENCES impl.lessons(tenant_id, id) ON DELETE RESTRICT;
 
 
 ALTER TABLE ONLY impl.refresh_tokens
@@ -306,10 +301,10 @@ ALTER TABLE impl.enrollments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON impl.enrollments USING ((tenant_id = app.current_tenant())) WITH CHECK ((tenant_id = app.current_tenant()));
 
 
-ALTER TABLE impl.lesson_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE impl.lesson_completion ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY tenant_isolation ON impl.lesson_progress USING ((tenant_id = app.current_tenant())) WITH CHECK ((tenant_id = app.current_tenant()));
+CREATE POLICY tenant_isolation ON impl.lesson_completion USING ((tenant_id = app.current_tenant())) WITH CHECK ((tenant_id = app.current_tenant()));
 
 
 ALTER TABLE impl.refresh_tokens ENABLE ROW LEVEL SECURITY;
@@ -367,7 +362,7 @@ DECLARE
     v_enrollment_id   UUID;
     v_course_id       UUID;
     v_lesson_count    INT;
-    v_progress_count  INT;
+    v_completion_count  INT;
 BEGIN
     v_enrollment_id := NEW.enrollment_id;
 
@@ -379,11 +374,11 @@ BEGIN
     FROM impl.lessons
     WHERE course_id = v_course_id;
 
-    SELECT COUNT(*) INTO v_progress_count
-    FROM impl.lesson_progress
+    SELECT COUNT(*) INTO v_completion_count
+    FROM impl.lesson_completion
     WHERE enrollment_id = v_enrollment_id;
 
-    IF v_progress_count = v_lesson_count AND v_lesson_count > 0 THEN
+    IF v_completion_count = v_lesson_count AND v_lesson_count > 0 THEN
         UPDATE impl.enrollments
         SET status = 'completed'
         WHERE id = v_enrollment_id
@@ -470,4 +465,4 @@ CREATE TRIGGER enrollments_set_updated_at BEFORE UPDATE ON impl.enrollments FOR 
 CREATE TRIGGER enrollments_stamp_terminal_timestamp BEFORE INSERT OR UPDATE ON impl.enrollments FOR EACH ROW EXECUTE FUNCTION impl.stamp_enrollment_terminal_timestamp();
 
 
-CREATE TRIGGER lesson_progress_auto_complete_enrollment AFTER INSERT ON impl.lesson_progress FOR EACH ROW EXECUTE FUNCTION impl.auto_complete_enrollment();
+CREATE TRIGGER lesson_completion_auto_complete_enrollment AFTER INSERT ON impl.lesson_completion FOR EACH ROW EXECUTE FUNCTION impl.auto_complete_enrollment();

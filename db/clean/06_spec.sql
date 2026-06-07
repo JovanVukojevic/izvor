@@ -78,8 +78,7 @@ CREATE TYPE api.enrollment AS (
 );
 
 
-CREATE TYPE api.lesson_progress AS (
-	id uuid,
+CREATE TYPE api.lesson_completion AS (
 	enrollment_id uuid,
 	lesson_id uuid,
 	completed_at timestamp with time zone
@@ -686,9 +685,9 @@ BEGIN
     active_progress AS (
         SELECT
             e.id AS enrollment_id,
-            COUNT(p.id) AS progress_count
+            COUNT(*) AS progress_count
         FROM impl.enrollments e
-        LEFT JOIN impl.lesson_progress p ON p.enrollment_id = e.id
+        LEFT JOIN impl.lesson_completion c ON c.enrollment_id = e.id
         WHERE e.course_id = p_course_id AND e.status = 'active'
         GROUP BY e.id
     ),
@@ -871,9 +870,9 @@ BEGIN
     PERFORM spec.assert_course_owner_or_admin(v_course_id);
 
     IF EXISTS (
-        SELECT 1 FROM impl.lesson_progress WHERE lesson_id = p_lesson_id
+        SELECT 1 FROM impl.lesson_completion WHERE lesson_id = p_lesson_id
     ) THEN
-        RAISE EXCEPTION 'lesson_has_progress';
+        RAISE EXCEPTION 'lesson_has_completions';
     END IF;
 
     SELECT COUNT(*) INTO v_lesson_count
@@ -1170,10 +1169,10 @@ BEGIN
 END;
 $$;
 
--- === Procedures: Lesson Progress ===
+-- === Procedures: Lesson Completions ===
 
 
-CREATE FUNCTION spec.get_lesson_progress_by_enrollment(p_enrollment_id uuid) RETURNS SETOF api.lesson_progress
+CREATE FUNCTION spec.get_lesson_completion_by_enrollment(p_enrollment_id uuid) RETURNS SETOF api.lesson_completion
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
@@ -1201,10 +1200,10 @@ BEGIN
     END IF;
 
     RETURN QUERY
-        SELECT P.id, P.enrollment_id, P.lesson_id, P.completed_at
-        FROM impl.lesson_progress P
-        JOIN impl.lessons L ON L.id = P.lesson_id
-        WHERE P.enrollment_id = p_enrollment_id
+        SELECT C.enrollment_id, C.lesson_id, C.completed_at
+        FROM impl.lesson_completion C
+        JOIN impl.lessons L ON L.id = C.lesson_id
+        WHERE C.enrollment_id = p_enrollment_id
         ORDER BY L.position ASC;
 END;
 $$;
@@ -1249,7 +1248,7 @@ BEGIN
 
     PERFORM 1 FROM impl.enrollments WHERE id = v_enrollment_id FOR UPDATE;
 
-    INSERT INTO impl.lesson_progress (tenant_id, enrollment_id, lesson_id)
+    INSERT INTO impl.lesson_completion (tenant_id, enrollment_id, lesson_id)
     VALUES (app.current_tenant(), v_enrollment_id, p_lesson_id)
     ON CONFLICT (tenant_id, enrollment_id, lesson_id) DO NOTHING;
 

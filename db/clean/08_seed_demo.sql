@@ -19,7 +19,7 @@ DECLARE t_id UUID;
 BEGIN
     FOR t_id IN SELECT id FROM system_impl.tenants LOOP
         PERFORM set_config('app.current_tenant', t_id::TEXT, true);
-        DELETE FROM impl.lesson_progress;
+        DELETE FROM impl.lesson_completion;
         DELETE FROM impl.enrollments;
         DELETE FROM impl.lessons;
         DELETE FROM impl.courses;

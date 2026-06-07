@@ -302,14 +302,14 @@ CREATE FUNCTION api.list_enrollments_by_user(p_user_id uuid, p_status_filter tex
     FROM spec.list_enrollments_by_user(p_user_id, p_status_filter);
 $$;
 
--- === Wrappers: Lesson Progress ===
+-- === Wrappers: Lesson Completions ===
 
 
-CREATE FUNCTION api.get_lesson_progress_by_enrollment(p_enrollment_id uuid) RETURNS SETOF api.lesson_progress
+CREATE FUNCTION api.get_lesson_completion_by_enrollment(p_enrollment_id uuid) RETURNS SETOF api.lesson_completion
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
-    SELECT * FROM spec.get_lesson_progress_by_enrollment(p_enrollment_id);
+    SELECT * FROM spec.get_lesson_completion_by_enrollment(p_enrollment_id);
 $$;
 
 
