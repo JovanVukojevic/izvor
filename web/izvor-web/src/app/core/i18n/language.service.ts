@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, of, tap } from 'rxjs';
+import { Observable, firstValueFrom, of, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { PrimeNG } from 'primeng/config';
 
@@ -15,10 +15,10 @@ export class LanguageService {
   readonly currentLocale = this._currentLocale.asReadonly();
   readonly isCyrillic = computed(() => this._currentLocale() === 'sr-cyrl');
 
-  loadInitialLocale(): Observable<unknown> {
+  async loadInitialLocale(): Promise<void> {
     const locale = this._currentLocale();
     this.primeng.setTranslation(PRIMENG_TRANSLATIONS[locale]);
-    return this.translate.use(locale);
+    await firstValueFrom(this.translate.use(locale));
   }
 
   setLocale(locale: Locale): Observable<unknown> {
