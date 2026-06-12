@@ -270,7 +270,7 @@ CREATE FUNCTION api.get_enrollment(p_enrollment_id uuid) RETURNS SETOF api.enrol
 BEGIN
     RETURN QUERY
         SELECT id, course_id, user_id, status,
-               enrolled_at, completed_at, cancelled_at,
+               enrolled_at, finished_at,
                created_at, updated_at
         FROM spec.get_enrollment(p_enrollment_id);
 
@@ -286,7 +286,7 @@ CREATE FUNCTION api.list_enrollments_by_course(p_course_id uuid, p_status_filter
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
     SELECT id, course_id, user_id, status,
-           enrolled_at, completed_at, cancelled_at,
+           enrolled_at, finished_at,
            created_at, updated_at
     FROM spec.list_enrollments_by_course(p_course_id, p_status_filter);
 $$;
@@ -297,7 +297,7 @@ CREATE FUNCTION api.list_enrollments_by_user(p_user_id uuid, p_status_filter tex
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
     SELECT id, course_id, user_id, status,
-           enrolled_at, completed_at, cancelled_at,
+           enrolled_at, finished_at,
            created_at, updated_at
     FROM spec.list_enrollments_by_user(p_user_id, p_status_filter);
 $$;

@@ -101,12 +101,10 @@ CREATE TABLE impl.enrollments (
     user_id uuid NOT NULL,
     status impl.enrollment_status DEFAULT 'active'::impl.enrollment_status NOT NULL,
     enrolled_at timestamp with time zone DEFAULT now() NOT NULL,
-    completed_at timestamp with time zone,
-    cancelled_at timestamp with time zone,
+    finished_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT enrollments_cancelled_at_check CHECK (((status = 'cancelled'::impl.enrollment_status) = (cancelled_at IS NOT NULL))),
-    CONSTRAINT enrollments_completed_at_check CHECK (((status = 'completed'::impl.enrollment_status) = (completed_at IS NOT NULL)))
+    CONSTRAINT enrollments_finished_at_check CHECK (((status = ANY (ARRAY['completed'::impl.enrollment_status, 'cancelled'::impl.enrollment_status])) = (finished_at IS NOT NULL)))
 );
 
 ALTER TABLE ONLY impl.enrollments FORCE ROW LEVEL SECURITY;
@@ -409,12 +407,8 @@ CREATE FUNCTION impl.stamp_enrollment_terminal_timestamp() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    IF NEW.status = 'completed' AND NEW.completed_at IS NULL THEN
-        NEW.completed_at := NOW();
-    END IF;
-
-    IF NEW.status = 'cancelled' AND NEW.cancelled_at IS NULL THEN
-        NEW.cancelled_at := NOW();
+    IF NEW.status IN ('completed', 'cancelled') AND NEW.finished_at IS NULL THEN
+        NEW.finished_at := NOW();
     END IF;
 
     RETURN NEW;

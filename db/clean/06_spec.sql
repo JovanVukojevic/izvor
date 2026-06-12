@@ -71,8 +71,7 @@ CREATE TYPE api.enrollment AS (
 	user_id uuid,
 	status text,
 	enrolled_at timestamp with time zone,
-	completed_at timestamp with time zone,
-	cancelled_at timestamp with time zone,
+	finished_at timestamp with time zone,
 	created_at timestamp with time zone,
 	updated_at timestamp with time zone
 );
@@ -1049,8 +1048,8 @@ BEGIN
     END IF;
 
     UPDATE impl.enrollments
-    SET status       = 'cancelled',
-        cancelled_at = NOW()
+    SET status      = 'cancelled',
+        finished_at = NOW()
     WHERE id = p_enrollment_id;
 
     RETURN true;
@@ -1117,7 +1116,7 @@ CREATE FUNCTION spec.get_enrollment(p_enrollment_id uuid) RETURNS SETOF api.enro
     LANGUAGE sql STABLE
     AS $$
     SELECT id, course_id, user_id, status::text,
-           enrolled_at, completed_at, cancelled_at,
+           enrolled_at, finished_at,
            created_at, updated_at
     FROM impl.enrollments
     WHERE id = p_enrollment_id;
@@ -1132,7 +1131,7 @@ BEGIN
 
     RETURN QUERY
         SELECT id, course_id, user_id, status::text,
-               enrolled_at, completed_at, cancelled_at,
+               enrolled_at, finished_at,
                created_at, updated_at
         FROM impl.enrollments
         WHERE course_id = p_course_id
@@ -1159,7 +1158,7 @@ BEGIN
 
     RETURN QUERY
         SELECT id, course_id, user_id, status::text,
-               enrolled_at, completed_at, cancelled_at,
+               enrolled_at, finished_at,
                created_at, updated_at
         FROM impl.enrollments
         WHERE user_id = p_user_id
