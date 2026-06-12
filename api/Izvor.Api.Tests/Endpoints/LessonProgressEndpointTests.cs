@@ -117,7 +117,7 @@ public sealed class LessonProgressEndpointTests : IAsyncLifetime
         get.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await get.Content.ReadFromJsonAsync<EnrollmentResponse>();
         body!.Status.Should().Be("completed");
-        body.CompletedAt.Should().NotBeNull();
+        body.FinishedAt.Should().NotBeNull();
     }
 
     [Fact] // LP8

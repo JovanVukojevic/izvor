@@ -6,8 +6,7 @@ export interface EnrollmentResponse {
   userId: string;
   status: EnrollmentStatus;
   enrolledAt: string;
-  completedAt: string | null;
-  cancelledAt: string | null;
+  finishedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

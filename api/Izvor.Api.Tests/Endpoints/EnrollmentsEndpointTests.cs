@@ -64,8 +64,7 @@ public sealed class EnrollmentsEndpointTests : IAsyncLifetime
         body!.UserId.Should().Be(TestIds.PeraUserId);
         body.CourseId.Should().Be(_activeCourseId);
         body.Status.Should().Be("active");
-        body.CompletedAt.Should().BeNull();
-        body.CancelledAt.Should().BeNull();
+        body.FinishedAt.Should().BeNull();
         response.Headers.Location!.ToString().Should().Be($"/api/enrollments/{body.Id}");
     }
 
@@ -153,7 +152,7 @@ public sealed class EnrollmentsEndpointTests : IAsyncLifetime
         var get = await PeraClient().GetAsync($"/api/enrollments/{enrollment.Id}");
         var body = await get.Content.ReadFromJsonAsync<EnrollmentResponse>();
         body!.Status.Should().Be("cancelled");
-        body.CancelledAt.Should().NotBeNull();
+        body.FinishedAt.Should().NotBeNull();
     }
 
     [Fact] // E10

@@ -6,7 +6,6 @@ public sealed record EnrollmentResponse(
     Guid UserId,
     string Status,
     DateTime EnrolledAt,
-    DateTime? CompletedAt,
-    DateTime? CancelledAt,
+    DateTime? FinishedAt,
     DateTime CreatedAt,
     DateTime UpdatedAt);

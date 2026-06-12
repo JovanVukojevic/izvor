@@ -69,7 +69,7 @@ interface StatusOption {
               <td>{{ courseTitle(row.courseId) }}</td>
               <td><p-tag [value]="row.status | enrollmentStatusLabel" [severity]="severity(row.status)" /></td>
               <td>{{ row.enrolledAt | date:'medium' }}</td>
-              <td>{{ row.completedAt ? (row.completedAt | date:'medium') : '—' }}</td>
+              <td>{{ row.finishedAt ? (row.finishedAt | date:'medium') : '—' }}</td>
               <td class="actions-col" (click)="$event.stopPropagation()">
                 @if (row.status === 'active') {
                   <p-button
