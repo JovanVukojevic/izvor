@@ -40,8 +40,8 @@ export class CourseService {
     return this.http.post<CourseResponse>(`${this.apiBaseUrl}/api/courses`, request);
   }
 
-  updateCourse(id: string, request: UpdateCourseRequest): Observable<void> {
-    return this.http.put<void>(`${this.apiBaseUrl}/api/courses/${id}`, request);
+  updateCourse(id: string, request: UpdateCourseRequest): Observable<CourseResponse> {
+    return this.http.put<CourseResponse>(`${this.apiBaseUrl}/api/courses/${id}`, request);
   }
 
   deleteCourse(id: string): Observable<void> {

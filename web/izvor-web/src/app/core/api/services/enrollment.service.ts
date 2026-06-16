@@ -23,8 +23,8 @@ export class EnrollmentService {
     return this.http.get<EnrollmentResponse>(`${this.apiBaseUrl}/api/enrollments/${id}`);
   }
 
-  cancelEnrollment(id: string): Observable<void> {
-    return this.http.post<void>(`${this.apiBaseUrl}/api/enrollments/${id}/cancel`, null);
+  cancelEnrollment(id: string): Observable<EnrollmentResponse> {
+    return this.http.post<EnrollmentResponse>(`${this.apiBaseUrl}/api/enrollments/${id}/cancel`, null);
   }
 
   getUserEnrollments(userId: string, status?: EnrollmentStatus): Observable<EnrollmentResponse[]> {

@@ -188,9 +188,9 @@ export class MyEnrollments {
 
   private cancel(row: EnrollmentResponse): void {
     this.enrollmentService.cancelEnrollment(row.id).subscribe({
-      next: () => {
+      next: cancelled => {
         this.messages.add({ severity: 'success', summary: this.translate.instant('enrollment.cancel.successSummary') });
-        this.reload();
+        this.applyCancelled(cancelled);
       },
       error: (err: HttpErrorResponse) => {
         const body = err.error as ErrorResponse | null | undefined;
@@ -206,5 +206,14 @@ export class MyEnrollments {
         });
       }
     });
+  }
+
+  private applyCancelled(updated: EnrollmentResponse): void {
+    const matchesFilter = this.statusFilter === 'all' || updated.status === this.statusFilter;
+    this.rows.update(rows =>
+      matchesFilter
+        ? rows.map(r => (r.id === updated.id ? updated : r))
+        : rows.filter(r => r.id !== updated.id)
+    );
   }
 }

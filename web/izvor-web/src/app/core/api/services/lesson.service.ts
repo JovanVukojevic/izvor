@@ -32,8 +32,8 @@ export class LessonService {
     );
   }
 
-  updateLesson(id: string, request: UpdateLessonRequest): Observable<void> {
-    return this.http.put<void>(`${this.apiBaseUrl}/api/lessons/${id}`, request);
+  updateLesson(id: string, request: UpdateLessonRequest): Observable<LessonResponse> {
+    return this.http.put<LessonResponse>(`${this.apiBaseUrl}/api/lessons/${id}`, request);
   }
 
   deleteLesson(id: string): Observable<void> {
