@@ -22,6 +22,7 @@ import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { EnrollmentStatusLabelPipe } from '../../../core/i18n/enrollment-status-label.pipe';
+import { TranslitPipe } from '../../../core/i18n/translit.pipe';
 
 interface StatusOption {
   label: string;
@@ -30,7 +31,7 @@ interface StatusOption {
 
 @Component({
   selector: 'izvor-my-enrollments',
-  imports: [TableModule, Select, Button, Tag, FormsModule, DatePipe, TranslateModule, EnrollmentStatusLabelPipe],
+  imports: [TableModule, Select, Button, Tag, FormsModule, DatePipe, TranslateModule, EnrollmentStatusLabelPipe, TranslitPipe],
   template: `
     <div class="page">
       <header class="page-header">
@@ -66,7 +67,7 @@ interface StatusOption {
           </ng-template>
           <ng-template pTemplate="body" let-row>
             <tr class="row-clickable" (click)="open(row)">
-              <td>{{ courseTitle(row.courseId) }}</td>
+              <td>{{ courseTitle(row.courseId) | translit }}</td>
               <td><p-tag [value]="row.status | enrollmentStatusLabel" [severity]="severity(row.status)" /></td>
               <td>{{ row.enrolledAt | date:'medium' }}</td>
               <td>{{ row.finishedAt ? (row.finishedAt | date:'medium') : '—' }}</td>
@@ -176,7 +177,7 @@ export class MyEnrollments {
   confirmCancel(row: EnrollmentResponse): void {
     this.confirm.confirm({
       header: this.translate.instant('enrollment.cancel.confirmHeader'),
-      message: this.translate.instant('enrollment.cancel.confirmMessageMy', { title: this.courseTitle(row.courseId) }),
+      message: this.translate.instant('enrollment.cancel.confirmMessageMy', { title: this.languageService.transliterateContent(this.courseTitle(row.courseId)) }),
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: this.translate.instant('enrollment.cancel.accept'),
       acceptButtonStyleClass: 'p-button-danger',

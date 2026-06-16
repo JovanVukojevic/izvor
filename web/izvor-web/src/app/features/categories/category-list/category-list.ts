@@ -12,10 +12,12 @@ import { CategoryService } from '../../../core/api/services/category.service';
 import { CategoryResponse } from '../../../core/api/models/category.model';
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
 import { translateApiErrorCode } from '../../../core/api/translate-api-error';
+import { TranslitPipe } from '../../../core/i18n/translit.pipe';
+import { LanguageService } from '../../../core/i18n/language.service';
 
 @Component({
   selector: 'izvor-category-list',
-  imports: [TableModule, Button, RouterLink, DatePipe, TranslateModule],
+  imports: [TableModule, Button, RouterLink, DatePipe, TranslateModule, TranslitPipe],
   template: `
     <div class="page">
       <header class="page-header">
@@ -39,8 +41,8 @@ import { translateApiErrorCode } from '../../../core/api/translate-api-error';
           </ng-template>
           <ng-template pTemplate="body" let-row>
             <tr>
-              <td>{{ row.name }}</td>
-              <td>{{ row.description ?? '—' }}</td>
+              <td>{{ row.name | translit }}</td>
+              <td>{{ (row.description ?? '—') | translit }}</td>
               <td>{{ row.createdAt | date:'medium' }}</td>
               <td class="actions-col">
                 <p-button
@@ -94,6 +96,7 @@ export class CategoryList {
   private readonly confirm = inject(ConfirmationService);
   private readonly messages = inject(MessageService);
   private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
 
   readonly isLoading = signal(true);
   readonly categories = signal<CategoryResponse[]>([]);
@@ -118,7 +121,7 @@ export class CategoryList {
   confirmDelete(row: CategoryResponse): void {
     this.confirm.confirm({
       header: this.translate.instant('category.actions.delete.confirmHeader'),
-      message: this.translate.instant('category.actions.delete.confirmMessage', { name: row.name }),
+      message: this.translate.instant('category.actions.delete.confirmMessage', { name: this.language.transliterateContent(row.name) }),
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: this.translate.instant('common.delete'),
       acceptButtonStyleClass: 'p-button-danger',

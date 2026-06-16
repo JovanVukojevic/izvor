@@ -4,7 +4,7 @@ import { DomSanitizer, SafeHtml, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { marked } from 'marked';
+import { marked, Token } from 'marked';
 
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
@@ -21,10 +21,13 @@ import { EnrollmentResponse, LessonCompletionResponse } from '../../../core/api/
 import { ErrorResponse } from '../../../core/api/models/error-response.model';
 import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService } from '../../../core/i18n/language.service';
+import { TranslitPipe } from '../../../core/i18n/translit.pipe';
+import { cyrillicToLatin } from '../../../core/i18n/transliterate';
 
 @Component({
   selector: 'izvor-lesson-detail',
-  imports: [Button, Message, Tag, RouterLink, TranslateModule],
+  imports: [Button, Message, Tag, RouterLink, TranslateModule, TranslitPipe],
   template: `
     <div class="page">
       @if (isLoading()) {
@@ -34,11 +37,11 @@ import { AuthService } from '../../../core/auth/auth.service';
         <p><a [routerLink]="['/courses', courseId()]">{{ 'lesson.detail.backToCourse' | translate }}</a></p>
       } @else if (lesson(); as l) {
         <p class="breadcrumb">
-          <a [routerLink]="['/courses', courseId()]">← {{ course()?.title }}</a>
+          <a [routerLink]="['/courses', courseId()]">← {{ course()?.title | translit }}</a>
         </p>
 
         <header class="lesson-header">
-          <h1>{{ l.title }}</h1>
+          <h1>{{ l.title | translit }}</h1>
           <span class="position">{{ 'lesson.detail.positionFormat' | translate: { position: l.position } }}</span>
           @if (alreadyComplete()) {
             <p-tag [value]="'lesson.detail.completedBadge' | translate" severity="success" />
@@ -136,6 +139,7 @@ export class LessonDetail {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly titleService = inject(Title);
   private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
 
   readonly courseId = signal<string>('');
   readonly lessonId = signal<string>('');
@@ -175,9 +179,25 @@ export class LessonDetail {
   // reaches another, so per-tenant XSS surface is bounded by tenant membership.
   readonly renderedContent = computed<SafeHtml>(() => {
     const content = this.lesson()?.content ?? '';
-    const html = marked.parse(content, { async: false }) as string;
+    const html = this.language.shouldTransliterateContent()
+      ? this.renderTransliterated(content)
+      : (marked.parse(content, { async: false }) as string);
     return this.sanitizer.bypassSecurityTrustHtml(html);
   });
+
+  // Transliterate after lexing, before rendering: only prose-bearing leaf `text`
+  // tokens are touched. Code blocks (`code`), inline code (`codespan`), and link
+  // hrefs are left byte-for-byte intact (a link's visible label is its own child
+  // `text` token, walked and transliterated separately from its href).
+  private renderTransliterated(content: string): string {
+    const tokens = marked.lexer(content);
+    marked.walkTokens(tokens, (token: Token) => {
+      if (token.type === 'text') {
+        token.text = cyrillicToLatin(token.text);
+      }
+    });
+    return marked.parser(tokens) as string;
+  }
 
   ngOnInit(): void {
     this.courseId.set(this.route.snapshot.paramMap.get('id') ?? '');
@@ -278,7 +298,7 @@ export class LessonDetail {
     if (!l) return;
     this.confirm.confirm({
       header: this.translate.instant('lesson.actions.delete.confirmHeader'),
-      message: this.translate.instant('lesson.actions.delete.confirmMessage', { title: l.title }),
+      message: this.translate.instant('lesson.actions.delete.confirmMessage', { title: this.language.transliterateContent(l.title) }),
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: this.translate.instant('common.delete'),
       acceptButtonStyleClass: 'p-button-danger',

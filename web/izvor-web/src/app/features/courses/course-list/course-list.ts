@@ -16,6 +16,7 @@ import { CategoryResponse } from '../../../core/api/models/category.model';
 import { RequiresRoleDirective } from '../../../core/auth/role.directive';
 import { LanguageService } from '../../../core/i18n/language.service';
 import { CourseActivityLabelPipe } from '../../../core/i18n/course-activity-label.pipe';
+import { TranslitPipe } from '../../../core/i18n/translit.pipe';
 
 interface CategoryOption {
   label: string;
@@ -31,7 +32,7 @@ interface ActiveOption {
 
 @Component({
   selector: 'izvor-course-list',
-  imports: [TableModule, Select, Button, Tag, FormsModule, RouterLink, RequiresRoleDirective, TranslateModule, CourseActivityLabelPipe],
+  imports: [TableModule, Select, Button, Tag, FormsModule, RouterLink, RequiresRoleDirective, TranslateModule, CourseActivityLabelPipe, TranslitPipe],
   template: `
     <div class="page">
       <header class="page-header">
@@ -84,7 +85,7 @@ interface ActiveOption {
           <ng-template pTemplate="body" let-row>
             <tr class="row-clickable" (click)="open(row)">
               <td>
-                <span>{{ row.title }}</span>
+                <span>{{ row.title | translit }}</span>
                 @if (!row.isActive) {
                   <p-tag [value]="false | courseActivityLabel" severity="warn" styleClass="inactive-badge" />
                 }
@@ -92,7 +93,7 @@ interface ActiveOption {
               <td>
                 <div class="category-chips">
                   @for (id of row.categoryIds; track id) {
-                    <p-tag [value]="categoryName(id)" severity="info" />
+                    <p-tag [value]="categoryName(id) | translit" severity="info" />
                   }
                 </div>
               </td>

@@ -5,6 +5,7 @@ import { PrimeNG } from 'primeng/config';
 
 import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, Locale, isLocale } from './locale.model';
 import { PRIMENG_TRANSLATIONS } from './primeng-translations';
+import { cyrillicToLatin } from './transliterate';
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
@@ -14,6 +15,19 @@ export class LanguageService {
   private readonly _currentLocale = signal<Locale>(this.readPersistedLocale());
   readonly currentLocale = this._currentLocale.asReadonly();
   readonly isCyrillic = computed(() => this._currentLocale() === 'sr-cyrl');
+
+  // User-authored content is stored canonically in Cyrillic; the Latin view is
+  // derived on the client. Both sr-latn and en render content in Latin (Latin
+  // is closer to a non-Serbian reader); only sr-cyrl shows the canonical script.
+  readonly shouldTransliterateContent = computed(() => this._currentLocale() !== 'sr-cyrl');
+
+  // Single chokepoint for rendering user-authored content in the active script:
+  // transliterates Cyrillic→Latin under sr-latn/en, passes through under sr-cyrl.
+  // Used by TranslitPipe (plain text) and by TS callsites that embed content into
+  // translate.instant() messages (confirm dialogs).
+  transliterateContent(value: string): string {
+    return this.shouldTransliterateContent() ? cyrillicToLatin(value) : value;
+  }
 
   async loadInitialLocale(): Promise<void> {
     const locale = this._currentLocale();

@@ -143,7 +143,7 @@
       "deactivate": {
         "label": "Deaktiviraj",
         "confirmHeader": "Deaktiviranje kursa",
-        "confirmMessage": "Sakriti ovaj kurs od učenika? Postojeći upisi će biti sačuvani.",
+        "confirmMessage": "Sakriti ovaj kurs od učenika? Postojeći upisi biće sačuvani.",
         "accept": "Deaktiviraj",
         "successSummary": "Kurs deaktiviran",
         "failedSummary": "Neuspešna deaktivacija",
@@ -152,7 +152,7 @@
       "delete": {
         "label": "Obriši kurs",
         "confirmHeader": "Brisanje kursa",
-        "confirmMessage": "Obrisati „{{title}}“ trajno? Ova operacija se ne može poništiti. Kursevi sa upisima ne mogu biti obrisani; umesto toga ih deaktivirajte.",
+        "confirmMessage": "Obrisati „{{title}}“ trajno? Ova operacija ne može biti poništena. Kursevi sa upisima ne mogu biti obrisani; umesto toga ih deaktivirajte.",
         "successSummary": "Kurs obrisan",
         "hasEnrollmentsError": "Ovaj kurs ima upise i ne može biti obrisan. Umesto toga ga deaktivirajte.",
         "failedSummary": "Neuspešno brisanje",
@@ -308,7 +308,7 @@
     "actions": {
       "delete": {
         "confirmHeader": "Brisanje kategorije",
-        "confirmMessage": "Obrisati „{{name}}“? Ova operacija se ne može poništiti.",
+        "confirmMessage": "Obrisati „{{name}}“? Ova operacija ne može biti poništena.",
         "successSummary": "Kategorija obrisana",
         "failedSummary": "Neuspešno brisanje",
         "inUseError": "Ova kategorija ne može biti obrisana — možda je u upotrebi od strane kurseva.",
@@ -332,9 +332,9 @@
   "login": {
     "title": "Prijava",
     "email": {
-      "label": "Email",
-      "required": "Email je obavezan",
-      "invalid": "Unesite ispravnu email adresu"
+      "label": "Imejl",
+      "required": "Imejl je obavezan",
+      "invalid": "Unesite ispravnu imejl adresu"
     },
     "password": {
       "label": "Lozinka",
@@ -343,7 +343,7 @@
     "submit": "Prijavi se",
     "errors": {
       "tenantContext": "Ovaj URL nije poddomen klijenta. Koristite https://<vaš-klijent>.izvor.lvh.me:4200/login",
-      "invalidCredentials": "Pogrešan email ili lozinka",
+      "invalidCredentials": "Pogrešan imejl ili lozinka",
       "unavailable": "Servis za prijavu trenutno nije dostupan. Pokušajte ponovo kasnije."
     }
   }

@@ -24,6 +24,8 @@ import { ErrorResponse } from '../../../core/api/models/error-response.model';
 import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
 import { CourseActivityLabelPipe } from '../../../core/i18n/course-activity-label.pipe';
+import { TranslitPipe } from '../../../core/i18n/translit.pipe';
+import { LanguageService } from '../../../core/i18n/language.service';
 import { CourseEnrollmentsView } from '../course-enrollments-view/course-enrollments-view';
 import { CourseStatsView } from '../course-stats-view/course-stats-view';
 
@@ -39,6 +41,7 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
     CdkDragHandle,
     TranslateModule,
     CourseActivityLabelPipe,
+    TranslitPipe,
     CourseEnrollmentsView,
     CourseStatsView
   ],
@@ -66,7 +69,7 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
         <header class="course-header">
           <div>
             <div class="title-row">
-              <h1>{{ c.title }}</h1>
+              <h1>{{ c.title | translit }}</h1>
               @if (!c.isActive) {
                 <p-tag [value]="false | courseActivityLabel" severity="warn" />
               }
@@ -75,7 +78,7 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
               <span class="category-label">{{ 'course.detail.categoryLabel' | translate }}</span>
               <span class="category-chips">
                 @for (name of categoryNames(); track name) {
-                  <p-tag [value]="name" severity="info" />
+                  <p-tag [value]="name | translit" severity="info" />
                 }
               </span>
               · {{ 'course.detail.authorLabel' | translate }} <code>{{ c.authorId }}</code>
@@ -84,7 +87,7 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
         </header>
 
         @if (c.description) {
-          <p class="description">{{ c.description }}</p>
+          <p class="description">{{ c.description | translit }}</p>
         }
 
         <section class="actions">
@@ -148,7 +151,7 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
                   }
                   <a [routerLink]="['/courses', c.id, 'lessons', lesson.id]" class="lesson-link">
                     <span class="lesson-position">{{ lesson.position }}.</span>
-                    <span>{{ lesson.title }}</span>
+                    <span>{{ lesson.title | translit }}</span>
                   </a>
                   @if (canManageLessons()) {
                     <span class="lesson-actions">
@@ -230,6 +233,7 @@ export class CourseDetail {
   private readonly messages = inject(MessageService);
   private readonly titleService = inject(Title);
   private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
 
   readonly courseId = signal<string>('');
   readonly isLoading = signal(true);
@@ -401,7 +405,7 @@ export class CourseDetail {
     if (!c) return;
     this.confirm.confirm({
       header: this.translate.instant('course.actions.delete.confirmHeader'),
-      message: this.translate.instant('course.actions.delete.confirmMessage', { title: c.title }),
+      message: this.translate.instant('course.actions.delete.confirmMessage', { title: this.language.transliterateContent(c.title) }),
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: this.translate.instant('common.delete'),
       acceptButtonStyleClass: 'p-button-danger',
@@ -556,7 +560,7 @@ export class CourseDetail {
   confirmDeleteLesson(lesson: LessonResponse): void {
     this.confirm.confirm({
       header: this.translate.instant('lesson.actions.delete.confirmHeader'),
-      message: this.translate.instant('lesson.actions.delete.confirmMessage', { title: lesson.title }),
+      message: this.translate.instant('lesson.actions.delete.confirmMessage', { title: this.language.transliterateContent(lesson.title) }),
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: this.translate.instant('common.delete'),
       acceptButtonStyleClass: 'p-button-danger',

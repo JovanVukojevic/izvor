@@ -59,9 +59,6 @@ public sealed class CoursesController : ControllerBase
         [FromBody] UpdateCourseRequest request,
         CancellationToken cancellationToken)
     {
-        // spec.update_course gates with assert_course_owner_or_admin which raises
-        // course_not_found / not_course_owner. Past the assert, false means the
-        // no-change short-circuit (idempotent no-op). Both paths return 204.
         await _db.ExecuteAsync(
             "api.update_course",
             new { p_id = id, p_title = request.Title, p_description = request.Description, p_category_ids = request.CategoryIds },

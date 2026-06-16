@@ -25,9 +25,6 @@ public sealed class LessonCompletionController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> MarkCompleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        // spec.mark_lesson_complete is idempotent: false = already complete,
-        // true = newly created. Both succeed paths return 204; client follows
-        // up with GET /api/enrollments/{id} to detect auto-flip to completed.
         await _db.ExecuteAsync(
             "api.mark_lesson_complete",
             new { p_lesson_id = id },
