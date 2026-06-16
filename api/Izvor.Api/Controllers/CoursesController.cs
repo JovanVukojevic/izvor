@@ -26,7 +26,7 @@ public sealed class CoursesController : ControllerBase
         [FromBody] CreateCourseRequest request,
         CancellationToken cancellationToken)
     {
-        var id = await _db.CallAsync<Guid>(
+        var created = await _db.CallAsync<CourseResponse>(
             "api.create_course",
             new
             {
@@ -36,34 +36,28 @@ public sealed class CoursesController : ControllerBase
                 p_first_lesson_title = request.FirstLessonTitle,
                 p_first_lesson_content = request.FirstLessonContent
             },
-            cancellationToken);
-
-        var created = await _db.CallAsync<CourseResponse>(
-            "api.get_course",
-            new { p_id = id },
             cancellationToken)
-            ?? throw new InvalidOperationException(
-                $"Course {id} disappeared after creation — RLS or transaction issue");
+            ?? throw new InvalidOperationException("api.create_course returned no row");
 
-        return Created($"/api/courses/{id}", created);
+        return Created($"/api/courses/{created.Id}", created);
     }
 
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(CourseResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateAsync(
+    public async Task<ActionResult<CourseResponse>> UpdateAsync(
         Guid id,
         [FromBody] UpdateCourseRequest request,
         CancellationToken cancellationToken)
     {
-        await _db.ExecuteAsync(
+        var updated = await _db.CallAsync<CourseResponse>(
             "api.update_course",
             new { p_id = id, p_title = request.Title, p_description = request.Description, p_category_ids = request.CategoryIds },
             cancellationToken);
-        return NoContent();
+        return Ok(updated);
     }
 
     [HttpDelete("{id:guid}")]
@@ -118,18 +112,11 @@ public sealed class CoursesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<CourseResponse>> ActivateAsync(Guid id, CancellationToken cancellationToken)
     {
-        await _db.ExecuteAsync(
+        var activated = await _db.CallAsync<CourseResponse>(
             "api.activate_course",
             new { p_course_id = id },
             cancellationToken);
-
-        var refreshed = await _db.CallAsync<CourseResponse>(
-            "api.get_course",
-            new { p_id = id },
-            cancellationToken)
-            ?? throw new InvalidOperationException(
-                $"Course {id} disappeared after activate — RLS or transaction issue");
-        return Ok(refreshed);
+        return Ok(activated);
     }
 
     [HttpPost("{id:guid}/deactivate")]
@@ -138,17 +125,10 @@ public sealed class CoursesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CourseResponse>> DeactivateAsync(Guid id, CancellationToken cancellationToken)
     {
-        await _db.ExecuteAsync(
+        var deactivated = await _db.CallAsync<CourseResponse>(
             "api.deactivate_course",
             new { p_course_id = id },
             cancellationToken);
-
-        var refreshed = await _db.CallAsync<CourseResponse>(
-            "api.get_course",
-            new { p_id = id },
-            cancellationToken)
-            ?? throw new InvalidOperationException(
-                $"Course {id} disappeared after deactivate — RLS or transaction issue");
-        return Ok(refreshed);
+        return Ok(deactivated);
     }
 }

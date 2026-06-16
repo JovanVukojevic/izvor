@@ -147,10 +147,9 @@ public sealed class EnrollmentsEndpointTests : IAsyncLifetime
         var enrollment = await EnrollAsync(PeraClient(), _activeCourseId, TestIds.PeraUserId);
 
         var cancel = await PeraClient().PostAsync($"/api/enrollments/{enrollment.Id}/cancel", null);
-        cancel.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        cancel.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var get = await PeraClient().GetAsync($"/api/enrollments/{enrollment.Id}");
-        var body = await get.Content.ReadFromJsonAsync<EnrollmentResponse>();
+        var body = await cancel.Content.ReadFromJsonAsync<EnrollmentResponse>();
         body!.Status.Should().Be("cancelled");
         body.FinishedAt.Should().NotBeNull();
     }
@@ -161,7 +160,10 @@ public sealed class EnrollmentsEndpointTests : IAsyncLifetime
         var enrollment = await EnrollAsync(PeraClient(), _activeCourseId, TestIds.PeraUserId);
 
         var cancel = await AdminClient().PostAsync($"/api/enrollments/{enrollment.Id}/cancel", null);
-        cancel.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        cancel.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await cancel.Content.ReadFromJsonAsync<EnrollmentResponse>();
+        body!.Status.Should().Be("cancelled");
     }
 
     [Fact] // E11

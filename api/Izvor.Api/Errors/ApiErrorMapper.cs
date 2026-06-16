@@ -8,10 +8,10 @@ namespace Izvor.Api.Errors;
 // The application-level `error` field is what clients switch on; `message`
 // carries the original PG text verbatim for debuggability.
 //
-// Note: BOOLEAN-returning api functions whose `false` means "not found"
-// (api.update_category, api.delete_category) are mapped to 404 by the
-// CONTROLLER, not here. This mapper covers the exception path; controllers
-// cover the boolean path. Both are part of the same status-code contract.
+// Note: api.delete_category still returns BOOLEAN where `false` means "not
+// found" and is mapped to 404 by the CONTROLLER. api.update_category now raises
+// category_not_found (migration 032), so its 404 flows through this mapper's
+// NotFoundCodes path. Both are part of the same status-code contract.
 public static class ApiErrorMapper
 {
     private static readonly HashSet<string> NotFoundCodes = new(StringComparer.Ordinal)

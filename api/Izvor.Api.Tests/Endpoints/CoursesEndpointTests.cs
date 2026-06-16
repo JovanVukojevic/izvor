@@ -180,10 +180,9 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         var draft = await CreateCourseAsync(AnaClient(), "OldTitle");
         var update = await AnaClient().PutAsJsonAsync($"/api/courses/{draft.Id}",
             new UpdateCourseRequest("NewTitle", null, new[] { _categoryId }));
-        update.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        update.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var get = await AnaClient().GetAsync($"/api/courses/{draft.Id}");
-        var body = await get.Content.ReadFromJsonAsync<CourseResponse>();
+        var body = await update.Content.ReadFromJsonAsync<CourseResponse>();
         body!.Title.Should().Be("NewTitle");
     }
 
@@ -213,13 +212,16 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
     }
 
     [Fact] // K13
-    public async Task Update_with_no_changes_returns_204_idempotent()
+    public async Task Update_with_no_changes_returns_200_with_body()
     {
         var draft = await CreateCourseAsync(AnaClient(), "NoChange");
 
         var noOp = await AnaClient().PutAsJsonAsync($"/api/courses/{draft.Id}",
             new UpdateCourseRequest("NoChange", null, new[] { _categoryId }));
-        noOp.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        noOp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await noOp.Content.ReadFromJsonAsync<CourseResponse>();
+        body!.Title.Should().Be("NoChange");
     }
 
     [Fact] // K14b
@@ -441,10 +443,9 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
 
         var update = await ana.PutAsJsonAsync($"/api/courses/{courseId}",
             new UpdateCourseRequest("SetSwap", null, new[] { second, third }));
-        update.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        update.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var get = await ana.GetAsync($"/api/courses/{courseId}");
-        var body = await get.Content.ReadFromJsonAsync<CourseResponse>();
+        var body = await update.Content.ReadFromJsonAsync<CourseResponse>();
         body!.CategoryIds.Should().BeEquivalentTo(new[] { second, third });
     }
 

@@ -28,19 +28,13 @@ public sealed class LessonsController : ControllerBase
         [FromBody] CreateLessonRequest request,
         CancellationToken cancellationToken)
     {
-        var id = await _db.CallAsync<Guid>(
+        var created = await _db.CallAsync<LessonResponse>(
             "api.create_lesson",
             new { p_course_id = courseId, p_title = request.Title, p_content = request.Content },
-            cancellationToken);
-
-        var created = await _db.CallAsync<LessonResponse>(
-            "api.get_lesson",
-            new { p_lesson_id = id },
             cancellationToken)
-            ?? throw new InvalidOperationException(
-                "api.get_lesson returned empty without raising lesson_not_found");
+            ?? throw new InvalidOperationException("api.create_lesson returned no row");
 
-        return Created($"/api/lessons/{id}", created);
+        return Created($"/api/lessons/{created.Id}", created);
     }
 
     [HttpGet("courses/{courseId:guid}/lessons")]
@@ -72,23 +66,21 @@ public sealed class LessonsController : ControllerBase
     }
 
     [HttpPut("lessons/{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(LessonResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdateAsync(
+    public async Task<ActionResult<LessonResponse>> UpdateAsync(
         Guid id,
         [FromBody] UpdateLessonRequest request,
         CancellationToken cancellationToken)
     {
-        // spec.update_lesson raises lesson_not_found; past that, false means
-        // no-change idempotent. Both succeed paths return 204.
-        await _db.ExecuteAsync(
+        var updated = await _db.CallAsync<LessonResponse>(
             "api.update_lesson",
             new { p_lesson_id = id, p_title = request.Title, p_content = request.Content },
             cancellationToken);
-        return NoContent();
+        return Ok(updated);
     }
 
     [HttpDelete("lessons/{id:guid}")]
@@ -118,17 +110,10 @@ public sealed class LessonsController : ControllerBase
         [FromBody] ReorderLessonRequest request,
         CancellationToken cancellationToken)
     {
-        await _db.ExecuteAsync(
+        var reordered = await _db.CallAsync<LessonResponse>(
             "api.reorder_lesson",
             new { p_lesson_id = id, p_new_position = request.Position },
             cancellationToken);
-
-        var refreshed = await _db.CallAsync<LessonResponse>(
-            "api.get_lesson",
-            new { p_lesson_id = id },
-            cancellationToken)
-            ?? throw new InvalidOperationException(
-                "api.get_lesson returned empty without raising lesson_not_found");
-        return Ok(refreshed);
+        return Ok(reordered);
     }
 }

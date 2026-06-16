@@ -190,22 +190,25 @@ public sealed class LessonsEndpointTests : IAsyncLifetime
 
         var update = await AnaClient().PutAsJsonAsync($"/api/lessons/{lesson.Id}",
             new UpdateLessonRequest("New", "New body"));
-        update.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        update.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var get = await AnaClient().GetAsync($"/api/lessons/{lesson.Id}");
-        var body = await get.Content.ReadFromJsonAsync<LessonResponse>();
+        var body = await update.Content.ReadFromJsonAsync<LessonResponse>();
         body!.Title.Should().Be("New");
         body.Content.Should().Be("New body");
     }
 
     [Fact] // L12
-    public async Task Update_with_no_changes_returns_204_idempotent()
+    public async Task Update_with_no_changes_returns_200_with_body()
     {
         var lesson = await CreateLessonAsync(AnaClient(), _courseId, "Same", "Same body");
 
         var noOp = await AnaClient().PutAsJsonAsync($"/api/lessons/{lesson.Id}",
             new UpdateLessonRequest("Same", "Same body"));
-        noOp.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        noOp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await noOp.Content.ReadFromJsonAsync<LessonResponse>();
+        body!.Title.Should().Be("Same");
+        body.Content.Should().Be("Same body");
     }
 
     [Fact] // L13

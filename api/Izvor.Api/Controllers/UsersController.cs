@@ -61,19 +61,13 @@ public sealed class UsersController : ControllerBase
     {
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
-        var id = await _db.CallAsync<Guid>(
+        var created = await _db.CallAsync<UserResponse>(
             "api.create_user",
             new { p_email = request.Email, p_password_hash = passwordHash, p_role = request.Role },
-            cancellationToken);
-
-        var created = await _db.CallAsync<UserResponse>(
-            "api.get_user",
-            new { p_id = id },
             cancellationToken)
-            ?? throw new InvalidOperationException(
-                $"User {id} disappeared after creation — RLS or transaction issue");
+            ?? throw new InvalidOperationException("api.create_user returned no row");
 
-        return Created($"/api/users/{id}", created);
+        return Created($"/api/users/{created.Id}", created);
     }
 
     [HttpPost("{id:guid}/deactivate")]

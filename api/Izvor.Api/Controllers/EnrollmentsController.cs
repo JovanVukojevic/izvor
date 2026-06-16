@@ -27,35 +27,27 @@ public sealed class EnrollmentsController : ControllerBase
         [FromBody] EnrollUserRequest request,
         CancellationToken cancellationToken)
     {
-        var id = await _db.CallAsync<Guid>(
+        var created = await _db.CallAsync<EnrollmentResponse>(
             "api.enroll_user",
             new { p_user_id = request.UserId, p_course_id = request.CourseId },
-            cancellationToken);
-
-        var created = await _db.CallAsync<EnrollmentResponse>(
-            "api.get_enrollment",
-            new { p_enrollment_id = id },
             cancellationToken)
-            ?? throw new InvalidOperationException(
-                "api.get_enrollment returned empty without raising enrollment_not_found");
+            ?? throw new InvalidOperationException("api.enroll_user returned no row");
 
-        return Created($"/api/enrollments/{id}", created);
+        return Created($"/api/enrollments/{created.Id}", created);
     }
 
     [HttpPost("enrollments/{id:guid}/cancel")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(EnrollmentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> CancelAsync(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<EnrollmentResponse>> CancelAsync(Guid id, CancellationToken cancellationToken)
     {
-        // spec.cancel_enrollment raises enrollment_not_found / enrollment_not_active /
-        // role-required; on success returns true. Bool ignored — no idempotent path.
-        await _db.ExecuteAsync(
+        var cancelled = await _db.CallAsync<EnrollmentResponse>(
             "api.cancel_enrollment",
             new { p_enrollment_id = id },
             cancellationToken);
-        return NoContent();
+        return Ok(cancelled);
     }
 
     [HttpGet("enrollments/{id:guid}")]

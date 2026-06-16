@@ -26,19 +26,13 @@ public sealed class CategoriesController : ControllerBase
         [FromBody] CreateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        var id = await _db.CallAsync<Guid>(
+        var created = await _db.CallAsync<CategoryResponse>(
             "api.create_category",
             new { p_name = request.Name, p_description = request.Description },
-            cancellationToken);
-
-        var created = await _db.CallAsync<CategoryResponse>(
-            "api.get_category",
-            new { p_id = id },
             cancellationToken)
-            ?? throw new InvalidOperationException(
-                $"Category {id} disappeared after creation — RLS or transaction issue");
+            ?? throw new InvalidOperationException("api.create_category returned no row");
 
-        return Created($"/api/categories/{id}", created);
+        return Created($"/api/categories/{created.Id}", created);
     }
 
     [HttpPut("{id:guid}")]
@@ -52,17 +46,10 @@ public sealed class CategoriesController : ControllerBase
         [FromBody] UpdateCategoryRequest request,
         CancellationToken cancellationToken)
     {
-        // spec.update_category has no pre-existence check, so RETURN FOUND from
-        // the UPDATE means false → row didn't exist (under RLS).
-        var result = await _db.CallAsync<bool>(
+        await _db.ExecuteAsync(
             "api.update_category",
             new { p_id = id, p_name = request.Name, p_description = request.Description },
             cancellationToken);
-
-        if (!result)
-        {
-            return NotFound(new ErrorResponse("not_found", "category_not_found"));
-        }
         return NoContent();
     }
 
