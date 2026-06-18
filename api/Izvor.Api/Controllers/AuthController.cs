@@ -1,4 +1,5 @@
 using Izvor.Api.Configuration;
+using Izvor.Api.Database;
 using Izvor.Api.Extensions;
 using Izvor.Api.Dtos;
 using Izvor.Api.Services;
@@ -27,16 +28,16 @@ public sealed class AuthController : ControllerBase
         "unauthorized",
         "invalid_refresh_token");
 
-    private readonly NpgsqlDataSource _dataSource;
+    private readonly IDbAccess _db;
     private readonly IJwtTokenService _tokenService;
     private readonly JwtSettings _jwtSettings;
 
     public AuthController(
-        NpgsqlDataSource dataSource,
+        IDbAccess db,
         IJwtTokenService tokenService,
         IOptions<JwtSettings> jwtSettings)
     {
-        _dataSource = dataSource;
+        _db = db;
         _tokenService = tokenService;
         _jwtSettings = jwtSettings.Value;
     }
@@ -54,53 +55,47 @@ public sealed class AuthController : ControllerBase
 
         var tenant = HttpContext.GetTenant();
 
-        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken);
-        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-        await SetConfigAsync(connection, transaction, "app.current_tenant", tenant.Id.ToString(), cancellationToken);
-
-        Guid userId = Guid.Empty;
-        string email = string.Empty;
-        string passwordHash = string.Empty;
-        string role = string.Empty;
-        bool userFound;
-
-        await using (var authCommand = new NpgsqlCommand(
-            "SELECT id, email, password_hash, role FROM api.authenticate_user(@email)",
-            connection, transaction))
+        LoginResult result;
+        try
         {
-            authCommand.Parameters.AddWithValue("email", request.Email);
-
-            await using var reader = await authCommand.ExecuteReaderAsync(cancellationToken);
-            userFound = await reader.ReadAsync(cancellationToken);
-            if (userFound)
+            result = await _db.InTransactionAsync(async scope =>
             {
-                userId = reader.GetGuid(0);
-                email = reader.GetString(1);
-                passwordHash = reader.GetString(2);
-                role = reader.GetString(3);
-            }
-        }
+                await scope.SetTenantAsync(tenant.Id, cancellationToken);
 
-        if (!userFound || !TryVerifyPassword(request.Password, passwordHash))
+                var credentials = await scope.CallAsync<CredentialsRow>(
+                    "api.authenticate_user",
+                    new { p_email = request.Email },
+                    cancellationToken);
+
+                if (credentials is null || !TryVerifyPassword(request.Password, credentials.PasswordHash))
+                {
+                    throw new AuthFailedException();
+                }
+
+                await scope.SetUserAsync(credentials.Id, cancellationToken);
+
+                var refresh = await scope.CallAsync<RefreshTokenRow>(
+                    "api.create_refresh_token",
+                    new { p_days = _jwtSettings.RefreshTokenLifetimeDays },
+                    cancellationToken)
+                    ?? throw new InvalidOperationException("api.create_refresh_token returned no row");
+
+                return new LoginResult(
+                    credentials.Id, credentials.Email, credentials.Role, refresh.Token, refresh.ExpiresAt);
+            }, cancellationToken);
+        }
+        catch (AuthFailedException)
         {
-            await transaction.RollbackAsync(cancellationToken);
             return Unauthorized(InvalidCredentials);
         }
 
-        await SetConfigAsync(connection, transaction, "app.current_user", userId.ToString(), cancellationToken);
+        AppendRefreshCookie(result.RefreshToken, result.RefreshExpiresAt);
 
-        var refresh = await CreateRefreshTokenAsync(connection, transaction, cancellationToken);
-
-        await transaction.CommitAsync(cancellationToken);
-
-        AppendRefreshCookie(refresh.Token, refresh.ExpiresAt);
-
-        var accessToken = _tokenService.GenerateToken(userId, tenant.Id, role, email);
+        var accessToken = _tokenService.GenerateToken(result.UserId, tenant.Id, result.Role, result.Email);
         var userInfo = new UserInfo(
-            Id: userId,
-            Email: email,
-            Role: role,
+            Id: result.UserId,
+            Email: result.Email,
+            Role: result.Role,
             Tenant: new TenantInfo(tenant.Id, tenant.Name, tenant.Subdomain));
         return Ok(new AuthResponse(accessToken, userInfo));
     }
@@ -116,67 +111,49 @@ public sealed class AuthController : ControllerBase
 
         var tenant = HttpContext.GetTenant();
 
-        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken);
-        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-        await SetConfigAsync(connection, transaction, "app.current_tenant", tenant.Id.ToString(), cancellationToken);
-
-        RefreshTokenRow rotated;
+        RefreshResult result;
         try
         {
-            rotated = await RotateRefreshTokenAsync(connection, transaction, incomingToken!, cancellationToken);
+            result = await _db.InTransactionAsync(async scope =>
+            {
+                await scope.SetTenantAsync(tenant.Id, cancellationToken);
+
+                var rotated = await scope.CallAsync<RefreshTokenRow>(
+                    "api.rotate_refresh_token",
+                    new { p_token = incomingToken, p_days = _jwtSettings.RefreshTokenLifetimeDays },
+                    cancellationToken)
+                    ?? throw new InvalidOperationException("api.rotate_refresh_token returned no row");
+
+                await scope.SetUserAsync(rotated.UserId, cancellationToken);
+
+                var user = await scope.CallAsync<CurrentUserRow>(
+                    "api.get_current_user",
+                    cancellationToken: cancellationToken)
+                    ?? throw new RefreshUserMissingException();
+
+                return new RefreshResult(user, rotated.Token, rotated.ExpiresAt);
+            }, cancellationToken);
         }
         catch (PostgresException ex) when (ex.MessageText == "invalid_refresh_token")
         {
-            await transaction.RollbackAsync(cancellationToken);
+            AppendClearingRefreshCookie();
+            return Unauthorized(InvalidRefreshToken);
+        }
+        catch (RefreshUserMissingException)
+        {
             AppendClearingRefreshCookie();
             return Unauthorized(InvalidRefreshToken);
         }
 
-        await SetConfigAsync(connection, transaction, "app.current_user", rotated.UserId.ToString(), cancellationToken);
+        AppendRefreshCookie(result.RefreshToken, result.RefreshExpiresAt);
 
-        Guid userId = rotated.UserId;
-        string email = string.Empty;
-        string role = string.Empty;
-        Guid tenantIdFromDb = Guid.Empty;
-        string tenantName = string.Empty;
-        string tenantSubdomain = string.Empty;
-        bool userFound;
-
-        await using (var meCommand = new NpgsqlCommand(
-            "SELECT id, email, role, tenant_id, tenant_name, tenant_subdomain FROM api.get_current_user()",
-            connection, transaction))
-        {
-            await using var reader = await meCommand.ExecuteReaderAsync(cancellationToken);
-            userFound = await reader.ReadAsync(cancellationToken);
-            if (userFound)
-            {
-                userId = reader.GetGuid(0);
-                email = reader.GetString(1);
-                role = reader.GetString(2);
-                tenantIdFromDb = reader.GetGuid(3);
-                tenantName = reader.GetString(4);
-                tenantSubdomain = reader.GetString(5);
-            }
-        }
-
-        if (!userFound)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            AppendClearingRefreshCookie();
-            return Unauthorized(InvalidRefreshToken);
-        }
-
-        await transaction.CommitAsync(cancellationToken);
-
-        AppendRefreshCookie(rotated.Token, rotated.ExpiresAt);
-
-        var accessToken = _tokenService.GenerateToken(userId, tenantIdFromDb, role, email);
+        var accessToken = _tokenService.GenerateToken(
+            result.User.Id, result.User.TenantId, result.User.Role, result.User.Email);
         var userInfo = new UserInfo(
-            Id: userId,
-            Email: email,
-            Role: role,
-            Tenant: new TenantInfo(tenantIdFromDb, tenantName, tenantSubdomain));
+            Id: result.User.Id,
+            Email: result.User.Email,
+            Role: result.User.Role,
+            Tenant: new TenantInfo(result.User.TenantId, result.User.TenantName, result.User.TenantSubdomain));
         return Ok(new AuthResponse(accessToken, userInfo));
     }
 
@@ -188,87 +165,18 @@ public sealed class AuthController : ControllerBase
         {
             var tenant = HttpContext.GetTenant();
 
-            await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken);
-            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-            await SetConfigAsync(connection, transaction, "app.current_tenant", tenant.Id.ToString(), cancellationToken);
-
-            await using (var revokeCommand = new NpgsqlCommand(
-                "SELECT api.revoke_refresh_token(@token)", connection, transaction))
+            await _db.InTransactionAsync(async scope =>
             {
-                revokeCommand.Parameters.AddWithValue("token", incomingToken!);
-                await revokeCommand.ExecuteNonQueryAsync(cancellationToken);
-            }
-
-            await transaction.CommitAsync(cancellationToken);
+                await scope.SetTenantAsync(tenant.Id, cancellationToken);
+                await scope.ExecuteAsync(
+                    "api.revoke_refresh_token",
+                    new { p_token = incomingToken },
+                    cancellationToken);
+            }, cancellationToken);
         }
 
         AppendClearingRefreshCookie();
         return NoContent();
-    }
-
-    private async Task<RefreshTokenRow> CreateRefreshTokenAsync(
-        NpgsqlConnection connection,
-        NpgsqlTransaction transaction,
-        CancellationToken cancellationToken)
-    {
-        await using var command = new NpgsqlCommand(
-            "SELECT id, user_id, token, issued_at, expires_at FROM api.create_refresh_token(@days)",
-            connection, transaction);
-        command.Parameters.AddWithValue("days", _jwtSettings.RefreshTokenLifetimeDays);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            throw new InvalidOperationException("api.create_refresh_token returned no rows");
-        }
-
-        return new RefreshTokenRow(
-            Id: reader.GetGuid(0),
-            UserId: reader.GetGuid(1),
-            Token: reader.GetString(2),
-            IssuedAt: reader.GetFieldValue<DateTimeOffset>(3),
-            ExpiresAt: reader.GetFieldValue<DateTimeOffset>(4));
-    }
-
-    private async Task<RefreshTokenRow> RotateRefreshTokenAsync(
-        NpgsqlConnection connection,
-        NpgsqlTransaction transaction,
-        string incomingToken,
-        CancellationToken cancellationToken)
-    {
-        await using var command = new NpgsqlCommand(
-            "SELECT id, user_id, token, issued_at, expires_at FROM api.rotate_refresh_token(@token, @days)",
-            connection, transaction);
-        command.Parameters.AddWithValue("token", incomingToken);
-        command.Parameters.AddWithValue("days", _jwtSettings.RefreshTokenLifetimeDays);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            throw new InvalidOperationException("api.rotate_refresh_token returned no rows");
-        }
-
-        return new RefreshTokenRow(
-            Id: reader.GetGuid(0),
-            UserId: reader.GetGuid(1),
-            Token: reader.GetString(2),
-            IssuedAt: reader.GetFieldValue<DateTimeOffset>(3),
-            ExpiresAt: reader.GetFieldValue<DateTimeOffset>(4));
-    }
-
-    private static async Task SetConfigAsync(
-        NpgsqlConnection connection,
-        NpgsqlTransaction transaction,
-        string key,
-        string value,
-        CancellationToken cancellationToken)
-    {
-        await using var command = new NpgsqlCommand(
-            "SELECT set_config(@k, @v, true)", connection, transaction);
-        command.Parameters.AddWithValue("k", key);
-        command.Parameters.AddWithValue("v", value);
-        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private void AppendRefreshCookie(string token, DateTimeOffset expiresAt)
@@ -307,10 +215,51 @@ public sealed class AuthController : ControllerBase
         }
     }
 
-    private sealed record RefreshTokenRow(
-        Guid Id,
+    // Property-based records (not positional) so Dapper materializes via the
+    // parameterless constructor + name-matched setters instead of exact-signature
+    // constructor matching, which would fail because the api composite types carry
+    // extra columns (e.g. created_at/updated_at) the controller doesn't need. Same
+    // reason documented on Dtos/CourseResponse.
+    private sealed record CredentialsRow
+    {
+        public Guid Id { get; init; }
+        public string Email { get; init; } = string.Empty;
+        public string PasswordHash { get; init; } = string.Empty;
+        public string Role { get; init; } = string.Empty;
+    }
+
+    private sealed record CurrentUserRow
+    {
+        public Guid Id { get; init; }
+        public string Email { get; init; } = string.Empty;
+        public string Role { get; init; } = string.Empty;
+        public Guid TenantId { get; init; }
+        public string TenantName { get; init; } = string.Empty;
+        public string TenantSubdomain { get; init; } = string.Empty;
+    }
+
+    private sealed record RefreshTokenRow
+    {
+        public Guid Id { get; init; }
+        public Guid UserId { get; init; }
+        public string Token { get; init; } = string.Empty;
+        public DateTimeOffset IssuedAt { get; init; }
+        public DateTimeOffset ExpiresAt { get; init; }
+    }
+
+    private sealed record LoginResult(
         Guid UserId,
-        string Token,
-        DateTimeOffset IssuedAt,
-        DateTimeOffset ExpiresAt);
+        string Email,
+        string Role,
+        string RefreshToken,
+        DateTimeOffset RefreshExpiresAt);
+
+    private sealed record RefreshResult(
+        CurrentUserRow User,
+        string RefreshToken,
+        DateTimeOffset RefreshExpiresAt);
+
+    private sealed class AuthFailedException : Exception;
+
+    private sealed class RefreshUserMissingException : Exception;
 }
