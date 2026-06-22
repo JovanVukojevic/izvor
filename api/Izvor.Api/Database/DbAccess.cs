@@ -66,12 +66,6 @@ public sealed class DbAccess : IDbAccess
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
         var scope = new DbTransactionScope(connection, transaction);
 
-        // No try/catch around work: any exception must propagate out unchanged — not
-        // caught, wrapped, or swallowed. Callers rely on the exact type and message
-        // (e.g. Refresh's `catch (PostgresException) when (ex.MessageText == "invalid_refresh_token")`);
-        // altering the exception in transit would silently misroute their catch filters.
-        // The uncommitted transaction rolls back via `await using` disposal as the
-        // exception unwinds.
         var result = await work(scope);
         await transaction.CommitAsync(cancellationToken);
         return result;
