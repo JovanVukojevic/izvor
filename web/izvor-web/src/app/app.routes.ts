@@ -30,6 +30,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/enrollments/enrollments.routes').then(m => m.ENROLLMENTS_ROUTES)
       },
+      {
+        path: 'users',
+        loadChildren: () =>
+          import('./features/users/users.routes').then(m => m.USERS_ROUTES)
+      },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },

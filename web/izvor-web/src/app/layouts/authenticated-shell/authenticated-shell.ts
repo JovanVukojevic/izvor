@@ -28,6 +28,7 @@ import { RoleLabelPipe } from '../../core/i18n/role-label.pipe';
           <a routerLink="/my-enrollments" routerLinkActive="shell-nav-active">{{ 'nav.myEnrollments' | translate }}</a>
           <a *izvorRequiresRole="'author'" routerLink="/courses/new" routerLinkActive="shell-nav-active">{{ 'nav.createCourse' | translate }}</a>
           <a *izvorRequiresRole="'admin'" routerLink="/categories" routerLinkActive="shell-nav-active">{{ 'nav.manageCategories' | translate }}</a>
+          <a *izvorRequiresRole="'admin'" routerLink="/users" routerLinkActive="shell-nav-active">{{ 'nav.manageUsers' | translate }}</a>
         </nav>
 
         <div class="shell-user">

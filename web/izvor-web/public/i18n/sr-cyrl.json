@@ -19,6 +19,7 @@
     "myEnrollments": "Моји уписи",
     "createCourse": "Нови курс",
     "manageCategories": "Категорије",
+    "manageUsers": "Корисници",
     "logout": "Одјава"
   },
   "dashboard": {
@@ -319,6 +320,64 @@
       },
       "update": {
         "successSummary": "Категорија ажурирана"
+      }
+    }
+  },
+  "user": {
+    "list": {
+      "title": "Корисници",
+      "new": "Нови корисник",
+      "loading": "Учитавање корисника…",
+      "empty": "Још нема корисника. Кликните „Нови корисник“ да креирате.",
+      "columnEmail": "Имејл",
+      "columnRole": "Улога",
+      "columnActive": "Статус",
+      "columnCreated": "Креирано",
+      "filterRole": "Улога",
+      "filterActive": "Статус",
+      "filterAll": "Сви",
+      "activeYes": "Активан",
+      "activeNo": "Неактиван"
+    },
+    "form": {
+      "headerNew": "Нови корисник",
+      "fieldEmail": "Имејл",
+      "fieldPassword": "Лозинка",
+      "fieldRole": "Улога",
+      "saveFailed": "Неуспешно чување корисника.",
+      "errors": {
+        "emailRequired": "Имејл је обавезан",
+        "emailInvalid": "Имејл мора бити исправна имејл адреса",
+        "passwordRequired": "Лозинка је обавезна",
+        "passwordTooShort": "Лозинка мора имати најмање 8 карактера",
+        "alreadyExists": "Корисник са овим имејлом већ постоји"
+      }
+    },
+    "actions": {
+      "create": {
+        "successSummary": "Корисник креиран"
+      },
+      "activate": {
+        "confirmHeader": "Активирање корисника",
+        "confirmMessage": "Активирати „{{email}}“?",
+        "successSummary": "Корисник активиран",
+        "failedSummary": "Неуспешно активирање",
+        "failedDetail": "Неуспешно активирање корисника."
+      },
+      "deactivate": {
+        "confirmHeader": "Деактивирање корисника",
+        "confirmMessage": "Деактивирати „{{email}}“? Више неће моћи да се пријави.",
+        "successSummary": "Корисник деактивиран",
+        "failedSummary": "Неуспешно деактивирање",
+        "failedDetail": "Неуспешно деактивирање корисника."
+      },
+      "resetPassword": {
+        "dialogHeader": "Ресетовање лозинке",
+        "fieldNewPassword": "Нова лозинка",
+        "submit": "Ресетуј лозинку",
+        "successSummary": "Лозинка ресетована",
+        "failedSummary": "Неуспешно ресетовање",
+        "failedDetail": "Неуспешно ресетовање лозинке."
       }
     }
   },

@@ -19,6 +19,7 @@
     "myEnrollments": "My Enrollments",
     "createCourse": "Create Course",
     "manageCategories": "Manage Categories",
+    "manageUsers": "Manage Users",
     "logout": "Logout"
   },
   "dashboard": {
@@ -319,6 +320,64 @@
       },
       "update": {
         "successSummary": "Category updated"
+      }
+    }
+  },
+  "user": {
+    "list": {
+      "title": "Users",
+      "new": "New User",
+      "loading": "Loading users…",
+      "empty": "No users yet. Click \"New User\" to create one.",
+      "columnEmail": "Email",
+      "columnRole": "Role",
+      "columnActive": "Status",
+      "columnCreated": "Created",
+      "filterRole": "Role",
+      "filterActive": "Status",
+      "filterAll": "All",
+      "activeYes": "Active",
+      "activeNo": "Inactive"
+    },
+    "form": {
+      "headerNew": "New User",
+      "fieldEmail": "Email",
+      "fieldPassword": "Password",
+      "fieldRole": "Role",
+      "saveFailed": "Could not save user.",
+      "errors": {
+        "emailRequired": "Email is required",
+        "emailInvalid": "Email must be a valid email address",
+        "passwordRequired": "Password is required",
+        "passwordTooShort": "Password must be at least 8 characters",
+        "alreadyExists": "A user with this email already exists"
+      }
+    },
+    "actions": {
+      "create": {
+        "successSummary": "User created"
+      },
+      "activate": {
+        "confirmHeader": "Activate user",
+        "confirmMessage": "Activate \"{{email}}\"?",
+        "successSummary": "User activated",
+        "failedSummary": "Activation failed",
+        "failedDetail": "Could not activate the user."
+      },
+      "deactivate": {
+        "confirmHeader": "Deactivate user",
+        "confirmMessage": "Deactivate \"{{email}}\"? They will no longer be able to sign in.",
+        "successSummary": "User deactivated",
+        "failedSummary": "Deactivation failed",
+        "failedDetail": "Could not deactivate the user."
+      },
+      "resetPassword": {
+        "dialogHeader": "Reset password",
+        "fieldNewPassword": "New password",
+        "submit": "Reset password",
+        "successSummary": "Password reset",
+        "failedSummary": "Reset failed",
+        "failedDetail": "Could not reset the password."
       }
     }
   },

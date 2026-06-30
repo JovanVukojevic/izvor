@@ -19,6 +19,7 @@
     "myEnrollments": "Moji upisi",
     "createCourse": "Novi kurs",
     "manageCategories": "Kategorije",
+    "manageUsers": "Korisnici",
     "logout": "Odjava"
   },
   "dashboard": {
@@ -319,6 +320,64 @@
       },
       "update": {
         "successSummary": "Kategorija ažurirana"
+      }
+    }
+  },
+  "user": {
+    "list": {
+      "title": "Korisnici",
+      "new": "Novi korisnik",
+      "loading": "Učitavanje korisnika…",
+      "empty": "Još nema korisnika. Kliknite „Novi korisnik“ da kreirate.",
+      "columnEmail": "Imejl",
+      "columnRole": "Uloga",
+      "columnActive": "Status",
+      "columnCreated": "Kreirano",
+      "filterRole": "Uloga",
+      "filterActive": "Status",
+      "filterAll": "Svi",
+      "activeYes": "Aktivan",
+      "activeNo": "Neaktivan"
+    },
+    "form": {
+      "headerNew": "Novi korisnik",
+      "fieldEmail": "Imejl",
+      "fieldPassword": "Lozinka",
+      "fieldRole": "Uloga",
+      "saveFailed": "Neuspešno čuvanje korisnika.",
+      "errors": {
+        "emailRequired": "Imejl je obavezan",
+        "emailInvalid": "Imejl mora biti ispravna imejl adresa",
+        "passwordRequired": "Lozinka je obavezna",
+        "passwordTooShort": "Lozinka mora imati najmanje 8 karaktera",
+        "alreadyExists": "Korisnik sa ovim imejlom već postoji"
+      }
+    },
+    "actions": {
+      "create": {
+        "successSummary": "Korisnik kreiran"
+      },
+      "activate": {
+        "confirmHeader": "Aktiviranje korisnika",
+        "confirmMessage": "Aktivirati „{{email}}“?",
+        "successSummary": "Korisnik aktiviran",
+        "failedSummary": "Neuspešno aktiviranje",
+        "failedDetail": "Neuspešno aktiviranje korisnika."
+      },
+      "deactivate": {
+        "confirmHeader": "Deaktiviranje korisnika",
+        "confirmMessage": "Deaktivirati „{{email}}“? Više neće moći da se prijavi.",
+        "successSummary": "Korisnik deaktiviran",
+        "failedSummary": "Neuspešno deaktiviranje",
+        "failedDetail": "Neuspešno deaktiviranje korisnika."
+      },
+      "resetPassword": {
+        "dialogHeader": "Resetovanje lozinke",
+        "fieldNewPassword": "Nova lozinka",
+        "submit": "Resetuj lozinku",
+        "successSummary": "Lozinka resetovana",
+        "failedSummary": "Neuspešno resetovanje",
+        "failedDetail": "Neuspešno resetovanje lozinke."
       }
     }
   },
