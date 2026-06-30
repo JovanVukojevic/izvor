@@ -80,7 +80,7 @@ BEGIN
                 ('c0000001-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Teorija igara',      'Uvod u matematičku teoriju strateškog odlučivanja.', true),
                 ('c0000002-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Osnove menadžmenta', 'Osnovni pojmovi menadžmenta i liderstva.',           true);
 
-            INSERT INTO impl.course_categories (tenant_id, course_id, category_id) VALUES
+            INSERT INTO impl.classification (tenant_id, course_id, category_id) VALUES
                 (v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'a0000001-0000-0000-0000-000000000000'),
                 (v_tenant_id, 'c0000002-0000-0000-0000-000000000000', 'a0000002-0000-0000-0000-000000000000');
 
@@ -221,7 +221,7 @@ SMART je dobar za *taktičke* ciljeve — one koji se mogu jasno opisati unapred
             -- c0000003 carries TWO categories: onboarding for engineers genuinely touches
             -- HR procedures (working hours, sick leave) — the demo data exercises the M:N
             -- relationship explicitly so a fresh DB shows the feature working.
-            INSERT INTO impl.course_categories (tenant_id, course_id, category_id) VALUES
+            INSERT INTO impl.classification (tenant_id, course_id, category_id) VALUES
                 (v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'a0000003-0000-0000-0000-000000000000'),
                 (v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'a0000004-0000-0000-0000-000000000000'),
                 (v_tenant_id, 'c0000004-0000-0000-0000-000000000000', 'a0000004-0000-0000-0000-000000000000');
@@ -410,9 +410,9 @@ BEGIN
         SELECT COUNT(*) INTO v_partial FROM impl.courses;            v_course_count     := v_course_count     + v_partial;
         SELECT COUNT(*) INTO v_partial FROM impl.lessons;            v_lesson_count     := v_lesson_count     + v_partial;
         SELECT COUNT(*) INTO v_partial FROM impl.enrollments;        v_enrollment_count := v_enrollment_count + v_partial;
-        SELECT COUNT(*) INTO v_partial FROM impl.course_categories;  v_link_count       := v_link_count       + v_partial;
+        SELECT COUNT(*) INTO v_partial FROM impl.classification;  v_link_count       := v_link_count       + v_partial;
     END LOOP;
-    RAISE NOTICE 'tenants=%, users=%, categories=%, courses=%, lessons=%, enrollments=%, course_categories=%',
+    RAISE NOTICE 'tenants=%, users=%, categories=%, courses=%, lessons=%, enrollments=%, classification=%',
         (SELECT COUNT(*) FROM system_impl.tenants),
         v_user_count, v_category_count, v_course_count, v_lesson_count, v_enrollment_count, v_link_count;
 END $$;

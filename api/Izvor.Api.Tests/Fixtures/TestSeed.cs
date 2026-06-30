@@ -55,10 +55,10 @@ internal static class TestSeed
         NpgsqlConnection conn, NpgsqlTransaction tx, Guid tenantId)
     {
         await using var cmd = new NpgsqlCommand(
-            "INSERT INTO impl.roles (tenant_id, code, name, description, rank) VALUES " +
-            "(@tenantId, 'admin',   'Administrator', 'Full administrative access within the organization', 100), " +
-            "(@tenantId, 'author',  'Author',        'Can create and manage course content',                50), " +
-            "(@tenantId, 'learner', 'Learner',       'Can browse and complete courses',                     10)",
+            "INSERT INTO impl.roles (tenant_id, code, description, rank) VALUES " +
+            "(@tenantId, 'admin',   'Full administrative access within the organization', 100), " +
+            "(@tenantId, 'author',  'Can create and manage course content',                50), " +
+            "(@tenantId, 'learner', 'Can browse and complete courses',                     10)",
             conn, tx);
         cmd.Parameters.AddWithValue("tenantId", tenantId);
         await cmd.ExecuteNonQueryAsync();
@@ -88,7 +88,7 @@ internal static class TestSeed
         await using var conn = new NpgsqlConnection(adminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
-            "TRUNCATE impl.lesson_completion, impl.enrollments, impl.lessons, impl.course_categories, impl.courses, impl.categories CASCADE",
+            "TRUNCATE impl.lesson_completion, impl.enrollments, impl.lessons, impl.classification, impl.courses, impl.categories CASCADE",
             conn);
         await cmd.ExecuteNonQueryAsync();
     }

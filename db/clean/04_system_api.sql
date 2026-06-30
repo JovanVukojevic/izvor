@@ -78,10 +78,10 @@ BEGIN
 
     PERFORM set_config('app.current_tenant', v_tenant_id::text, true);
 
-    INSERT INTO impl.roles (tenant_id, code, name, description, rank) VALUES
-        (v_tenant_id, 'admin',   'Administrator', 'Full administrative access within the organization', 100),
-        (v_tenant_id, 'author',  'Author',        'Can create and manage course content',                50),
-        (v_tenant_id, 'learner', 'Learner',       'Can browse and complete courses',                     10);
+    INSERT INTO impl.roles (tenant_id, code, description, rank) VALUES
+        (v_tenant_id, 'admin',   'Full administrative access within the organization', 100),
+        (v_tenant_id, 'author',  'Can create and manage course content',                50),
+        (v_tenant_id, 'learner', 'Can browse and complete courses',                     10);
 
     v_admin_id := spec.create_user_internal(p_admin_email, p_admin_password_hash, 'admin');
 

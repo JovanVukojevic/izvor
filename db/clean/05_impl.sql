@@ -30,7 +30,6 @@ CREATE TABLE impl.roles (
     tenant_id uuid NOT NULL,
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     code text NOT NULL,
-    name text NOT NULL,
     description text,
     rank integer NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -70,13 +69,13 @@ CREATE TABLE impl.courses (
 ALTER TABLE ONLY impl.courses FORCE ROW LEVEL SECURITY;
 
 
-CREATE TABLE impl.course_categories (
+CREATE TABLE impl.classification (
     tenant_id uuid NOT NULL,
     course_id uuid NOT NULL,
     category_id uuid NOT NULL
 );
 
-ALTER TABLE ONLY impl.course_categories FORCE ROW LEVEL SECURITY;
+ALTER TABLE ONLY impl.classification FORCE ROW LEVEL SECURITY;
 
 
 CREATE TABLE impl.lessons (
@@ -88,6 +87,7 @@ CREATE TABLE impl.lessons (
     "position" integer NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT lessons_position_check CHECK (("position" > 0)),
     CONSTRAINT lessons_title_check CHECK (((length(TRIM(BOTH FROM title)) >= 1) AND (length(TRIM(BOTH FROM title)) <= 300)))
 );
 
@@ -114,7 +114,8 @@ CREATE TABLE impl.lesson_completion (
     tenant_id uuid NOT NULL,
     enrollment_id uuid NOT NULL,
     lesson_id uuid NOT NULL,
-    completed_at timestamp with time zone DEFAULT now() NOT NULL
+    completed_at timestamp with time zone DEFAULT now() NOT NULL,
+    course_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY impl.lesson_completion FORCE ROW LEVEL SECURITY;
@@ -153,8 +154,8 @@ ALTER TABLE ONLY impl.courses
     ADD CONSTRAINT courses_pkey PRIMARY KEY (tenant_id, id);
 
 
-ALTER TABLE ONLY impl.course_categories
-    ADD CONSTRAINT course_categories_pkey PRIMARY KEY (tenant_id, course_id, category_id);
+ALTER TABLE ONLY impl.classification
+    ADD CONSTRAINT classification_pkey PRIMARY KEY (tenant_id, course_id, category_id);
 
 
 ALTER TABLE ONLY impl.lessons
@@ -165,12 +166,20 @@ ALTER TABLE ONLY impl.lessons
     ADD CONSTRAINT lessons_position_unique UNIQUE (tenant_id, course_id, "position") DEFERRABLE;
 
 
+ALTER TABLE ONLY impl.lessons
+    ADD CONSTRAINT lessons_course_lesson_unique UNIQUE (tenant_id, course_id, id);
+
+
 ALTER TABLE ONLY impl.enrollments
     ADD CONSTRAINT enrollments_pkey PRIMARY KEY (tenant_id, id);
 
 
+ALTER TABLE ONLY impl.enrollments
+    ADD CONSTRAINT enrollments_id_course_unique UNIQUE (tenant_id, id, course_id);
+
+
 ALTER TABLE ONLY impl.lesson_completion
-    ADD CONSTRAINT lesson_completion_pkey PRIMARY KEY (tenant_id, enrollment_id, lesson_id);
+    ADD CONSTRAINT lesson_completion_pkey PRIMARY KEY (tenant_id, enrollment_id, course_id, lesson_id);
 
 
 ALTER TABLE ONLY impl.refresh_tokens
@@ -185,12 +194,12 @@ ALTER TABLE ONLY impl.courses
     ADD CONSTRAINT courses_tenant_id_author_id_fkey FOREIGN KEY (tenant_id, author_id) REFERENCES impl.users(tenant_id, id);
 
 
-ALTER TABLE ONLY impl.course_categories
-    ADD CONSTRAINT course_categories_tenant_id_category_id_fkey FOREIGN KEY (tenant_id, category_id) REFERENCES impl.categories(tenant_id, id) ON DELETE RESTRICT;
+ALTER TABLE ONLY impl.classification
+    ADD CONSTRAINT classification_tenant_id_category_id_fkey FOREIGN KEY (tenant_id, category_id) REFERENCES impl.categories(tenant_id, id) ON DELETE RESTRICT;
 
 
-ALTER TABLE ONLY impl.course_categories
-    ADD CONSTRAINT course_categories_tenant_id_course_id_fkey FOREIGN KEY (tenant_id, course_id) REFERENCES impl.courses(tenant_id, id) ON DELETE CASCADE;
+ALTER TABLE ONLY impl.classification
+    ADD CONSTRAINT classification_tenant_id_course_id_fkey FOREIGN KEY (tenant_id, course_id) REFERENCES impl.courses(tenant_id, id) ON DELETE CASCADE;
 
 
 ALTER TABLE ONLY impl.lessons
@@ -206,11 +215,11 @@ ALTER TABLE ONLY impl.enrollments
 
 
 ALTER TABLE ONLY impl.lesson_completion
-    ADD CONSTRAINT lesson_completion_tenant_id_enrollment_id_fkey FOREIGN KEY (tenant_id, enrollment_id) REFERENCES impl.enrollments(tenant_id, id) ON DELETE RESTRICT;
+    ADD CONSTRAINT lesson_completion_tenant_id_course_id_lesson_id_fkey FOREIGN KEY (tenant_id, course_id, lesson_id) REFERENCES impl.lessons(tenant_id, course_id, id) ON DELETE RESTRICT;
 
 
 ALTER TABLE ONLY impl.lesson_completion
-    ADD CONSTRAINT lesson_completion_tenant_id_lesson_id_fkey FOREIGN KEY (tenant_id, lesson_id) REFERENCES impl.lessons(tenant_id, id) ON DELETE RESTRICT;
+    ADD CONSTRAINT lesson_completion_tenant_id_enrollment_id_course_id_fkey FOREIGN KEY (tenant_id, enrollment_id, course_id) REFERENCES impl.enrollments(tenant_id, id, course_id) ON DELETE RESTRICT;
 
 
 ALTER TABLE ONLY impl.refresh_tokens
@@ -237,7 +246,7 @@ CREATE INDEX courses_tenant_active_idx ON impl.courses USING btree (tenant_id) W
 CREATE INDEX courses_tenant_author_idx ON impl.courses USING btree (tenant_id, author_id);
 
 
-CREATE INDEX course_categories_tenant_category_idx ON impl.course_categories USING btree (tenant_id, category_id);
+CREATE INDEX classification_tenant_category_idx ON impl.classification USING btree (tenant_id, category_id);
 
 
 CREATE UNIQUE INDEX enrollments_active_unique ON impl.enrollments USING btree (tenant_id, course_id, user_id) WHERE (status = 'active'::impl.enrollment_status);
@@ -281,10 +290,10 @@ ALTER TABLE impl.courses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON impl.courses USING ((tenant_id = app.current_tenant())) WITH CHECK ((tenant_id = app.current_tenant()));
 
 
-ALTER TABLE impl.course_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE impl.classification ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY tenant_isolation ON impl.course_categories USING ((tenant_id = app.current_tenant())) WITH CHECK ((tenant_id = app.current_tenant()));
+CREATE POLICY tenant_isolation ON impl.classification USING ((tenant_id = app.current_tenant())) WITH CHECK ((tenant_id = app.current_tenant()));
 
 
 ALTER TABLE impl.lessons ENABLE ROW LEVEL SECURITY;
@@ -323,7 +332,7 @@ BEGIN
          WHERE tenant_id = OLD.tenant_id AND id = OLD.course_id
     )
     AND NOT EXISTS (
-        SELECT 1 FROM impl.course_categories
+        SELECT 1 FROM impl.classification
          WHERE tenant_id = OLD.tenant_id AND course_id = OLD.course_id
     ) THEN
         RAISE EXCEPTION 'course_must_have_categories';
@@ -438,10 +447,10 @@ CREATE TRIGGER categories_set_updated_at BEFORE UPDATE ON impl.categories FOR EA
 CREATE TRIGGER courses_set_updated_at BEFORE UPDATE ON impl.courses FOR EACH ROW EXECUTE FUNCTION app.set_updated_at();
 
 
-CREATE CONSTRAINT TRIGGER course_categories_has_category_on_delete AFTER DELETE ON impl.course_categories DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_course_has_category();
+CREATE CONSTRAINT TRIGGER course_categories_has_category_on_delete AFTER DELETE ON impl.classification DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_course_has_category();
 
 
-CREATE CONSTRAINT TRIGGER course_categories_has_category_on_update AFTER UPDATE OF course_id ON impl.course_categories DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_course_has_category();
+CREATE CONSTRAINT TRIGGER course_categories_has_category_on_update AFTER UPDATE OF course_id ON impl.classification DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_course_has_category();
 
 
 CREATE CONSTRAINT TRIGGER lessons_course_has_lesson_on_delete AFTER DELETE ON impl.lessons DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_course_has_lesson();
