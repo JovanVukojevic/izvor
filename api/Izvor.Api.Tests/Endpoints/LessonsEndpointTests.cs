@@ -33,11 +33,12 @@ public sealed class LessonsEndpointTests : IAsyncLifetime
         catResp.EnsureSuccessStatusCode();
         _categoryId = (await catResp.Content.ReadFromJsonAsync<CategoryResponse>())!.Id;
 
-        // Course is created together with its first lesson (migration 027).
-        // _firstLessonId tracks that auto-created lesson; tests that add more
-        // lessons see them at positions 2, 3, …
+        // Course is created together with its lessons (one here, migration 027/036).
+        // _firstLessonId tracks that lesson; tests that add more lessons see them at
+        // positions 2, 3, …
         var courseResp = await AnaClient().PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest("Course1", null, new[] { _categoryId }, "Fixture intro", "seed"));
+            new CreateCourseRequest("Course1", null, new[] { _categoryId },
+                new[] { new CreateLessonInput("Fixture intro", "seed") }));
         courseResp.EnsureSuccessStatusCode();
         _courseId = (await courseResp.Content.ReadFromJsonAsync<CourseResponse>())!.Id;
 

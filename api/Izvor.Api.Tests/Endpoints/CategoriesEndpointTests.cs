@@ -150,7 +150,8 @@ public sealed class CategoriesEndpointTests : IAsyncLifetime
             .WithBearer(AuthHelper.MintToken(
                 _factory.Services, TestIds.AnaUserId, TestIds.AcmeTenantId, "author", TestIds.AnaEmail));
         var courseResponse = await ana.PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest("Course1", null, new[] { category.Id }, "First lesson", "seed"));
+            new CreateCourseRequest("Course1", null, new[] { category.Id },
+                new[] { new CreateLessonInput("First lesson", "seed") }));
         courseResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var del = await admin.DeleteAsync($"/api/categories/{category.Id}");
@@ -175,7 +176,8 @@ public sealed class CategoriesEndpointTests : IAsyncLifetime
             .WithBearer(AuthHelper.MintToken(
                 _factory.Services, TestIds.AnaUserId, TestIds.AcmeTenantId, "author", TestIds.AnaEmail));
         (await ana.PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest("UsingCategory", null, new[] { category.Id }, "First lesson", "seed")))
+            new CreateCourseRequest("UsingCategory", null, new[] { category.Id },
+                new[] { new CreateLessonInput("First lesson", "seed") })))
             .EnsureSuccessStatusCode();
 
         var del = await admin.DeleteAsync($"/api/categories/{category.Id}");

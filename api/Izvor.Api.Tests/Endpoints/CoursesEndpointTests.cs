@@ -65,7 +65,8 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         var ana = AnaClient();
         var response = await ana.PostAsJsonAsync("/api/courses",
             new CreateCourseRequest("Intro to FP", "Functional programming basics",
-                new[] { _categoryId }, "First lesson", "Welcome"));
+                new[] { _categoryId },
+                new[] { new CreateLessonInput("First lesson", "Welcome") }));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<CourseResponse>();
@@ -73,7 +74,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         body.AuthorId.Should().Be(TestIds.AnaUserId);
         body.CategoryIds.Should().BeEquivalentTo(new[] { _categoryId });
 
-        // First lesson is created together with the course.
+        // The lesson is created together with the course.
         var lessons = await ana.GetAsync($"/api/courses/{body.Id}/lessons");
         var lessonList = (await lessons.Content.ReadFromJsonAsync<List<LessonResponse>>())!;
         lessonList.Should().HaveCount(1);
@@ -81,12 +82,39 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         lessonList[0].Position.Should().Be(1);
     }
 
+    [Fact] // K1b
+    public async Task Author_can_create_course_with_multiple_ordered_lessons()
+    {
+        var ana = AnaClient();
+        var response = await ana.PostAsJsonAsync("/api/courses",
+            new CreateCourseRequest("Ordered course", null,
+                new[] { _categoryId },
+                new[]
+                {
+                    new CreateLessonInput("L1", "a"),
+                    new CreateLessonInput("L2", "b"),
+                    new CreateLessonInput("L3", "c")
+                }));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<CourseResponse>();
+
+        // Position is server-derived from array order (1..N), and titles must round-trip
+        // exactly — proving the jsonb keys serialized as lowercase title/content.
+        var lessons = await ana.GetAsync($"/api/courses/{body!.Id}/lessons");
+        var lessonList = (await lessons.Content.ReadFromJsonAsync<List<LessonResponse>>())!;
+        lessonList.Should().HaveCount(3);
+        lessonList.Single(l => l.Position == 1).Title.Should().Be("L1");
+        lessonList.Single(l => l.Position == 2).Title.Should().Be("L2");
+        lessonList.Single(l => l.Position == 3).Title.Should().Be("L3");
+    }
+
     [Fact] // K2
     public async Task Admin_can_create_course()
     {
         var admin = AdminClient();
         var response = await admin.PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest("Admin course", null, new[] { _categoryId }, "First lesson", "seed"));
+            new CreateCourseRequest("Admin course", null, new[] { _categoryId }, new[] { new CreateLessonInput("First lesson", "seed") }));
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
@@ -95,7 +123,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
     {
         var pera = PeraClient();
         var response = await pera.PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest("Should fail", null, new[] { _categoryId }, "First lesson", "seed"));
+            new CreateCourseRequest("Should fail", null, new[] { _categoryId }, new[] { new CreateLessonInput("First lesson", "seed") }));
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Error.Should().Be("forbidden");
@@ -109,7 +137,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
         // classifies it as 404 not_found, consistent with all other *_not_found codes.
         var ana = AnaClient();
         var response = await ana.PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest("Bad cat", null, new[] { Guid.NewGuid() }, "First lesson", "seed"));
+            new CreateCourseRequest("Bad cat", null, new[] { Guid.NewGuid() }, new[] { new CreateLessonInput("First lesson", "seed") }));
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Error.Should().Be("not_found");
@@ -121,7 +149,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
     {
         var ana = AnaClient();
         var response = await ana.PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest("Missing cat", null, Array.Empty<Guid>(), "First lesson", "seed"));
+            new CreateCourseRequest("Missing cat", null, Array.Empty<Guid>(), new[] { new CreateLessonInput("First lesson", "seed") }));
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Error.Should().Be("validation_failed");
@@ -139,11 +167,24 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
     }
 
     [Fact] // K4d
-    public async Task Create_with_empty_first_lesson_title_returns_400_validation_failed()
+    public async Task Create_with_empty_lesson_title_returns_400_validation_failed()
     {
         var ana = AnaClient();
         var response = await ana.PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest("Missing lesson", null, new[] { _categoryId }, "", "content"));
+            new CreateCourseRequest("Missing lesson", null, new[] { _categoryId },
+                new[] { new CreateLessonInput("", "content") }));
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        body!.Error.Should().Be("validation_failed");
+    }
+
+    [Fact] // K4e
+    public async Task Create_with_empty_lessons_list_returns_400_validation_failed()
+    {
+        var ana = AnaClient();
+        var response = await ana.PostAsJsonAsync("/api/courses",
+            new CreateCourseRequest("No lessons", null, new[] { _categoryId },
+                Array.Empty<CreateLessonInput>()));
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var body = await response.Content.ReadFromJsonAsync<ErrorResponse>();
         body!.Error.Should().Be("validation_failed");
@@ -421,7 +462,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
 
         var response = await ana.PostAsJsonAsync("/api/courses",
             new CreateCourseRequest("Multi-cat course", null,
-                new[] { _categoryId, second }, "First lesson", "seed"));
+                new[] { _categoryId, second }, new[] { new CreateLessonInput("First lesson", "seed") }));
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<CourseResponse>();
@@ -437,7 +478,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
 
         var create = await ana.PostAsJsonAsync("/api/courses",
             new CreateCourseRequest("SetSwap", null,
-                new[] { _categoryId, second }, "First lesson", "seed"));
+                new[] { _categoryId, second }, new[] { new CreateLessonInput("First lesson", "seed") }));
         create.EnsureSuccessStatusCode();
         var courseId = (await create.Content.ReadFromJsonAsync<CourseResponse>())!.Id;
 
@@ -461,13 +502,13 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
 
         var c1 = await ana.PostAsJsonAsync("/api/courses",
             new CreateCourseRequest("CourseA", null,
-                new[] { _categoryId, pivot }, "First lesson", "seed"));
+                new[] { _categoryId, pivot }, new[] { new CreateLessonInput("First lesson", "seed") }));
         c1.EnsureSuccessStatusCode();
         var c1Id = (await c1.Content.ReadFromJsonAsync<CourseResponse>())!.Id;
 
         var c2 = await ana.PostAsJsonAsync("/api/courses",
             new CreateCourseRequest("CourseB", null,
-                new[] { pivot, other }, "First lesson", "seed"));
+                new[] { pivot, other }, new[] { new CreateLessonInput("First lesson", "seed") }));
         c2.EnsureSuccessStatusCode();
         var c2Id = (await c2.Content.ReadFromJsonAsync<CourseResponse>())!.Id;
 
@@ -485,7 +526,7 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
     private async Task<CourseResponse> CreateCourseAsync(HttpClient client, string title)
     {
         var response = await client.PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest(title, null, new[] { _categoryId }, "First lesson", "seed"));
+            new CreateCourseRequest(title, null, new[] { _categoryId }, new[] { new CreateLessonInput("First lesson", "seed") }));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<CourseResponse>())!;
     }

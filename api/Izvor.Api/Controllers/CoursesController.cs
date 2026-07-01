@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Izvor.Api.Database;
 using Izvor.Api.Dtos;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,12 @@ namespace Izvor.Api.Controllers;
 [Authorize]
 public sealed class CoursesController : ControllerBase
 {
+    // Serializes lesson objects with lowercase keys (title/content) so they match the
+    // procedure's elem->>'title' / elem->>'content' reads. A casing mismatch would make
+    // those reads return NULL and trip the lessons NOT NULL/CHECK constraints.
+    private static readonly JsonSerializerOptions LessonsJsonOptions =
+        new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
     private readonly IDbAccess _db;
 
     public CoursesController(IDbAccess db)
@@ -26,6 +33,7 @@ public sealed class CoursesController : ControllerBase
         [FromBody] CreateCourseRequest request,
         CancellationToken cancellationToken)
     {
+        var lessonsJson = JsonSerializer.Serialize(request.Lessons, LessonsJsonOptions);
         var created = await _db.CallAsync<CourseResponse>(
             "api.create_course",
             new
@@ -33,8 +41,7 @@ public sealed class CoursesController : ControllerBase
                 p_title = request.Title,
                 p_description = request.Description,
                 p_category_ids = request.CategoryIds,
-                p_first_lesson_title = request.FirstLessonTitle,
-                p_first_lesson_content = request.FirstLessonContent
+                p_lessons = new JsonbParameter(lessonsJson)
             },
             cancellationToken)
             ?? throw new InvalidOperationException("api.create_course returned no row");

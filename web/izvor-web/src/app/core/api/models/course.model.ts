@@ -9,12 +9,16 @@ export interface CourseResponse {
   isActive: boolean;
 }
 
+export interface CreateLessonInput {
+  title: string;
+  content: string;
+}
+
 export interface CreateCourseRequest {
   title: string;
   description: string | null;
   categoryIds: string[];
-  firstLessonTitle: string;
-  firstLessonContent: string;
+  lessons: CreateLessonInput[];
 }
 
 export interface UpdateCourseRequest {

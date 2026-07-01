@@ -237,7 +237,8 @@ public sealed class LessonProgressEndpointTests : IAsyncLifetime
     private async Task<Guid> CreateCourseAsync(string title)
     {
         var resp = await AnaClient().PostAsJsonAsync("/api/courses",
-            new CreateCourseRequest(title, null, new[] { _categoryId }, "Fixture intro", "seed"));
+            new CreateCourseRequest(title, null, new[] { _categoryId },
+                new[] { new CreateLessonInput("Fixture intro", "seed") }));
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<CourseResponse>())!.Id;
     }

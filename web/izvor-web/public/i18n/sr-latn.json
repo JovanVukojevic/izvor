@@ -113,17 +113,21 @@
       "fieldDescription": "Opis",
       "fieldCategory": "Kategorije",
       "selectCategoryPlaceholder": "Izaberite jednu ili više kategorija",
-      "fieldFirstLessonTitle": "Naslov prve lekcije",
-      "fieldFirstLessonContent": "Sadržaj prve lekcije",
-      "firstLessonHint": "Kurs mora uvek imati bar jednu lekciju. Prva lekcija se kreira zajedno sa kursom; dodatne lekcije možete dodati naknadno.",
+      "lessonsHeader": "Lekcije",
+      "dragHint": "Kurs mora imati bar jednu lekciju. Prevucite ručku da promenite redosled — lekcije se numerišu prema ovom redosledu.",
+      "addLesson": "Dodaj lekciju",
+      "removeLesson": "Ukloni lekciju",
+      "fieldLessonTitle": "Naslov lekcije",
+      "fieldLessonContent": "Sadržaj lekcije",
       "loadFailed": "Neuspešno učitavanje forme.",
       "saveFailed": "Neuspešno čuvanje kursa.",
       "categoryGoneError": "Izabrana kategorija više ne postoji. Izaberite drugu.",
       "errors": {
         "titleRequired": "Naslov je obavezan",
         "categoryRequired": "Bar jedna kategorija je obavezna",
-        "firstLessonTitleRequired": "Naslov prve lekcije je obavezan",
-        "firstLessonContentRequired": "Sadržaj prve lekcije je obavezan"
+        "lessonTitleRequired": "Naslov lekcije je obavezan",
+        "lessonTitleLength": "Naslov lekcije mora imati 1–300 karaktera",
+        "atLeastOneLesson": "Dodajte bar jednu lekciju"
       }
     },
     "activity": {

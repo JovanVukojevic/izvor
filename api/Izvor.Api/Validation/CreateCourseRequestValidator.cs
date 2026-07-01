@@ -16,12 +16,14 @@ public sealed class CreateCourseRequestValidator : AbstractValidator<CreateCours
         RuleFor(x => x.CategoryIds)
             .NotEmpty().WithMessage("Category is required");
 
-        RuleFor(x => x.FirstLessonTitle)
-            .NotEmpty().WithMessage("First lesson title is required")
-            .Must(t => t is not null && t.Trim().Length >= 1 && t.Trim().Length <= 300)
-            .WithMessage("First lesson title must be between 1 and 300 characters after trimming");
+        RuleFor(x => x.Lessons)
+            .NotEmpty().WithMessage("At least one lesson is required");
 
-        RuleFor(x => x.FirstLessonContent)
-            .NotNull().WithMessage("First lesson content is required");
+        // mirrors impl.lessons.title CHECK length(trim(title)) BETWEEN 1 AND 300
+        RuleForEach(x => x.Lessons).ChildRules(lesson =>
+            lesson.RuleFor(l => l.Title)
+                .NotEmpty().WithMessage("Lesson title is required")
+                .Must(t => t is not null && t.Trim().Length >= 1 && t.Trim().Length <= 300)
+                .WithMessage("Lesson title must be between 1 and 300 characters after trimming"));
     }
 }

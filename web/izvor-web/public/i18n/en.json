@@ -113,17 +113,21 @@
       "fieldDescription": "Description",
       "fieldCategory": "Categories",
       "selectCategoryPlaceholder": "Select one or more categories",
-      "fieldFirstLessonTitle": "First lesson title",
-      "fieldFirstLessonContent": "First lesson content",
-      "firstLessonHint": "A course must always have at least one lesson. The first lesson is created together with the course; you can add more lessons afterwards.",
+      "lessonsHeader": "Lessons",
+      "dragHint": "A course must have at least one lesson. Drag the handle to reorder — lessons are numbered by their order here.",
+      "addLesson": "Add lesson",
+      "removeLesson": "Remove lesson",
+      "fieldLessonTitle": "Lesson title",
+      "fieldLessonContent": "Lesson content",
       "loadFailed": "Could not load form.",
       "saveFailed": "Could not save course.",
       "categoryGoneError": "Selected category no longer exists. Pick a different one.",
       "errors": {
         "titleRequired": "Title is required",
         "categoryRequired": "At least one category is required",
-        "firstLessonTitleRequired": "First lesson title is required",
-        "firstLessonContentRequired": "First lesson content is required"
+        "lessonTitleRequired": "Lesson title is required",
+        "lessonTitleLength": "Lesson title must be 1–300 characters",
+        "atLeastOneLesson": "Add at least one lesson"
       }
     },
     "activity": {

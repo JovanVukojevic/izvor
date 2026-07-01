@@ -551,7 +551,7 @@ END;
 $$;
 
 
-CREATE FUNCTION spec.create_course(p_title text, p_description text, p_category_ids uuid[], p_first_lesson_title text, p_first_lesson_content text) RETURNS SETOF api.course
+CREATE FUNCTION spec.create_course(p_title text, p_description text, p_category_ids uuid[], p_lessons jsonb) RETURNS SETOF api.course
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -569,8 +569,8 @@ BEGIN
         RAISE EXCEPTION 'category_required';
     END IF;
 
-    IF p_first_lesson_title IS NULL OR length(trim(p_first_lesson_title)) = 0 THEN
-        RAISE EXCEPTION 'First lesson title is required';
+    IF p_lessons IS NULL OR jsonb_typeof(p_lessons) <> 'array' OR jsonb_array_length(p_lessons) = 0 THEN
+        RAISE EXCEPTION 'lesson_required';
     END IF;
 
     SELECT array_agg(DISTINCT cat) INTO v_distinct
@@ -594,8 +594,8 @@ BEGIN
       FROM unnest(v_distinct) AS cat;
 
     INSERT INTO impl.lessons (tenant_id, course_id, title, content, position)
-    VALUES (app.current_tenant(), v_id,
-            trim(p_first_lesson_title), COALESCE(p_first_lesson_content, ''), 1);
+    SELECT app.current_tenant(), v_id, trim(elem->>'title'), COALESCE(elem->>'content', ''), ord
+      FROM jsonb_array_elements(p_lessons) WITH ORDINALITY AS t(elem, ord);
 
     RETURN QUERY SELECT * FROM spec.get_course(v_id);
 EXCEPTION

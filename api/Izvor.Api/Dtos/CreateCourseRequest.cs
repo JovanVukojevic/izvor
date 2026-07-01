@@ -4,5 +4,6 @@ public sealed record CreateCourseRequest(
     string Title,
     string? Description,
     Guid[] CategoryIds,
-    string FirstLessonTitle,
-    string FirstLessonContent);
+    IReadOnlyList<CreateLessonInput> Lessons);
+
+public sealed record CreateLessonInput(string Title, string? Content);

@@ -129,12 +129,11 @@ CREATE FUNCTION api.activate_course(p_course_id uuid) RETURNS SETOF api.course
 $$;
 
 
-CREATE FUNCTION api.create_course(p_title text, p_description text, p_category_ids uuid[], p_first_lesson_title text, p_first_lesson_content text) RETURNS SETOF api.course
+CREATE FUNCTION api.create_course(p_title text, p_description text, p_category_ids uuid[], p_lessons jsonb) RETURNS SETOF api.course
     LANGUAGE sql SECURITY DEFINER
     SET search_path TO 'api', 'spec', 'impl', 'app', 'pg_temp'
     AS $$
-    SELECT * FROM spec.create_course(p_title, p_description, p_category_ids,
-                                     p_first_lesson_title, p_first_lesson_content);
+    SELECT * FROM spec.create_course(p_title, p_description, p_category_ids, p_lessons);
 $$;
 
 

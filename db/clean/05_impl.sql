@@ -362,6 +362,46 @@ END;
 $$;
 
 
+CREATE FUNCTION impl.assert_new_course_has_category() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'impl', 'app', 'pg_temp'
+    AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM impl.courses
+         WHERE tenant_id = NEW.tenant_id AND id = NEW.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM impl.classification
+         WHERE tenant_id = NEW.tenant_id AND course_id = NEW.id
+    ) THEN
+        RAISE EXCEPTION 'course_must_have_categories';
+    END IF;
+    RETURN NULL;
+END;
+$$;
+
+
+CREATE FUNCTION impl.assert_new_course_has_lesson() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'impl', 'app', 'pg_temp'
+    AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM impl.courses
+         WHERE tenant_id = NEW.tenant_id AND id = NEW.id
+    )
+    AND NOT EXISTS (
+        SELECT 1 FROM impl.lessons
+         WHERE tenant_id = NEW.tenant_id AND course_id = NEW.id
+    ) THEN
+        RAISE EXCEPTION 'course_must_have_lessons';
+    END IF;
+    RETURN NULL;
+END;
+$$;
+
+
 CREATE FUNCTION impl.auto_complete_enrollment() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -442,6 +482,12 @@ CREATE TRIGGER roles_set_updated_at BEFORE UPDATE ON impl.roles FOR EACH ROW EXE
 
 
 CREATE TRIGGER categories_set_updated_at BEFORE UPDATE ON impl.categories FOR EACH ROW EXECUTE FUNCTION app.set_updated_at();
+
+
+CREATE CONSTRAINT TRIGGER courses_has_category_on_insert AFTER INSERT ON impl.courses DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_new_course_has_category();
+
+
+CREATE CONSTRAINT TRIGGER courses_has_lesson_on_insert AFTER INSERT ON impl.courses DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION impl.assert_new_course_has_lesson();
 
 
 CREATE TRIGGER courses_set_updated_at BEFORE UPDATE ON impl.courses FOR EACH ROW EXECUTE FUNCTION app.set_updated_at();

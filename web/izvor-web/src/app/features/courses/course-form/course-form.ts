@@ -2,7 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
-import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { finalize, forkJoin, of } from 'rxjs';
 
 import { Card } from 'primeng/card';
@@ -22,10 +23,29 @@ import { ErrorResponse } from '../../../core/api/models/error-response.model';
 import { translateApiErrorCode } from '../../../core/api/translate-api-error';
 import { AuthService } from '../../../core/auth/auth.service';
 
+type LessonGroup = FormGroup<{
+  title: FormControl<string>;
+  content: FormControl<string>;
+}>;
+
+// mirrors impl.lessons.title CHECK length(trim(title)) BETWEEN 1 AND 300
+const lessonTitleValidator = (c: AbstractControl): ValidationErrors | null => {
+  const value = (c.value ?? '').trim();
+  if (value.length === 0) return { required: true };
+  if (value.length > 300) return { maxlength: true };
+  return null;
+};
+
+const atLeastOneLesson = (c: AbstractControl): ValidationErrors | null =>
+  (c as FormArray).length >= 1 ? null : { atLeastOneLesson: true };
+
 @Component({
   selector: 'izvor-course-form',
   imports: [
     ReactiveFormsModule,
+    CdkDropList,
+    CdkDrag,
+    CdkDragHandle,
     Card,
     InputText,
     Textarea,
@@ -86,30 +106,60 @@ import { AuthService } from '../../../core/auth/auth.service';
             </div>
 
             @if (!isEdit()) {
-              <div class="first-lesson-block">
-                <p class="first-lesson-hint">{{ 'course.form.firstLessonHint' | translate }}</p>
+              <div class="lessons-block">
+                <div class="lessons-header">{{ 'course.form.lessonsHeader' | translate }}</div>
+                <p class="lessons-hint">{{ 'course.form.dragHint' | translate }}</p>
 
-                <div class="field">
-                  <label for="firstLessonTitle">{{ 'course.form.fieldFirstLessonTitle' | translate }}</label>
-                  <input pInputText id="firstLessonTitle" formControlName="firstLessonTitle" maxlength="200" fluid />
-                  @if (form.controls.firstLessonTitle.touched && form.controls.firstLessonTitle.errors?.['required']) {
-                    <small class="error">{{ 'course.form.errors.firstLessonTitleRequired' | translate }}</small>
+                <div formArrayName="lessons" cdkDropList (cdkDropListDropped)="onLessonDrop($event)">
+                  @for (row of lessons.controls; track row; let i = $index) {
+                    <div class="lesson-row" cdkDrag [formGroupName]="i">
+                      <span class="drag-handle" cdkDragHandle [title]="'course.form.dragHint' | translate">
+                        <i class="pi pi-bars"></i>
+                      </span>
+                      <div class="lesson-fields">
+                        <input
+                          pInputText
+                          formControlName="title"
+                          maxlength="300"
+                          [placeholder]="'course.form.fieldLessonTitle' | translate"
+                          fluid
+                        />
+                        @if (row.get('title')?.touched && row.get('title')?.errors?.['required']) {
+                          <small class="error">{{ 'course.form.errors.lessonTitleRequired' | translate }}</small>
+                        } @else if (row.get('title')?.touched && row.get('title')?.errors?.['maxlength']) {
+                          <small class="error">{{ 'course.form.errors.lessonTitleLength' | translate }}</small>
+                        }
+                        <textarea
+                          pTextarea
+                          formControlName="content"
+                          rows="4"
+                          maxlength="20000"
+                          [placeholder]="'course.form.fieldLessonContent' | translate"
+                        ></textarea>
+                      </div>
+                      <p-button
+                        icon="pi pi-trash"
+                        severity="danger"
+                        [text]="true"
+                        [attr.aria-label]="'course.form.removeLesson' | translate"
+                        (onClick)="removeLesson(i)"
+                      />
+                    </div>
                   }
                 </div>
 
-                <div class="field">
-                  <label for="firstLessonContent">{{ 'course.form.fieldFirstLessonContent' | translate }}</label>
-                  <textarea
-                    pTextarea
-                    id="firstLessonContent"
-                    formControlName="firstLessonContent"
-                    rows="6"
-                    maxlength="20000"
-                  ></textarea>
-                  @if (form.controls.firstLessonContent.touched && form.controls.firstLessonContent.errors?.['required']) {
-                    <small class="error">{{ 'course.form.errors.firstLessonContentRequired' | translate }}</small>
-                  }
-                </div>
+                @if (lessons.length === 0) {
+                  <small class="error">{{ 'course.form.errors.atLeastOneLesson' | translate }}</small>
+                }
+
+                <p-button
+                  type="button"
+                  icon="pi pi-plus"
+                  severity="secondary"
+                  [text]="true"
+                  [label]="'course.form.addLesson' | translate"
+                  (onClick)="addLesson()"
+                />
               </div>
             }
 
@@ -139,7 +189,7 @@ import { AuthService } from '../../../core/auth/auth.service';
     .field { display: flex; flex-direction: column; gap: 0.375rem; }
     .field label { font-weight: 500; }
     .field-inline { display: flex; align-items: center; gap: 0.5rem; }
-    .first-lesson-block {
+    .lessons-block {
       display: flex;
       flex-direction: column;
       gap: 1rem;
@@ -148,11 +198,35 @@ import { AuthService } from '../../../core/auth/auth.service';
       border-radius: 6px;
       background: var(--p-content-hover-background, #f9fafb);
     }
-    .first-lesson-hint {
+    .lessons-header { font-weight: 600; }
+    .lessons-hint {
       margin: 0;
       color: var(--p-text-muted-color, #6b7280);
       font-size: 0.9rem;
     }
+    .lesson-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid var(--p-content-border-color, #e5e7eb);
+      border-radius: 6px;
+      background: var(--p-content-background, #ffffff);
+    }
+    .lesson-fields {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+    .drag-handle {
+      cursor: grab;
+      padding-top: 0.5rem;
+      color: var(--p-text-muted-color, #6b7280);
+    }
+    .cdk-drag-preview { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+    .cdk-drag-placeholder { opacity: 0.4; }
     .actions { display: flex; gap: 0.5rem; }
     .error { color: var(--p-message-error-color, #b91c1c); font-size: 0.85rem; }
     :host ::ng-deep .form-message { width: 100%; margin-bottom: 1rem; }
@@ -198,15 +272,39 @@ export class CourseForm {
           Array.isArray(c.value) && c.value.length > 0 ? null : { required: true }
       ]
     }),
-    firstLessonTitle: new FormControl<string>('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)]
-    }),
-    firstLessonContent: new FormControl<string>('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(20000)]
-    })
+    lessons: new FormArray<LessonGroup>([], atLeastOneLesson)
   });
+
+  get lessons(): FormArray<LessonGroup> {
+    return this.form.controls.lessons;
+  }
+
+  private newLessonGroup(): LessonGroup {
+    return new FormGroup({
+      title: new FormControl<string>('', {
+        nonNullable: true,
+        validators: [lessonTitleValidator]
+      }),
+      content: new FormControl<string>('', {
+        nonNullable: true,
+        validators: [Validators.maxLength(20000)]
+      })
+    });
+  }
+
+  addLesson(): void {
+    this.lessons.push(this.newLessonGroup());
+  }
+
+  removeLesson(index: number): void {
+    this.lessons.removeAt(index);
+  }
+
+  onLessonDrop(event: CdkDragDrop<LessonGroup[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+    moveItemInArray(this.lessons.controls, event.previousIndex, event.currentIndex);
+    this.lessons.updateValueAndValidity();
+  }
 
   isEdit(): boolean {
     return this.id() !== null;
@@ -216,10 +314,11 @@ export class CourseForm {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam !== null) {
       this.id.set(idParam);
-      // First-lesson fields are create-only; in edit mode they are not in the
-      // template, so the form-wide validity must ignore them.
-      this.form.controls.firstLessonTitle.disable({ emitEvent: false });
-      this.form.controls.firstLessonContent.disable({ emitEvent: false });
+      // The lessons section is create-only; in edit mode it is not in the template,
+      // so disabling it excludes the FormArray from form-wide validity.
+      this.form.controls.lessons.disable({ emitEvent: false });
+    } else {
+      this.addLesson();
     }
     this.load();
   }
@@ -304,8 +403,7 @@ export class CourseForm {
           title: raw.title.trim(),
           description,
           categoryIds: raw.categoryIds,
-          firstLessonTitle: raw.firstLessonTitle.trim(),
-          firstLessonContent: raw.firstLessonContent
+          lessons: raw.lessons.map(l => ({ title: l.title.trim(), content: l.content }))
         })
         .pipe(finalize(() => this.saving.set(false)))
         .subscribe({
