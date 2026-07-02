@@ -5,7 +5,7 @@ import { roleGuard } from '../../core/auth/role.guard';
 export const USERS_ROUTES: Routes = [
   {
     path: '',
-    title: 'Users · Izvor',
+    title: 'title.users',
     canActivate: [roleGuard],
     data: { minRole: 'admin' },
     loadComponent: () =>
@@ -13,7 +13,7 @@ export const USERS_ROUTES: Routes = [
   },
   {
     path: 'new',
-    title: 'New User · Izvor',
+    title: 'title.userNew',
     canActivate: [roleGuard],
     data: { minRole: 'admin' },
     loadComponent: () =>

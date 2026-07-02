@@ -1,5 +1,5 @@
 import { ApplicationConfig, ErrorHandler, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, TitleStrategy } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -14,6 +14,7 @@ import { API_BASE_URL } from './core/api-base-url.token';
 import { TenantContextService } from './core/tenant-context';
 import { AuthService } from './core/auth/auth.service';
 import { LanguageService } from './core/i18n/language.service';
+import { TranslatedTitleStrategy } from './core/i18n/translated-title.strategy';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { errorInterceptor } from './core/api/error.interceptor';
 import { SilentErrorHandler } from './core/silent-error-handler';
@@ -23,6 +24,7 @@ export const appConfig: ApplicationConfig = {
     { provide: ErrorHandler, useClass: SilentErrorHandler },
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    { provide: TitleStrategy, useClass: TranslatedTitleStrategy },
     provideHttpClient(withInterceptors([errorInterceptor, authInterceptor])),
     MessageService,
     ConfirmationService,
