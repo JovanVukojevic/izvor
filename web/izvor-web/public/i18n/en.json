@@ -405,5 +405,19 @@
       "invalidCredentials": "Invalid email or password",
       "unavailable": "Login service is unavailable. Please try again later."
     }
+  },
+  "title": {
+    "login": "Log in",
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "courseNew": "New Course",
+    "lessonNew": "New Lesson",
+    "categories": "Categories",
+    "categoryNew": "New Category",
+    "categoryEdit": "Edit Category",
+    "users": "Users",
+    "userNew": "New User",
+    "myEnrollments": "My Enrollments",
+    "notFound": "Not Found"
   }
 }

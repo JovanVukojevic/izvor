@@ -405,5 +405,19 @@
       "invalidCredentials": "Pogrešan imejl ili lozinka",
       "unavailable": "Servis za prijavu trenutno nije dostupan. Pokušajte ponovo kasnije."
     }
+  },
+  "title": {
+    "login": "Prijava",
+    "dashboard": "Početna",
+    "courses": "Kursevi",
+    "courseNew": "Novi kurs",
+    "lessonNew": "Nova lekcija",
+    "categories": "Kategorije",
+    "categoryNew": "Nova kategorija",
+    "categoryEdit": "Izmena kategorije",
+    "users": "Korisnici",
+    "userNew": "Novi korisnik",
+    "myEnrollments": "Moji upisi",
+    "notFound": "Nije pronađeno"
   }
 }
