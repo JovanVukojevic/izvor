@@ -81,7 +81,6 @@
       "new": "Novi kurs",
       "filterActivity": "Aktivnost",
       "filterCategory": "Kategorija",
-      "anyCategory": "Bilo koja kategorija",
       "loading": "Učitavanje kurseva…",
       "empty": "Nema kurseva koji odgovaraju izabranim filterima.",
       "columnTitle": "Naslov",
@@ -132,8 +131,7 @@
     },
     "activity": {
       "active": "Aktivan",
-      "inactive": "Neaktivan",
-      "all": "Svi"
+      "inactive": "Neaktivan"
     },
     "actions": {
       "activate": {
@@ -268,8 +266,7 @@
     "status": {
       "active": "Aktivan",
       "completed": "Završen",
-      "cancelled": "Otkazan",
-      "all": "Bilo koji"
+      "cancelled": "Otkazan"
     },
     "cancel": {
       "label": "Otkaži",
@@ -339,7 +336,6 @@
       "columnCreated": "Kreirano",
       "filterRole": "Uloga",
       "filterActive": "Status",
-      "filterAll": "Svi",
       "activeYes": "Aktivan",
       "activeNo": "Neaktivan"
     },

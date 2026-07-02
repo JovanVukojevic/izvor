@@ -84,7 +84,7 @@ export class CourseEnrollmentsView implements OnChanges {
       { label: this.translate.instant('enrollment.status.active'), value: 'active' },
       { label: this.translate.instant('enrollment.status.completed'), value: 'completed' },
       { label: this.translate.instant('enrollment.status.cancelled'), value: 'cancelled' },
-      { label: this.translate.instant('enrollment.status.all'), value: 'all' }
+      { label: '', value: 'all' }
     ];
   });
   statusFilter: EnrollmentStatus | 'all' = 'active';

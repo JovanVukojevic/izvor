@@ -81,7 +81,6 @@
       "new": "Нови курс",
       "filterActivity": "Активност",
       "filterCategory": "Категорија",
-      "anyCategory": "Било која категорија",
       "loading": "Учитавање курсева…",
       "empty": "Нема курсева који одговарају изабраним филтерима.",
       "columnTitle": "Наслов",
@@ -132,8 +131,7 @@
     },
     "activity": {
       "active": "Активан",
-      "inactive": "Неактиван",
-      "all": "Сви"
+      "inactive": "Неактиван"
     },
     "actions": {
       "activate": {
@@ -268,8 +266,7 @@
     "status": {
       "active": "Активан",
       "completed": "Завршен",
-      "cancelled": "Отказан",
-      "all": "Било који"
+      "cancelled": "Отказан"
     },
     "cancel": {
       "label": "Откажи",
@@ -339,7 +336,6 @@
       "columnCreated": "Креирано",
       "filterRole": "Улога",
       "filterActive": "Статус",
-      "filterAll": "Сви",
       "activeYes": "Активан",
       "activeNo": "Неактиван"
     },

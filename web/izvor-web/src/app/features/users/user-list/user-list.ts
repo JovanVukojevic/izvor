@@ -210,7 +210,7 @@ export class UserList {
   readonly roleOptions = computed<FilterOption[]>(() => {
     this.language.currentLocale();
     return [
-      { label: this.translate.instant('user.list.filterAll'), value: 'all' },
+      { label: '', value: 'all' },
       { label: this.translate.instant('role.admin'), value: 'admin' },
       { label: this.translate.instant('role.author'), value: 'author' },
       { label: this.translate.instant('role.learner'), value: 'learner' }
@@ -220,7 +220,7 @@ export class UserList {
   readonly activeOptions = computed<FilterOption[]>(() => {
     this.language.currentLocale();
     return [
-      { label: this.translate.instant('user.list.filterAll'), value: 'all' },
+      { label: '', value: 'all' },
       { label: this.translate.instant('user.list.activeYes'), value: 'active' },
       { label: this.translate.instant('user.list.activeNo'), value: 'inactive' }
     ];

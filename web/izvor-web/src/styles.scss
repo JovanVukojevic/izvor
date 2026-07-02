@@ -1,0 +1,16 @@
+// An empty-label option (label: '') is used as the "no filter" row in select
+// dropdowns; without a text line it collapses to padding-only height. Pin a
+// min-height so it matches labeled rows. The theme already centers content
+// (display: flex; align-items: center), so labeled rows are unaffected.
+.p-select-option {
+  min-height: 34px;
+}
+
+// Closed field: the selected value renders through .p-select-label, which gains
+// .p-select-label-empty (display: block) when the selection has an empty label.
+// Without a text line it collapses, so the field shrinks between empty and
+// labeled selections. Pin the same height (border-box, incl. 8+8 padding) so the
+// empty selection matches a labeled one and the field height never jumps.
+.p-select-label-empty {
+  min-height: 34px;
+}

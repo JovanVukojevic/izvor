@@ -81,7 +81,6 @@
       "new": "New Course",
       "filterActivity": "Activity",
       "filterCategory": "Category",
-      "anyCategory": "Any category",
       "loading": "Loading courses…",
       "empty": "No courses match the selected filters.",
       "columnTitle": "Title",
@@ -132,8 +131,7 @@
     },
     "activity": {
       "active": "Active",
-      "inactive": "Inactive",
-      "all": "All"
+      "inactive": "Inactive"
     },
     "actions": {
       "activate": {
@@ -268,8 +266,7 @@
     "status": {
       "active": "Active",
       "completed": "Completed",
-      "cancelled": "Cancelled",
-      "all": "Any"
+      "cancelled": "Cancelled"
     },
     "cancel": {
       "label": "Cancel",
@@ -339,7 +336,6 @@
       "columnCreated": "Created",
       "filterRole": "Role",
       "filterActive": "Status",
-      "filterAll": "All",
       "activeYes": "Active",
       "activeNo": "Inactive"
     },

@@ -66,8 +66,8 @@ BEGIN
 
         IF v_subdomain = 'fon' THEN
             INSERT INTO impl.categories (id, tenant_id, name, description) VALUES
-                ('a0000001-0000-0000-0000-000000000000', v_tenant_id, 'Matematika', 'Kursovi iz matematičkih disciplina.'),
-                ('a0000002-0000-0000-0000-000000000000', v_tenant_id, 'Menadžment', 'Kursovi iz menadžmenta i organizacije.');
+                ('a0000001-0000-0000-0000-000000000000', v_tenant_id, 'Matematika', 'Kursevi iz matematičkih disciplina.'),
+                ('a0000002-0000-0000-0000-000000000000', v_tenant_id, 'Menadžment', 'Kursevi iz menadžmenta i organizacije.');
 
             INSERT INTO impl.courses (id, tenant_id, category_id, author_id, title, description, is_active) VALUES
                 ('c0000001-0000-0000-0000-000000000000', v_tenant_id, 'a0000001-0000-0000-0000-000000000000', v_author_id, 'Teorija igara',      'Uvod u matematičku teoriju strateškog odlučivanja.', true),
@@ -200,7 +200,7 @@ SMART je dobar za *taktičke* ciljeve — one koji se mogu jasno opisati unapred
 
         ELSIF v_subdomain = 'intellya' THEN
             INSERT INTO impl.categories (id, tenant_id, name, description) VALUES
-                ('a0000003-0000-0000-0000-000000000000', v_tenant_id, 'Onboarding', 'Kursovi za nove zaposlene.'),
+                ('a0000003-0000-0000-0000-000000000000', v_tenant_id, 'Onboarding', 'Kursevi za nove zaposlene.'),
                 ('a0000004-0000-0000-0000-000000000000', v_tenant_id, 'HR',         'Interna HR pravila i procedure.');
 
             INSERT INTO impl.courses (id, tenant_id, category_id, author_id, title, description, is_active) VALUES

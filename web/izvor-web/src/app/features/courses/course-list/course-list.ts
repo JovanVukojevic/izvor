@@ -129,7 +129,7 @@ export class CourseList {
     return [
       { label: this.translate.instant('course.activity.active'), value: 'active' },
       { label: this.translate.instant('course.activity.inactive'), value: 'inactive' },
-      { label: this.translate.instant('course.activity.all'), value: 'all' }
+      { label: '', value: 'all' }
     ];
   });
 
@@ -148,7 +148,7 @@ export class CourseList {
   readonly categoryOptions = computed<CategoryOption[]>(() => {
     this.languageService.currentLocale();
     return [
-      { label: this.translate.instant('course.list.anyCategory'), value: 'all' },
+      { label: '', value: 'all' },
       ...this.categories().map(c => ({ label: c.name, value: c.id }))
     ];
   });
