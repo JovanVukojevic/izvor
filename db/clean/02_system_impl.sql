@@ -28,6 +28,21 @@ CREATE TABLE system_impl.tenants (
     CONSTRAINT tenants_subdomain_check1 CHECK ((subdomain <> ALL (ARRAY['www'::text, 'admin'::text, 'api'::text, 'app'::text, 'mail'::text, 'static'::text, 'assets'::text, 'cdn'::text, 'support'::text, 'help'::text, 'blog'::text, 'docs'::text])))
 );
 
+
+CREATE TABLE system_impl.exception_log (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    occurred_at timestamp with time zone DEFAULT now() NOT NULL,
+    pg_code text NOT NULL,
+    message text NOT NULL,
+    constraint_name text,
+    detail text,
+    http_method text NOT NULL,
+    path text NOT NULL,
+    http_status integer NOT NULL,
+    tenant_id uuid,
+    user_id uuid
+);
+
 -- === Constraints ===
 
 
@@ -41,6 +56,10 @@ ALTER TABLE ONLY system_impl.tenants
 
 ALTER TABLE ONLY system_impl.tenants
     ADD CONSTRAINT tenants_subdomain_key UNIQUE (subdomain);
+
+
+ALTER TABLE ONLY system_impl.exception_log
+    ADD CONSTRAINT exception_log_pkey PRIMARY KEY (id);
 
 -- === Triggers ===
 

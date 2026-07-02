@@ -98,3 +98,26 @@ BEGIN
     WHERE id = p_tenant_id;
 END;
 $$;
+
+-- === Procedures: Exception Log ===
+
+
+CREATE FUNCTION system_spec.log_exception(p_pg_code text, p_message text, p_constraint_name text, p_detail text, p_http_method text, p_path text, p_http_status integer, p_tenant_id uuid, p_user_id uuid) RETURNS uuid
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_id UUID;
+BEGIN
+    INSERT INTO system_impl.exception_log (
+        pg_code, message, constraint_name, detail,
+        http_method, path, http_status, tenant_id, user_id
+    )
+    VALUES (
+        p_pg_code, p_message, p_constraint_name, p_detail,
+        p_http_method, p_path, p_http_status, p_tenant_id, p_user_id
+    )
+    RETURNING id INTO v_id;
+
+    RETURN v_id;
+END;
+$$;

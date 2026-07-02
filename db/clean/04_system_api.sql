@@ -89,3 +89,16 @@ BEGIN
     RETURN v_result;
 END;
 $$;
+
+-- === Wrappers: Exception Log ===
+
+
+CREATE FUNCTION system_api.log_exception(p_pg_code text, p_message text, p_constraint_name text, p_detail text, p_http_method text, p_path text, p_http_status integer, p_tenant_id uuid, p_user_id uuid) RETURNS uuid
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO 'system_api', 'system_spec', 'system_impl', 'app', 'pg_temp'
+    AS $$
+    SELECT system_spec.log_exception(
+        p_pg_code, p_message, p_constraint_name, p_detail,
+        p_http_method, p_path, p_http_status, p_tenant_id, p_user_id
+    );
+$$;
