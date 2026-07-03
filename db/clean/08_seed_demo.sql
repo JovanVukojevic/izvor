@@ -73,150 +73,150 @@ BEGIN
 
         IF v_subdomain = 'fon' THEN
             INSERT INTO impl.categories (id, tenant_id, name, description) VALUES
-                ('a0000001-0000-0000-0000-000000000000', v_tenant_id, 'Matematika', 'Kursevi iz matematičkih disciplina.'),
-                ('a0000002-0000-0000-0000-000000000000', v_tenant_id, 'Menadžment', 'Kursevi iz menadžmenta i organizacije.');
+                ('a0000001-0000-0000-0000-000000000000', v_tenant_id, 'Математика', 'Курсеви из математичких дисциплина.'),
+                ('a0000002-0000-0000-0000-000000000000', v_tenant_id, 'Менаџмент', 'Курсеви из менаџмента и организације.');
 
             INSERT INTO impl.courses (id, tenant_id, author_id, title, description, is_active) VALUES
-                ('c0000001-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Teorija igara',      'Uvod u matematičku teoriju strateškog odlučivanja.', true),
-                ('c0000002-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Osnove menadžmenta', 'Osnovni pojmovi menadžmenta i liderstva.',           true);
+                ('c0000001-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Теорија игара',      'Увод у математичку теорију стратешког одлучивања.', true),
+                ('c0000002-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Основе менаџмента', 'Основни појмови менаџмента и лидерства.',           true);
 
             INSERT INTO impl.classification (tenant_id, course_id, category_id) VALUES
                 (v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'a0000001-0000-0000-0000-000000000000'),
                 (v_tenant_id, 'c0000002-0000-0000-0000-000000000000', 'a0000002-0000-0000-0000-000000000000');
 
             INSERT INTO impl.lessons (id, tenant_id, course_id, title, content, position) VALUES
-                ('e0000001-0000-0000-0000-000000000000', v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'Uvod u teoriju igara',
-                 $md$## Šta je teorija igara?
+                ('e0000001-0000-0000-0000-000000000000', v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'Увод у теорију игара',
+                 $md$## Шта је теорија игара?
 
-Teorija igara je matematička disciplina koja proučava donošenje odluka u situacijama gde ishod svakog učesnika zavisi od izbora svih ostalih. Igrač ne razmišlja samo o tome šta je najbolje za njega — on razmišlja o tome šta će ostali uraditi i kako njegova odluka utiče na njihove.
+Теорија игара је математичка дисциплина која проучава доношење одлука у ситуацијама где исход сваког учесника зависи од избора свих осталих. Играч не размишља само о томе шта је најбоље за њега — он размишља о томе шта ће остали урадити и како његова одлука утиче на њихове.
 
-Klasičan, svima poznat primer je **kamen-papir-makaze**. Tri strategije, tri ishoda, i nijedna strategija nije *dominantna* — ako se zna da protivnik uvek igra kamen, optimalan odgovor je papir; ali tada protivnik najbolje prolazi ako pređe na makaze. Ravnoteža se ne dostiže fiksnim izborom, nego nasumičnom raspodelom.
+Класичан, свима познат пример је **камен-папир-маказе**. Три стратегије, три исхода, и ниједна стратегија није *доминантна* — ако се зна да противник увек игра камен, оптималан одговор је папир; али тада противник најбоље пролази ако пређе на маказе. Равнотежа се не достиже фиксним избором, него насумичном расподелом.
 
-## Tipične primene
+## Типичне примене
 
-- ekonomija (analiza tržišta sa nekoliko velikih igrača)
-- politika (modelovanje koalicija i pregovora)
-- vojna strategija (procena protivnikove reakcije)
-- biologija (evolucija strategija među jedinkama iste vrste)
+- економија (анализа тржишта са неколико великих играча)
+- политика (моделовање коалиција и преговора)
+- војна стратегија (процена противникове реакције)
+- биологија (еволуција стратегија међу јединкама исте врсте)
 
-U ovom kursu obrađujemo osnovne pojmove i nekoliko klasičnih primera. Cilj nije da naučite da rešite svaku igru, nego da razvijete osećaj za to *kada* strateško razmišljanje menja zaključak.$md$, 1),
+У овом курсу обрађујемо основне појмове и неколико класичних примера. Циљ није да научите да решите сваку игру, него да развијете осећај за то *када* стратешко размишљање мења закључак.$md$, 1),
 
-                ('e0000002-0000-0000-0000-000000000000', v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'Nash-ova ravnoteža',
-                 $md$## Definicija
+                ('e0000002-0000-0000-0000-000000000000', v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'Нешова равнотежа',
+                 $md$## Дефиниција
 
-Nash-ova ravnoteža je stanje u kome **nijedan igrač nema podsticaj da jednostrano promeni svoju strategiju**, pod pretpostavkom da ostali igrači zadržavaju svoje. To ne znači da je ishod najbolji za sve — samo da nijedan učesnik nema razlog da prvi odstupi.
+Нешова равнотежа је стање у коме **ниједан играч нема подстицај да једнострано промени своју стратегију**, под претпоставком да остали играчи задржавају своје. То не значи да је исход најбољи за све — само да ниједан учесник нема разлог да први одступи.
 
-Pojam je 1950. uveo John Nash, čiji je rad doneo Nobelovu nagradu za ekonomiju 1994.
+Појам је 1950. увео Џон Неш, чији је рад донео Нобелову награду за економију 1994.
 
-## Jednostavan 2x2 primer
+## Једноставан 2x2 пример
 
-Dva igrača, svaki bira između strategija A i B. Isplata je oblika *(igrač 1, igrač 2)*:
+Два играча, сваки бира између стратегија A и B. Исплата је облика *(играч 1, играч 2)*:
 
-- oba A → (3, 3)
-- oba B → (1, 1)
-- 1 igra A, 2 igra B → (0, 4)
-- 1 igra B, 2 igra A → (4, 0)
+- оба A → (3, 3)
+- оба B → (1, 1)
+- 1 игра A, 2 игра B → (0, 4)
+- 1 игра B, 2 игра A → (4, 0)
 
-Ovde postoje **dve čiste Nash-ove ravnoteže**: (A, A) i (B, B). U obe nijedan igrač ne dobija ništa ako prvi odstupi sam. Ishod (A, A) je *Pareto-bolji* — svi su bolje prošli — ali bez koordinacije nema garancije da će igrači stići do njega.
+Овде постоје **две чисте Нешове равнотеже**: (A, A) и (B, B). У обе ниједан играч не добија ништа ако први одступи сам. Исход (A, A) је *Парето-бољи* — сви су боље прошли — али без координације нема гаранције да ће играчи стићи до њега.
 
-Ovaj rascep između *individualne racionalnosti* i *kolektivne efikasnosti* je centralna tema teorije igara.$md$, 2),
+Овај расцеп између *индивидуалне рационалности* и *колективне ефикасности* је централна тема теорије игара.$md$, 2),
 
-                ('e0000003-0000-0000-0000-000000000000', v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'Zatvorenikova dilema',
-                 $md$## Postavka
+                ('e0000003-0000-0000-0000-000000000000', v_tenant_id, 'c0000001-0000-0000-0000-000000000000', 'Затвореникова дилема',
+                 $md$## Поставка
 
-Dva osumnjičena su uhapšena. Tužilac nema dovoljno dokaza za teže delo, ali nudi svakom pojedinačno isti dogovor: *priznaj, izdaj saučesnika, i izaći ćeš slobodan dok drugi dobija punu kaznu*.
+Два осумњичена су ухапшена. Тужилац нема довољно доказа за теже дело, али нуди сваком појединачно исти договор: *признај, издај саучесника, и изаћи ћеш слободан док други добија пуну казну*.
 
-Isplate (godine zatvora, manje je bolje):
+Исплате (године затвора, мање је боље):
 
-- oba ćute → (1, 1)
-- oba priznaju → (5, 5)
-- 1 ćuti, 2 priznaje → (10, 0)
-- 1 priznaje, 2 ćuti → (0, 10)
+- оба ћуте → (1, 1)
+- оба признају → (5, 5)
+- 1 ћути, 2 признаје → (10, 0)
+- 1 признаје, 2 ћути → (0, 10)
 
-## Zašto je ovo *dilema*
+## Зашто је ово *дилема*
 
-Sa stanovišta svakog igrača posebno, priznati je *dominantna strategija* — bolje je priznati bez obzira na to šta drugi radi:
+Са становишта сваког играча посебно, признати је *доминантна стратегија* — боље је признати без обзира на то шта други ради:
 
-- ako drugi ćuti, priznavanjem dobijam 0 umesto 1 → bolje
-- ako drugi priznaje, priznavanjem dobijam 5 umesto 10 → bolje
+- ако други ћути, признавањем добијам 0 уместо 1 → боље
+- ако други признаје, признавањем добијам 5 уместо 10 → боље
 
-Ravnoteža je dakle (priznaje, priznaje) sa ishodom (5, 5). Ali *zajednički najbolje* je (ćuti, ćuti) sa ishodom (1, 1). Racionalnost svakog pojedinačno vodi do ishoda koji je svima gori.
+Равнотежа је дакле (признаје, признаје) са исходом (5, 5). Али *заједнички најбоље* је (ћути, ћути) са исходом (1, 1). Рационалност сваког појединачно води до исхода који је свима гори.
 
-## Ponovljena igra
+## Поновљена игра
 
-Ako se ista situacija ponavlja više puta sa istim učesnicima, dinamika se menja — strategije kao **„odgovori istom merom"** (*tit-for-tat*) mogu da održe saradnju jer kazna za izdaju dolazi u sledećem krugu.$md$, 3),
+Ако се иста ситуација понавља више пута са истим учесницима, динамика се мења — стратегије као **„одговори истом мером"** (*tit-for-tat*) могу да одрже сарадњу јер казна за издају долази у следећем кругу.$md$, 3),
 
-                ('e0000004-0000-0000-0000-000000000000', v_tenant_id, 'c0000002-0000-0000-0000-000000000000', 'Funkcije menadžmenta',
-                 $md$## Četiri klasične funkcije
+                ('e0000004-0000-0000-0000-000000000000', v_tenant_id, 'c0000002-0000-0000-0000-000000000000', 'Функције менаџмента',
+                 $md$## Четири класичне функције
 
-Menadžment se tradicionalno raščlanjuje na četiri funkcije, prvi put sistematski formulisane u radu Henrija Fayola početkom 20. veka:
+Менаџмент се традиционално рашчлањује на четири функције, први пут систематски формулисане у раду Анрија Фајола почетком 20. века:
 
-- **Planiranje** — definisanje ciljeva i puta do njih. Bez planiranja, ostale funkcije nemaju usmerenje.
-- **Organizovanje** — raspoređivanje resursa i odgovornosti. Ko šta radi, ko kome odgovara, koje su zavisnosti.
-- **Vođenje** — usmeravanje i motivisanje ljudi. Tehnički dobar plan ne sprovodi se sam.
-- **Kontrolisanje** — praćenje rezultata u odnosu na plan i korigovanje odstupanja.
+- **Планирање** — дефинисање циљева и пута до њих. Без планирања, остале функције немају усмерење.
+- **Организовање** — распоређивање ресурса и одговорности. Ко шта ради, ко коме одговара, које су зависности.
+- **Вођење** — усмеравање и мотивисање људи. Технички добар план не спроводи се сам.
+- **Контролисање** — праћење резултата у односу на план и кориговање одступања.
 
-## Kako se uklapaju
+## Како се уклапају
 
-Funkcije nisu nezavisne — one se *ciklično prepliću*. Plan postavlja okvir koji se onda organizuje u strukturu; vođenje pokreće tu strukturu u rad; kontrola vraća informaciju koja menja sledeći plan.
+Функције нису независне — оне се *циклично преплићу*. План поставља оквир који се онда организује у структуру; вођење покреће ту структуру у рад; контрола враћа информацију која мења следећи план.
 
-U praksi, menadžer ne radi jednu funkciju u jednom trenutku — često u istom razgovoru postavlja cilj (planiranje), dodeljuje ga (organizovanje), motiviše izvršioca (vođenje) i traži termin za izveštaj (kontrolisanje).$md$, 1),
+У пракси, менаџер не ради једну функцију у једном тренутку — често у истом разговору поставља циљ (планирање), додељује га (организовање), мотивише извршиоца (вођење) и тражи термин за извештај (контролисање).$md$, 1),
 
-                ('e0000005-0000-0000-0000-000000000000', v_tenant_id, 'c0000002-0000-0000-0000-000000000000', 'Stilovi liderstva',
-                 $md$Kurt Lewin je 1939. formulisao podelu na tri stila liderstva. Razlika je u tome *gde* nastaje odluka — kod lidera, u grupi, ili kod izvršilaca.
+                ('e0000005-0000-0000-0000-000000000000', v_tenant_id, 'c0000002-0000-0000-0000-000000000000', 'Стилови лидерства',
+                 $md$Курт Левин је 1939. формулисао поделу на три стила лидерства. Разлика је у томе *где* настаје одлука — код лидера, у групи, или код извршилаца.
 
-## Autokratski
+## Аутократски
 
-Lider sam donosi odluke i prenosi ih timu. Komunikacija je *odozgo nadole*. Pogodan kada je vreme kratko, posledice greške velike, ili tim nema iskustva. Brzo daje pravac, ali ugušuje inicijativu i dugoročno smanjuje motivaciju.
+Лидер сам доноси одлуке и преноси их тиму. Комуникација је *одозго надоле*. Погодан када је време кратко, последице грешке велике, или тим нема искуства. Брзо даје правац, али угушује иницијативу и дугорочно смањује мотивацију.
 
-## Demokratski
+## Демократски
 
-Odluka se donosi *zajedno sa timom* — lider postavlja okvir i pita za mišljenje pre nego što presudi. Pogodan kada je tim iskusan, problem složen, a posledice greške podnošljive. Daje bolje odluke i veću posvećenost, ali traje duže i može da zapadne u beskonačnu raspravu ako lider ne zna *kada* da presudi.
+Одлука се доноси *заједно са тимом* — лидер поставља оквир и пита за мишљење пре него што пресуди. Погодан када је тим искусан, проблем сложен, а последице грешке подношљиве. Даје боље одлуке и већу посвећеност, али траје дуже и може да западне у бесконачну расправу ако лидер не зна *када* да пресуди.
 
 ## Laissez-faire
 
-Lider definiše cilj i prepušta timu kako će ga ostvariti. Pogodan kada su izvršioci visoko stručni i samostalni — istraživanje, dizajn, kreativne profesije. Loš izbor kada tim nije siguran u smer ili kada postoje međuzavisnosti koje neko mora da koordinira.
+Лидер дефинише циљ и препушта тиму како ће га остварити. Погодан када су извршиоци високо стручни и самостални — истраживање, дизајн, креативне професије. Лош избор када тим није сигуран у смер или када постоје међузависности које неко мора да координира.
 
-Dobar menadžer **menja stil prema situaciji**, ne prema svom temperamentu. Stil je alat, ne identitet.$md$, 2),
+Добар менаџер **мења стил према ситуацији**, не према свом темпераменту. Стил је алат, не идентитет.$md$, 2),
 
-                ('e0000006-0000-0000-0000-000000000000', v_tenant_id, 'c0000002-0000-0000-0000-000000000000', 'Postavljanje ciljeva (SMART)',
-                 $md$## Akronim
+                ('e0000006-0000-0000-0000-000000000000', v_tenant_id, 'c0000002-0000-0000-0000-000000000000', 'Постављање циљева (SMART)',
+                 $md$## Акроним
 
-SMART je popularan okvir za formulisanje ciljeva. Razvio ga je George Doran 1981. godine. Svako slovo označava jedan kriterijum:
+SMART је популаран оквир за формулисање циљева. Развио га је Џорџ Доран 1981. године. Свако слово означава један критеријум:
 
-- **S — Specific (konkretno)** — cilj mora da imenuje *šta* tačno
-- **M — Measurable (merljivo)** — mora postojati jasan način da se proveri da li je postignut
-- **A — Achievable (dostižno)** — realno u datim resursima i vremenu
-- **R — Relevant (relevantno)** — povezano sa širim ciljem tima ili organizacije
-- **T — Time-bound (vremenski omeđeno)** — sa rokom
+- **S — Specific (конкретно)** — циљ мора да именује *шта* тачно
+- **M — Measurable (мерљиво)** — мора постојати јасан начин да се провери да ли је постигнут
+- **A — Achievable (достижно)** — реално у датим ресурсима и времену
+- **R — Relevant (релевантно)** — повезано са ширим циљем тима или организације
+- **T — Time-bound (временски омеђено)** — са роком
 
-## Loš primer
+## Лош пример
 
-> *„Treba da poboljšamo korisničko iskustvo."*
+> *„Треба да побољшамо корисничко искуство."*
 
-Ovo nije cilj — ovo je želja. Ne kaže *šta* tačno, *kako* se meri, *do kada*.
+Ово није циљ — ово је жеља. Не каже *шта* тачно, *како* се мери, *до када*.
 
-## Dobar primer
+## Добар пример
 
-> *„Smanjiti prosečno vreme učitavanja prve stranice sa 3.2s na 1.8s do kraja drugog kvartala, mereno preko Lighthouse-a u produkciji."*
+> *„Смањити просечно време учитавања прве странице са 3.2s на 1.8s до краја другог квартала, мерено преко Lighthouse-а у продукцији."*
 
-Konkretno, merljivo, dostižno, relevantno, vremenski omeđeno.
+Конкретно, мерљиво, достижно, релевантно, временски омеђено.
 
-## Granice okvira
+## Границе оквира
 
-SMART je dobar za *taktičke* ciljeve — one koji se mogu jasno opisati unapred. Za istraživačke ciljeve preterana metrička strogost zna da pomeri fokus sa razumevanja na *postizanje broja*.$md$, 3);
+SMART је добар за *тактичке* циљеве — оне који се могу јасно описати унапред. За истраживачке циљеве претерана метричка строгост зна да помери фокус са разумевања на *постизање броја*.$md$, 3);
 
             INSERT INTO impl.enrollments (id, tenant_id, course_id, user_id, status) VALUES
                 ('f0000001-0000-0000-0000-000000000000', v_tenant_id, 'c0000001-0000-0000-0000-000000000000', v_learner_id, 'active');
 
         ELSIF v_subdomain = 'intellya' THEN
             INSERT INTO impl.categories (id, tenant_id, name, description) VALUES
-                ('a0000003-0000-0000-0000-000000000000', v_tenant_id, 'Onboarding', 'Kursevi za nove zaposlene.'),
-                ('a0000004-0000-0000-0000-000000000000', v_tenant_id, 'HR',         'Interna HR pravila i procedure.');
+                ('a0000003-0000-0000-0000-000000000000', v_tenant_id, 'Onboarding', 'Курсеви за нове запослене.'),
+                ('a0000004-0000-0000-0000-000000000000', v_tenant_id, 'HR',         'Интерна HR правила и процедуре.');
 
             INSERT INTO impl.courses (id, tenant_id, author_id, title, description, is_active) VALUES
-                ('c0000003-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Onboarding za Junior programere', 'Prvi koraci za novog člana razvojnog tima.', true),
-                ('c0000004-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'HR pravila',                      'Osnovna HR pravila i procedure.',            true);
+                ('c0000003-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'Onboarding за Junior програмере', 'Први кораци за новог члана развојног тима.', true),
+                ('c0000004-0000-0000-0000-000000000000', v_tenant_id, v_author_id, 'HR правила',                      'Основна HR правила и процедуре.',            true);
 
             -- c0000003 carries TWO categories: onboarding for engineers genuinely touches
             -- HR procedures (working hours, sick leave) — the demo data exercises the M:N
@@ -227,161 +227,161 @@ SMART je dobar za *taktičke* ciljeve — one koji se mogu jasno opisati unapred
                 (v_tenant_id, 'c0000004-0000-0000-0000-000000000000', 'a0000004-0000-0000-0000-000000000000');
 
             INSERT INTO impl.lessons (id, tenant_id, course_id, title, content, position) VALUES
-                ('e0000007-0000-0000-0000-000000000000', v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'Dobrodošli u tim',
-                 $md$## Dobrodošli
+                ('e0000007-0000-0000-0000-000000000000', v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'Добродошли у тим',
+                 $md$## Добродошли
 
-Ova stranica je polazište za sve nove članove tima. Cilj nam je da u prvih nedelju dana budeš u stanju da podigneš lokalno okruženje, otvoriš prvi PR, i razumeš ko je za šta zadužen.
+Ова страница је полазиште за све нове чланове тима. Циљ нам је да у првих недељу дана будеш у стању да подигнеш локално окружење, отвориш први PR, и разумеш ко је за шта задужен.
 
-## Ko smo
+## Ко смо
 
-Tim radi na unutrašnjoj platformi za korporativno učenje. Naši korisnici su *zaposleni u firmama koje koriste platformu* — ne krajnji potrošači. To znači da je naš ritam **manje hitan, više struktuiran** nego što bi bio za konzumentski proizvod, ali svaka greška u produkciji pogađa nečiji radni dan.
+Тим ради на унутрашњој платформи за корпоративно учење. Наши корисници су *запослени у фирмама које користе платформу* — не крајњи потрошачи. То значи да је наш ритам **мање хитан, више структуиран** него што би био за конзументски производ, али свака грешка у продукцији погађа нечији радни дан.
 
-## Šta radimo dnevno
+## Шта радимо дневно
 
-- **stand-up** svakog jutra u 9:30, kratko, ne duže od 15 minuta
-- **review-i** su asinhroni — niko ne čeka *uživo* da bi nastavio
-- **planning** ponedeljkom u 10h, jedna nedelja unapred
+- **stand-up** сваког јутра у 9:30, кратко, не дуже од 15 минута
+- **review-и** су асинхрони — нико не чека *уживо* да би наставио
+- **planning** понедељком у 10h, једна недеља унапред
 
-## Gde naći
+## Где наћи
 
-- Tehnička dokumentacija — internal wiki, link u kalendarskoj pozivnici
-- Pristupi alatima — Slack kanal *#onboarding*, postavi pitanje
-- Tvoj mentor — biće ti dodeljen u prvom danu, on prati napredak prve dve nedelje
+- Техничка документација — internal wiki, линк у календарској позивници
+- Приступи алатима — Slack канал *#onboarding*, постави питање
+- Твој ментор — биће ти додељен у првом дану, он прати напредак прве две недеље
 
-Sledeća lekcija prolazi kroz konkretnu postavku dev okruženja.$md$, 1),
+Следећа лекција пролази кроз конкретну поставку dev окружења.$md$, 1),
 
-                ('e0000008-0000-0000-0000-000000000000', v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'Postavka dev okruženja',
-                 $md$## Šta ti treba
+                ('e0000008-0000-0000-0000-000000000000', v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'Поставка dev окружења',
+                 $md$## Шта ти треба
 
 - Git, Node.js 20+, Docker Desktop
-- Pristup internom GitLab-u (mentor će ti odobriti članstvo)
-- IDE po izboru — većina tima koristi VS Code
+- Приступ интерном GitLab-у (ментор ће ти одобрити чланство)
+- IDE по избору — већина тима користи VS Code
 
-## Kloniranje
+## Клонирање
 
 ```
 git clone git@gitlab.internal:platform/main.git
 cd main
 ```
 
-Ako je ovo prvi put da koristiš interni GitLab, prvo dodaj svoj SSH ključ kroz GitLab UI (Settings → SSH Keys).
+Ако је ово први пут да користиш интерни GitLab, прво додај свој SSH кључ кроз GitLab UI (Settings → SSH Keys).
 
-## Zavisnosti
+## Зависности
 
 ```
 npm install
 ```
 
-Prvi `npm install` traje nekoliko minuta — povlači interni *npm registry* kao mirror, koji je sporiji nego javni pri prvom hitu.
+Први `npm install` траје неколико минута — повлачи интерни *npm registry* као mirror, који је спорији него јавни при првом hitu.
 
-## Pokretanje
+## Покретање
 
-Lokalna baza i pomoćni servisi se podižu kroz Docker:
+Локална база и помоћни сервиси се подижу кроз Docker:
 
 ```
 docker compose up -d
 ```
 
-Frontend pokrećeš zasebno:
+Frontend покрећеш засебно:
 
 ```
 npm run start
 ```
 
-## Provera
+## Провера
 
-Otvori `http://localhost:4200` u browseru. Trebalo bi da vidiš login ekran. Probaj se ulogovati kao **demo nalog** koji ti je mentor dao u prvom danu.
+Отвори `http://localhost:4200` у browseru. Требало би да видиш login екран. Пробај се улоговати као **demo налог** који ти је ментор дао у првом дану.
 
-Ako se ne učitava:
+Ако се не учитава:
 
-- `docker ps` — proveri da su svi servisi *up*
-- `npm run start` log — pogledaj poslednju liniju, najčešća greška je port već zauzet
-- *#dev-help* Slack kanal — opiši šta vidiš, neko će reagovati$md$, 2),
+- `docker ps` — провери да су сви сервиси *up*
+- `npm run start` log — погледај последњу линију, најчешћа грешка је port већ заузет
+- *#dev-help* Slack канал — опиши шта видиш, неко ће реаговати$md$, 2),
 
-                ('e0000009-0000-0000-0000-000000000000', v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'Code review proces',
-                 $md$## Otvaranje PR-a
+                ('e0000009-0000-0000-0000-000000000000', v_tenant_id, 'c0000003-0000-0000-0000-000000000000', 'Code review процес',
+                 $md$## Отварање PR-а
 
-Kada završiš rad na zadatku:
+Када завршиш рад на задатку:
 
-1. Push-uj granu na remote
-2. Otvori PR ka `main`
-3. Popuni *opis* — šta menjaš, zašto, kako si testirao
-4. Dodaj *reviewere* — najmanje jedan iz tima
+1. Push-уј грану на remote
+2. Отвори PR ка `main`
+3. Попуни *опис* — шта мењаш, зашто, како си тестирао
+4. Додај *reviewere* — најмање један из тима
 
-Granu ne diraj posle otvaranja PR-a osim kroz dodatne commitove na osnovu komentara. Force-push posle review-a otežava praćenje promena.
+Грану не дирај после отварања PR-а осим кроз додатне commitove на основу коментара. Force-push после review-а отежава праћење промена.
 
-## Šta očekujemo u opisu
+## Шта очекујемо у опису
 
-- **Šta se menja** — jedna do dve rečenice
-- **Zašto** — link ka tiketu ili kratko objašnjenje konteksta
-- **Kako je testirano** — manuelni koraci ili automatski testovi
-- **Šta nije pokriveno** — ako postoji svesno preskočen slučaj, navedi ga
+- **Шта се мења** — једна до две реченице
+- **Зашто** — линк ка тикету или кратко објашњење контекста
+- **Како је тестирано** — мануелни кораци или аутоматски тестови
+- **Шта није покривено** — ако постоји свесно прескочен случај, наведи га
 
-## Šta nije OK
+## Шта није OK
 
-- PR bez opisa
-- PR koji menja više nepovezanih stvari odjednom — *teško je review-ovati, lako je propustiti grešku*
-- *„Sitno, ne treba review"* — ne postoji *sitno*; svaki commit u `main` ide kroz proces
-- Tihe izmene posle approval-a — ako dodaš nešto novo posle review-a, zatraži ponovan pregled
+- PR без описа
+- PR који мења више неповезаних ствари одједном — *тешко је review-овати, лако је пропустити грешку*
+- *„Ситно, не треба review"* — не постоји *ситно*; сваки commit у `main` иде кроз процес
+- Тихе измене после approval-а — ако додаш нешто ново после review-а, затражи понован преглед
 
-## Ritam
+## Ритам
 
-Cilj nam je da svaki PR dobije prvi komentar **u toku istog radnog dana**. Ako čekaš review duže od 24h, ping-uj reviewer-a — propusti se dešavaju.$md$, 3),
+Циљ нам је да сваки PR добије први коментар **у току истог радног дана**. Ако чекаш review дуже од 24h, ping-уј reviewer-а — пропусти се дешавају.$md$, 3),
 
-                ('e0000010-0000-0000-0000-000000000000', v_tenant_id, 'c0000004-0000-0000-0000-000000000000', 'Radno vreme i godišnji odmor',
-                 $md$## Radno vreme
+                ('e0000010-0000-0000-0000-000000000000', v_tenant_id, 'c0000004-0000-0000-0000-000000000000', 'Радно време и годишњи одмор',
+                 $md$## Радно време
 
-Standardno radno vreme je **40 sati nedeljno**, fleksibilno raspoređeno između 7h i 19h. Osnovna pravila:
+Стандардно радно време је **40 сати недељно**, флексибилно распоређено између 7h и 19h. Основна правила:
 
-- **jezgro radnog vremena**: 10h–15h (svi dostupni za sastanke i sinhrone razgovore)
-- pre i posle jezgra: po dogovoru sa timom
-- pauza za ručak: nije računata u radno vreme
+- **језгро радног времена**: 10h–15h (сви доступни за састанке и синхроне разговоре)
+- пре и после језгра: по договору са тимом
+- пауза за ручак: није рачуната у радно време
 
-Rad od kuće je dozvoljen do **3 dana nedeljno** osim ako menadžer ne naloži drugačije za konkretan period.
+Рад од куће је дозвољен до **3 дана недељно** осим ако менаџер не наложи другачије за конкретан период.
 
-## Godišnji odmor
+## Годишњи одмор
 
-Imaš pravo na **25 radnih dana** godišnjeg odmora. Akumuliraju se proporcionalno tokom godine. Neiskorišćeni dani se prenose u sledeću godinu samo do *kraja marta*; posle toga propadaju.
+Имаш право на **25 радних дана** годишњег одмора. Акумулирају се пропорционално током године. Неискоришћени дани се преносе у следећу годину само до *краја марта*; после тога пропадају.
 
-## Procedura
+## Процедура
 
-1. Dogovori termin sa **timom** najmanje nedelju dana unapred
-2. Dogovori termin sa **menadžerom** — formalno odobrenje
-3. Prijavi u HR sistemu sa tačnim datumima
-4. Postavi *out-of-office* u kalendaru i Slack statusu
+1. Договори термин са **тимом** најмање недељу дана унапред
+2. Договори термин са **менаџером** — формално одобрење
+3. Пријави у HR систему са тачним датумима
+4. Постави *out-of-office* у календару и Slack статусу
 
-Za odmor duži od **dve nedelje** dogovor mora biti najmanje *mesec dana unapred* — tim treba vremena da preraspodeli posao.
+За одмор дужи од **две недеље** договор мора бити најмање *месец дана унапред* — тим треба времена да прераспредели посао.
 
-## Praznici
+## Празници
 
-Državni praznici (Republika Srbija) automatski se računaju kao neradni dani i ne ulaze u kvotu godišnjeg odmora.$md$, 1),
+Државни празници (Република Србија) аутоматски се рачунају као нерадни дани и не улазе у квоту годишњег одмора.$md$, 1),
 
-                ('e0000011-0000-0000-0000-000000000000', v_tenant_id, 'c0000004-0000-0000-0000-000000000000', 'Sick leave i bolovanje',
-                 $md$## Kratko bolovanje (do 3 dana)
+                ('e0000011-0000-0000-0000-000000000000', v_tenant_id, 'c0000004-0000-0000-0000-000000000000', 'Sick leave и боловање',
+                 $md$## Кратко боловање (до 3 дана)
 
-Za blagu prehladu, glavobolju ili sličnu neraspoloženost koja te sprečava da radiš jedan ili dva dana:
+За благу прехладу, главобољу или сличну нерасположеност која те спречава да радиш један или два дана:
 
-1. Pošalji poruku **menadžeru** u Slack-u istog jutra
-2. Označi status u kalendaru kao *out sick*
-3. Ne treba lekarsko opravdanje za bolovanje **do tri uzastopna radna dana**
+1. Пошаљи поруку **менаџеру** у Slack-у истог јутра
+2. Означи статус у календару као *out sick*
+3. Не треба лекарско оправдање за боловање **до три узастопна радна дана**
 
-Ovi dani se računaju kao bolovanje, ne kao godišnji odmor. Limit je *do 5 takvih dana godišnje*; posle toga svako naredno bolovanje zahteva opravdanje.
+Ови дани се рачунају као боловање, не као годишњи одмор. Лимит је *до 5 таквих дана годишње*; после тога свако наредно боловање захтева оправдање.
 
-## Duže bolovanje
+## Дуже боловање
 
-Za bolest koja te zadržava **četiri ili više dana**:
+За болест која те задржава **четири или више дана**:
 
-- *neophodno je lekarsko opravdanje* — donosi ga lekar opšte prakse
-- opravdanje skenirano dostavlja se HR-u u roku od **48h** od povratka na posao
-- za bolovanje duže od **30 dana** dokumentaciju preuzima fond zdravstvenog osiguranja, a HR ti šalje uputstvo
+- *неопходно је лекарско оправдање* — доноси га лекар опште праксе
+- оправдање скенирано доставља се HR-у у року од **48h** од повратка на посао
+- за боловање дуже од **30 дана** документацију преузима фонд здравственог осигурања, а HR ти шаље упутство
 
-## Šta treba HR-u
+## Шта треба HR-у
 
-- ime i prezime
-- period bolovanja (datumi od–do)
-- skenirano opravdanje (PDF ili JPG)
+- име и презиме
+- период боловања (датуми од–до)
+- скенирано оправдање (PDF или JPG)
 
-Za specifične slučajeve (nega člana porodice, hronična oboljenja, porodiljsko) pitanje šalješ direktno HR-u — procedura se razlikuje od standardnog bolovanja.$md$, 2);
+За специфичне случајеве (нега члана породице, хронична обољења, породиљско) питање шаљеш директно HR-у — процедура се разликује од стандардног боловања.$md$, 2);
 
             INSERT INTO impl.enrollments (id, tenant_id, course_id, user_id, status) VALUES
                 ('f0000002-0000-0000-0000-000000000000', v_tenant_id, 'c0000003-0000-0000-0000-000000000000', v_learner_id, 'active');
