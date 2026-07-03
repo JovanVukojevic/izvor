@@ -12,5 +12,5 @@ export const roleGuard: CanActivateFn = route => {
   if (!required || hasRole(actual, required)) {
     return true;
   }
-  return router.createUrlTree(['/dashboard']);
+  return router.createUrlTree(['/courses']);
 };

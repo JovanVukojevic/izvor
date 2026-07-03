@@ -171,7 +171,7 @@ export class Login {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: () => {
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/courses']);
         },
         error: (err: unknown) => {
           this.errorKey.set(this.mapErrorKey(err));

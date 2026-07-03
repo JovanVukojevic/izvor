@@ -11,11 +11,6 @@ export const routes: Routes = [
       import('./layouts/authenticated-shell/authenticated-shell').then(m => m.AuthenticatedShell),
     children: [
       {
-        path: 'dashboard',
-        title: 'title.dashboard',
-        loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard)
-      },
-      {
         path: 'categories',
         loadChildren: () =>
           import('./features/categories/categories.routes').then(m => m.CATEGORIES_ROUTES)
@@ -35,8 +30,8 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/users/users.routes').then(m => m.USERS_ROUTES)
       },
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
+      { path: '', pathMatch: 'full', redirectTo: 'courses' }
     ]
   },
-  { path: '**', redirectTo: '/dashboard' }
+  { path: '**', redirectTo: '/courses' }
 ];
