@@ -81,7 +81,7 @@ import { CourseStatsView } from '../course-stats-view/course-stats-view';
                   <p-tag [value]="name | translit" severity="info" />
                 }
               </span>
-              · {{ 'course.detail.authorLabel' | translate }} <code>{{ c.authorId }}</code>
+              · {{ 'course.detail.authorLabel' | translate }} {{ c.authorEmail }}
             </p>
           </div>
         </header>

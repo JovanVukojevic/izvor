@@ -2,6 +2,7 @@ export interface CourseResponse {
   id: string;
   categoryIds: string[];
   authorId: string;
+  authorEmail: string | null;
   title: string;
   description: string | null;
   createdAt: string;

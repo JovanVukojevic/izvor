@@ -51,7 +51,7 @@ interface StatusOption {
           </ng-template>
           <ng-template pTemplate="body" let-row>
             <tr>
-              <td><code>{{ row.userId }}</code></td>
+              <td>{{ row.userEmail }}</td>
               <td><p-tag [value]="row.status | enrollmentStatusLabel" [severity]="severity(row.status)" /></td>
               <td>{{ row.enrolledAt | date:'medium' }}</td>
               <td>{{ row.finishedAt ? (row.finishedAt | date:'medium') : '—' }}</td>

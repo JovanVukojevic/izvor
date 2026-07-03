@@ -4,6 +4,7 @@ export interface EnrollmentResponse {
   id: string;
   courseId: string;
   userId: string;
+  userEmail: string | null;
   status: EnrollmentStatus;
   enrolledAt: string;
   finishedAt: string | null;
