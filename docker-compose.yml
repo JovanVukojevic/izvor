@@ -11,12 +11,37 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - izvor-pgdata:/var/lib/postgresql/data
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./db/docker-init/init-izvor.sh:/docker-entrypoint-initdb.d/init-izvor.sh:ro
+      - ./db/clean:/opt/izvor/db-clean:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build: ./api
+    container_name: izvor-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=izvor;Username=izvor_app;Password=${IZVOR_DB_PASSWORD};Include Error Detail=true"
+      Jwt__SecretKey: ${JWT_SECRET}
+      TenantHost__BaseDomain: izvor.lvh.me
+      BehindProxy: "false"
+    ports:
+      - "8080:8080"
+
+  web:
+    build: ./web/izvor-web
+    container_name: izvor-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "8081:80"
 
 volumes:
   izvor-pgdata:
