@@ -38,11 +38,13 @@ public sealed class MeController : ControllerBase
     // api.get_current_user returns api.user_with_tenant (flat columns); Dapper
     // doesn't flatten composite columns into nested DTOs natively, so this
     // intermediate record maps the row before the controller assembles UserInfo.
-    private sealed record MeRow(
-        Guid Id,
-        string Email,
-        string Role,
-        Guid TenantId,
-        string TenantName,
-        string TenantSubdomain);
+    private sealed record MeRow
+    {
+        public Guid Id { get; init; }
+        public string Email { get; init; } = "";
+        public string Role { get; init; } = "";
+        public Guid TenantId { get; init; }
+        public string TenantName { get; init; } = "";
+        public string TenantSubdomain { get; init; } = "";
+    }
 }

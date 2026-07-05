@@ -9,7 +9,6 @@ import Aura from '@primeuix/themes/aura';
 import { firstValueFrom } from 'rxjs';
 
 import { routes } from './app.routes';
-import { environment } from '../environments/environment';
 import { API_BASE_URL } from './core/api-base-url.token';
 import { TenantContextService } from './core/tenant-context';
 import { AuthService } from './core/auth/auth.service';
@@ -53,7 +52,7 @@ export const appConfig: ApplicationConfig = {
     providePrimeNG({ theme: { preset: Aura } }),
     {
       provide: API_BASE_URL,
-      useFactory: () => `${window.location.protocol}//${window.location.hostname}:${environment.apiPort}`
+      useFactory: () => ''
     }
   ]
 };
