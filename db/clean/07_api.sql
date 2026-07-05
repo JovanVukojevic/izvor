@@ -270,7 +270,7 @@ BEGIN
     RETURN QUERY
         SELECT id, course_id, user_id, status,
                enrolled_at, finished_at,
-               created_at, updated_at
+               created_at, updated_at, user_email
         FROM spec.get_enrollment(p_enrollment_id);
 
     IF NOT FOUND THEN
@@ -286,7 +286,7 @@ CREATE FUNCTION api.list_enrollments_by_course(p_course_id uuid, p_status_filter
     AS $$
     SELECT id, course_id, user_id, status,
            enrolled_at, finished_at,
-           created_at, updated_at
+           created_at, updated_at, user_email
     FROM spec.list_enrollments_by_course(p_course_id, p_status_filter);
 $$;
 
@@ -297,7 +297,7 @@ CREATE FUNCTION api.list_enrollments_by_user(p_user_id uuid, p_status_filter tex
     AS $$
     SELECT id, course_id, user_id, status,
            enrolled_at, finished_at,
-           created_at, updated_at
+           created_at, updated_at, user_email
     FROM spec.list_enrollments_by_user(p_user_id, p_status_filter);
 $$;
 

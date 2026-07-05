@@ -50,7 +50,8 @@ CREATE TYPE api.course AS (
 	description text,
 	created_at timestamp with time zone,
 	updated_at timestamp with time zone,
-	is_active boolean
+	is_active boolean,
+	author_email text
 );
 
 
@@ -73,7 +74,8 @@ CREATE TYPE api.enrollment AS (
 	enrolled_at timestamp with time zone,
 	finished_at timestamp with time zone,
 	created_at timestamp with time zone,
-	updated_at timestamp with time zone
+	updated_at timestamp with time zone,
+	user_email text
 );
 
 
@@ -667,7 +669,9 @@ CREATE FUNCTION spec.get_course(p_id uuid) RETURNS SETOF api.course
                ARRAY[]::UUID[]
            ) AS category_ids,
            c.author_id, c.title, c.description,
-           c.created_at, c.updated_at, c.is_active
+           c.created_at, c.updated_at, c.is_active,
+           (SELECT u.email FROM impl.users u
+             WHERE u.tenant_id = c.tenant_id AND u.id = c.author_id) AS author_email
       FROM impl.courses c
      WHERE c.id = p_id;
 $$;
@@ -740,7 +744,9 @@ CREATE FUNCTION spec.list_courses(p_category_filter uuid DEFAULT NULL::uuid, p_a
                ARRAY[]::UUID[]
            ) AS category_ids,
            c.author_id, c.title, c.description,
-           c.created_at, c.updated_at, c.is_active
+           c.created_at, c.updated_at, c.is_active,
+           (SELECT u.email FROM impl.users u
+             WHERE u.tenant_id = c.tenant_id AND u.id = c.author_id) AS author_email
       FROM impl.courses c
      WHERE (p_category_filter IS NULL OR EXISTS (
                SELECT 1 FROM impl.classification cc
@@ -1135,11 +1141,13 @@ $$;
 CREATE FUNCTION spec.get_enrollment(p_enrollment_id uuid) RETURNS SETOF api.enrollment
     LANGUAGE sql STABLE
     AS $$
-    SELECT id, course_id, user_id, status::text,
-           enrolled_at, finished_at,
-           created_at, updated_at
-    FROM impl.enrollments
-    WHERE id = p_enrollment_id;
+    SELECT e.id, e.course_id, e.user_id, e.status::text,
+           e.enrolled_at, e.finished_at,
+           e.created_at, e.updated_at,
+           (SELECT u.email FROM impl.users u
+             WHERE u.tenant_id = e.tenant_id AND u.id = e.user_id) AS user_email
+    FROM impl.enrollments e
+    WHERE e.id = p_enrollment_id;
 $$;
 
 
@@ -1150,14 +1158,16 @@ BEGIN
     PERFORM spec.assert_course_owner_or_admin(p_course_id);
 
     RETURN QUERY
-        SELECT id, course_id, user_id, status::text,
-               enrolled_at, finished_at,
-               created_at, updated_at
-        FROM impl.enrollments
-        WHERE course_id = p_course_id
+        SELECT e.id, e.course_id, e.user_id, e.status::text,
+               e.enrolled_at, e.finished_at,
+               e.created_at, e.updated_at,
+               (SELECT u.email FROM impl.users u
+                 WHERE u.tenant_id = e.tenant_id AND u.id = e.user_id) AS user_email
+        FROM impl.enrollments e
+        WHERE e.course_id = p_course_id
           AND (p_status_filter IS NULL
-               OR status = p_status_filter::impl.enrollment_status)
-        ORDER BY enrolled_at DESC;
+               OR e.status = p_status_filter::impl.enrollment_status)
+        ORDER BY e.enrolled_at DESC;
 END;
 $$;
 
@@ -1177,14 +1187,16 @@ BEGIN
     END IF;
 
     RETURN QUERY
-        SELECT id, course_id, user_id, status::text,
-               enrolled_at, finished_at,
-               created_at, updated_at
-        FROM impl.enrollments
-        WHERE user_id = p_user_id
+        SELECT e.id, e.course_id, e.user_id, e.status::text,
+               e.enrolled_at, e.finished_at,
+               e.created_at, e.updated_at,
+               (SELECT u.email FROM impl.users u
+                 WHERE u.tenant_id = e.tenant_id AND u.id = e.user_id) AS user_email
+        FROM impl.enrollments e
+        WHERE e.user_id = p_user_id
           AND (p_status_filter IS NULL
-               OR status = p_status_filter::impl.enrollment_status)
-        ORDER BY enrolled_at DESC;
+               OR e.status = p_status_filter::impl.enrollment_status)
+        ORDER BY e.enrolled_at DESC;
 END;
 $$;
 
