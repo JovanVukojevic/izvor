@@ -60,8 +60,6 @@
 --  10. Recreate spec/api get_course and list_courses against the new type.
 
 
--- 1. Join table.
-
 CREATE TABLE impl.course_categories (
     tenant_id   UUID NOT NULL,
     course_id   UUID NOT NULL,
@@ -159,8 +157,6 @@ DROP FUNCTION spec.create_course(TEXT, TEXT, UUID, TEXT, TEXT);
 ALTER TABLE impl.courses DROP CONSTRAINT courses_tenant_id_category_id_fkey;
 DROP INDEX impl.courses_tenant_category_idx;
 
-
--- 5. Drop the column.
 
 ALTER TABLE impl.courses DROP COLUMN category_id;
 

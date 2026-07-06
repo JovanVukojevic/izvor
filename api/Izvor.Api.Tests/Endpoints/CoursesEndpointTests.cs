@@ -25,7 +25,6 @@ public sealed class CoursesEndpointTests : IAsyncLifetime
     {
         await TestSeed.ResetCategoriesAndCoursesAsync(_postgres.AdminConnectionString);
 
-        // Seed one category for course tests, owned by Acme.
         var admin = AdminClient();
         var response = await admin.PostAsJsonAsync("/api/categories",
             new CreateCategoryRequest("Default", null));

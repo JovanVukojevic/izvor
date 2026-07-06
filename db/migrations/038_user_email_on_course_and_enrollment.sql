@@ -14,8 +14,6 @@
 -- (SQL-language, hard-depend on spec) before spec; recreate spec (get_* first,
 -- since siblings delegate to it) before api.
 
--- === Drop dependents: api wrappers first ===
-
 DROP FUNCTION api.get_course(uuid);
 DROP FUNCTION api.list_courses(uuid, boolean);
 DROP FUNCTION api.create_course(text, text, uuid[], jsonb);
@@ -28,8 +26,6 @@ DROP FUNCTION api.list_enrollments_by_course(uuid, text);
 DROP FUNCTION api.list_enrollments_by_user(uuid, text);
 DROP FUNCTION api.enroll_user(uuid, uuid);
 DROP FUNCTION api.cancel_enrollment(uuid);
-
--- === Drop dependents: spec ===
 
 DROP FUNCTION spec.get_course(uuid);
 DROP FUNCTION spec.list_courses(uuid, boolean);
@@ -44,12 +40,8 @@ DROP FUNCTION spec.list_enrollments_by_user(uuid, text);
 DROP FUNCTION spec.enroll_user(uuid, uuid);
 DROP FUNCTION spec.cancel_enrollment(uuid);
 
--- === Extend the composite types ===
-
 ALTER TYPE api.course ADD ATTRIBUTE author_email text;
 ALTER TYPE api.enrollment ADD ATTRIBUTE user_email text;
-
--- === Recreate spec: courses (get_course first) ===
 
 CREATE FUNCTION spec.get_course(p_id uuid) RETURNS SETOF api.course
     LANGUAGE sql STABLE
@@ -288,8 +280,6 @@ BEGIN
 END;
 $$;
 
--- === Recreate spec: enrollments (get_enrollment first) ===
-
 CREATE FUNCTION spec.get_enrollment(p_enrollment_id uuid) RETURNS SETOF api.enrollment
     LANGUAGE sql STABLE
     AS $$
@@ -439,8 +429,6 @@ BEGIN
     RETURN QUERY SELECT * FROM spec.get_enrollment(p_enrollment_id);
 END;
 $$;
-
--- === Recreate api wrappers: courses (all thin SELECT *) ===
 
 CREATE FUNCTION api.get_course(p_id uuid) RETURNS SETOF api.course
     LANGUAGE sql STABLE SECURITY DEFINER

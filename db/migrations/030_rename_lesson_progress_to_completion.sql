@@ -16,7 +16,6 @@
 -- Action verbs stay: spec.mark_lesson_complete, impl.auto_complete_enrollment.
 -- Only entity-named identifiers change.
 
--- 1. Rename table.
 ALTER TABLE impl.lesson_progress RENAME TO lesson_completion;
 
 -- 2. Rename composite type (does NOT require dropping returning functions).
@@ -38,7 +37,6 @@ ALTER TRIGGER lesson_progress_auto_complete_enrollment
     ON impl.lesson_completion
     RENAME TO lesson_completion_auto_complete_enrollment;
 
--- 4. Rename the entity-named read functions.
 ALTER FUNCTION spec.get_lesson_progress_by_enrollment(UUID)
     RENAME TO get_lesson_completion_by_enrollment;
 

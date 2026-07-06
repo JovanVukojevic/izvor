@@ -12,7 +12,6 @@
 -- while function bodies reference the column. Pattern matches 015 / 018.
 
 
--- Step 1: drop the sequential-gating block from spec.mark_lesson_complete.
 -- Same signature, so CREATE OR REPLACE works without DROP.
 -- api.mark_lesson_complete is unchanged (thin SELECT pass-through).
 CREATE OR REPLACE FUNCTION spec.mark_lesson_complete(p_lesson_id UUID)
@@ -93,7 +92,6 @@ COMMENT ON FUNCTION spec.mark_lesson_complete(UUID) IS
     'Records lesson completion for the calling user; idempotent (returns false on duplicate). Auto-flips enrollment to completed when all lessons done.';
 
 
--- Step 2: drop functions that reference api.course / sequential.
 -- spec.create_course and api.create_course never took p_sequential
 -- (verified against 011) so they are not dropped.
 DROP FUNCTION api.list_courses(UUID, TEXT);
@@ -104,15 +102,11 @@ DROP FUNCTION spec.get_course(UUID);
 DROP FUNCTION spec.update_course(UUID, TEXT, TEXT, UUID, BOOLEAN);
 
 
--- Step 3: drop the type attribute (now unreferenced).
 ALTER TYPE api.course DROP ATTRIBUTE sequential;
 
 
--- Step 4: drop the column (now unreferenced by any function body).
 ALTER TABLE impl.courses DROP COLUMN sequential;
 
-
--- Step 5: recreate the six dropped functions without sequential.
 
 CREATE FUNCTION spec.update_course(
     p_id          UUID,

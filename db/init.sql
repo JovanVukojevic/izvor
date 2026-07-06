@@ -15,15 +15,9 @@
 -- ============================================================
 
 
--- -----------------------------
--- Extensions
--- -----------------------------
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 
--- -----------------------------
--- Schemas
--- -----------------------------
 -- Infrastructure (cross-cutting helpers, not part of any ATP)
 CREATE SCHEMA app;
 
@@ -38,9 +32,6 @@ CREATE SCHEMA system_spec;
 CREATE SCHEMA system_api;
 
 
--- -----------------------------
--- Roles (dev-only passwords; see header)
--- -----------------------------
 CREATE ROLE izvor_admin LOGIN PASSWORD 'izvor_admin_dev';
 CREATE ROLE izvor_app   LOGIN PASSWORD 'izvor_app_dev';
 

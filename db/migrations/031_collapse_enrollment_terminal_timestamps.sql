@@ -11,12 +11,10 @@
 -- 015 and 018). The terminal-timestamp trigger lives in impl since migration
 -- 026; only its body changes, the trigger wiring is untouched.
 
--- 1. Drop the two old biconditional CHECK constraints.
 ALTER TABLE impl.enrollments
     DROP CONSTRAINT enrollments_completed_at_check,
     DROP CONSTRAINT enrollments_cancelled_at_check;
 
--- 2. Rename completed_at -> finished_at.
 ALTER TABLE impl.enrollments RENAME COLUMN completed_at TO finished_at;
 
 -- 3. Fold cancelled_at into finished_at for already-cancelled rows so the new
@@ -34,10 +32,8 @@ BEGIN
     END LOOP;
 END $$;
 
--- 4. Drop cancelled_at.
 ALTER TABLE impl.enrollments DROP COLUMN cancelled_at;
 
--- 5. Single biconditional CHECK across both terminal statuses.
 ALTER TABLE impl.enrollments
     ADD CONSTRAINT enrollments_finished_at_check
     CHECK ((status IN ('completed', 'cancelled')) = (finished_at IS NOT NULL));

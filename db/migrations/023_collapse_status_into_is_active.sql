@@ -137,7 +137,6 @@ END;
 $$;
 
 
--- 4. Drop the status surface.
 DROP INDEX impl.courses_tenant_active_status_idx;
 
 ALTER TYPE api.course DROP ATTRIBUTE status;
@@ -150,8 +149,6 @@ ALTER TABLE impl.courses ALTER COLUMN is_active SET DEFAULT false;
 ALTER TABLE impl.courses DROP COLUMN status;
 DROP TYPE impl.course_status;
 
-
--- 5. Recreate spec procedures.
 
 CREATE FUNCTION spec.create_course(
     p_title       TEXT,
@@ -477,8 +474,6 @@ $$;
 
 ALTER FUNCTION spec.delete_lesson(UUID) OWNER TO izvor_admin;
 
-
--- 6. Recreate api wrappers.
 
 CREATE FUNCTION api.create_course(
     p_title       TEXT,
