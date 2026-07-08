@@ -477,7 +477,6 @@ CREATE FUNCTION api.deactivate_course(p_course_id uuid) RETURNS SETOF api.course
     SELECT * FROM spec.deactivate_course(p_course_id);
 $$;
 
--- === Recreate api wrappers: enrollments ===
 -- get_enrollment / list_* enumerate columns explicitly (get_enrollment adds a
 -- not-found raise; the lists are plain projections) — the new user_email column
 -- must be appended to each so the projection matches the extended composite type.
